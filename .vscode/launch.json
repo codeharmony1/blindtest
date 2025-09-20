@@ -1,0 +1,23 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "type": "node",
+      "request": "launch",
+      "name": "API (Node)",
+      "program": "${workspaceFolder}/apps/api/src/index.ts",
+      "runtimeExecutable": "node",
+      "runtimeArgs": ["--loader", "ts-node/esm"],
+      "envFile": "${workspaceFolder}/apps/api/.env",
+      "cwd": "${workspaceFolder}/apps/api",
+      "skipFiles": ["<node_internals>/**"]
+    },
+    {
+      "type": "chrome",
+      "request": "launch",
+      "name": "Angular (Chrome)",
+      "url": "http://localhost:4200",
+      "webRoot": "${workspaceFolder}/apps/web"
+    }
+  ]
+}

@@ -1,0 +1,9 @@
+{
+  "recommendations": [
+    "dbaeumer.vscode-eslint",
+    "esbenp.prettier-vscode",
+    "Angular.ng-template",
+    "github.vscode-pull-request-github",
+    "editorconfig.editorconfig"
+  ]
+}

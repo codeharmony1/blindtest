@@ -1,0 +1,8 @@
+{
+  "name": "@blindtest/web",
+  "private": true,
+  "scripts": {
+    "start": "ng serve --port 4200 --proxy-config proxy.conf.json",
+    "build": "ng build"
+  }
+}

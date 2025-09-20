@@ -1,0 +1,20 @@
+{
+  "name": "blindtest-monorepo",
+  "private": true,
+  "workspaces": ["apps/api", "apps/web"],
+  "scripts": {
+    "dev": "concurrently -k -n API,WEB -c green,cyan \"npm:dev:api\" \"npm:start:web\"",
+    "dev:api": "npm run dev -w @blindtest/api",
+    "start:web": "npm run start -w @blindtest/web",
+    "build": "npm run build -w @blindtest/api && npm run build -w @blindtest/web",
+    "migrate:run": "npm run migrate:run -w @blindtest/api",
+    "seed:demo": "npm run seed:demo -w @blindtest/api",
+    "lint": "eslint .",
+    "format": "prettier --write ."
+  },
+  "devDependencies": {
+    "concurrently": "^9.0.0",
+    "eslint": "^9.8.0",
+    "prettier": "^3.3.3"
+  }
+}
