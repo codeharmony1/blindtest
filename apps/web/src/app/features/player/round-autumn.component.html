@@ -1,0 +1,113 @@
+<div class="autumn-theme autumn-fade-in">
+  <div class="autumn-leaves"></div>
+
+  <div class="autumn-container">
+    <!-- Message d'erreur si pas de session -->
+    <div *ngIf="!session" class="autumn-card">
+      <div class="autumn-message message-error">
+        <span>⚠️</span>
+        <div>
+          <p><strong>Session expirée</strong></p>
+          <p>Veuillez vous reconnecter pour continuer.</p>
+          <button (click)="back()" class="btn-autumn btn-autumn-primary">
+            <span class="btn-icon">🏠</span>
+            Retour à l'accueil
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Interface de jeu -->
+    <ng-container *ngIf="session">
+      <header class="autumn-header">
+        <h1>
+          <span class="autumn-icon">🎵</span>
+          Round Musical en Cours
+        </h1>
+        <div class="player-info">
+          <div class="team-badge">Équipe #{{ session.teamId }}</div>
+          <div class="player-name">{{ session.nickname }}</div>
+        </div>
+      </header>
+
+      <!-- Timer et statut -->
+      <div class="autumn-card timer-card" *ngIf="songId">
+        <div class="timer-display">
+          <div class="timer-icon">⏱️</div>
+          <div class="timer-content">
+            <div class="timer-label">Temps restant</div>
+            <div class="timer-value" [class.timer-urgent]="remaining < 10000">
+              {{ remaining / 1000 | number: '1.0-1' }}s
+            </div>
+          </div>
+        </div>
+
+        <div class="progress-bar">
+          <div
+            class="progress-fill"
+            [style.width.%]="(remaining / 30000) * 100"
+            [class.progress-urgent]="remaining < 10000"
+          ></div>
+        </div>
+      </div>
+
+      <!-- Message d'attente si pas de chanson -->
+      <div *ngIf="!songId" class="autumn-card">
+        <div class="autumn-message message-info">
+          <span>🎧</span>
+          <div>
+            <p><strong>En attente du prochain morceau...</strong></p>
+            <p>Le DJ prépare la prochaine chanson à deviner !</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Formulaire de réponse -->
+      <div class="autumn-card answer-card">
+        <h3>
+          <span class="autumn-section-icon">✍️</span>
+          Votre Réponse
+        </h3>
+
+        <div class="answer-form">
+          <label for="answer" class="autumn-label"> Titre et/ou Artiste de la chanson </label>
+          <input
+            id="answer"
+            [(ngModel)]="answer"
+            placeholder="ex: Billie Jean - Michael Jackson"
+            class="autumn-input answer-input"
+            [disabled]="!songId || sending"
+            (keyup.enter)="send()"
+          />
+
+          <button
+            (click)="send()"
+            [disabled]="!songId || sending || !answer.trim()"
+            class="btn-autumn"
+            [class.btn-autumn-primary]="!sending"
+            [class.btn-autumn-secondary]="sending"
+          >
+            <span class="btn-icon" *ngIf="!sending">📝</span>
+            <span class="btn-icon" *ngIf="sending">⏳</span>
+            <span *ngIf="!sending">Envoyer la Réponse</span>
+            <span *ngIf="sending">Envoi en cours...</span>
+          </button>
+        </div>
+
+        <div class="autumn-message message-info">
+          <span>💡</span>
+          <strong>Astuce :</strong> La dernière réponse avant la fin du temps imparti sera prise en
+          compte !
+        </div>
+      </div>
+
+      <!-- Navigation -->
+      <div class="autumn-card navigation-card">
+        <button (click)="goLeaderboard()" class="btn-autumn btn-autumn-success">
+          <span class="btn-icon">🏆</span>
+          Voir le Classement
+        </button>
+      </div>
+    </ng-container>
+  </div>
+</div>

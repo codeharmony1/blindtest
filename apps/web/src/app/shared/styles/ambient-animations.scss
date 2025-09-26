@@ -1,0 +1,467 @@
+/* Ambient animations layer for non-autumn themes */
+
+.ambient-layer {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 2; /* above base content but still click-through */
+  overflow: hidden;
+}
+
+.ambient-layer span,
+.ambient-layer i {
+  position: absolute;
+  display: block;
+  opacity: 0.8;
+  pointer-events: none;
+}
+
+/* ========== DJ Equalizer (DJ screen only) ========== */
+@keyframes djBarPulse {
+  0% {
+    transform: scaleY(0.2);
+    opacity: 0.6;
+  }
+  50% {
+    transform: scaleY(1);
+    opacity: 1;
+  }
+  100% {
+    transform: scaleY(0.2);
+    opacity: 0.6;
+  }
+}
+.anim-dj-eq {
+  pointer-events: none;
+}
+.anim-dj-eq span {
+  position: absolute;
+  bottom: 6vh;
+  width: 6px;
+  height: 24vh;
+  transform-origin: bottom center;
+  background: linear-gradient(180deg, rgba(0, 255, 240, 0.85), rgba(255, 0, 200, 0.85));
+  box-shadow:
+    0 0 8px rgba(0, 255, 240, 0.8),
+    0 0 14px rgba(255, 0, 200, 0.5);
+  animation: djBarPulse 1.8s ease-in-out infinite;
+  border-radius: 3px;
+}
+.anim-dj-eq span:nth-child(3n) {
+  background: linear-gradient(180deg, rgba(255, 255, 0, 0.85), rgba(255, 0, 128, 0.85));
+}
+.anim-dj-eq span:nth-child(5n) {
+  background: linear-gradient(180deg, rgba(0, 200, 255, 0.85), rgba(0, 255, 128, 0.85));
+}
+
+/* Position horizontale et déphasage des barres (32) */
+@for $i from 1 through 32 {
+  .anim-dj-eq span:nth-child(#{$i}) {
+    left: #{(2 + ($i - 1) * (96 / 31))}vw;
+    animation-delay: #{($i - 1) * 0.06}s;
+  }
+}
+
+/* ========== Generic falling animation ========== */
+@keyframes ambientFall {
+  0% {
+    transform: translateY(-10vh) rotate(0deg);
+    opacity: 0;
+  }
+  10% {
+    opacity: 0.9;
+  }
+  100% {
+    transform: translateY(110vh) rotate(360deg);
+    opacity: 0;
+  }
+}
+
+/* ========== Blossoms (wedding-spring) ========== */
+.anim-blossoms {
+  filter: drop-shadow(0 2px 2px rgba(0, 0, 0, 0.1));
+}
+.anim-blossoms i::before {
+  content: '❀';
+}
+.anim-blossoms i {
+  font-size: 18px;
+  color: rgba(255, 182, 193, 0.9); /* light pink */
+  animation: ambientFall linear infinite;
+}
+
+/* ========== Snow (seasonal-winter) ========== */
+.anim-snow i::before {
+  content: '✼';
+}
+.anim-snow i {
+  font-size: 14px;
+  color: rgba(255, 255, 255, 0.9);
+  text-shadow: 0 0 6px rgba(255, 255, 255, 0.6);
+  animation: ambientFall linear infinite;
+}
+
+/* ========== Confetti (birthday-fun) ========== */
+.anim-confetti span {
+  width: 8px;
+  height: 14px;
+  border-radius: 2px;
+  background: #ff6b6b;
+  animation: ambientFall linear infinite;
+}
+.anim-confetti span:nth-child(3n) {
+  background: #4ecdc4;
+}
+.anim-confetti span:nth-child(5n) {
+  background: #ffe66d;
+}
+.anim-confetti span:nth-child(7n) {
+  background: #6c63ff;
+}
+
+/* ========== Sparkles (corporate-luxury, birthday-elegant) ========== */
+@keyframes ambientTwinkle {
+  0%,
+  100% {
+    transform: scale(0.8);
+    opacity: 0.2;
+  }
+  50% {
+    transform: scale(1.2);
+    opacity: 1;
+  }
+}
+.anim-sparkles span {
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: rgba(255, 215, 0, 0.9);
+  box-shadow: 0 0 8px rgba(255, 215, 0, 0.8);
+  animation: ambientTwinkle ease-in-out infinite;
+  /* ensure sparkles appear within viewport */
+  top: 20vh;
+}
+
+/* ========== Neon lines (party-neon) ========== */
+@keyframes neonMove {
+  0% {
+    transform: translateY(-20%) translateX(-20%);
+    opacity: 0.3;
+  }
+  50% {
+    opacity: 0.8;
+  }
+  100% {
+    transform: translateY(120%) translateX(20%);
+    opacity: 0.3;
+  }
+}
+.anim-neon span {
+  width: 2px;
+  height: 120px;
+  background: linear-gradient(180deg, rgba(255, 0, 128, 0), rgba(255, 0, 128, 0.9));
+  filter: drop-shadow(0 0 6px rgba(255, 0, 128, 0.9));
+  animation: neonMove linear infinite;
+}
+.anim-neon span:nth-child(3n) {
+  background: linear-gradient(180deg, rgba(0, 255, 255, 0), rgba(0, 255, 255, 0.9));
+  filter: drop-shadow(0 0 6px rgba(0, 255, 255, 0.9));
+}
+.anim-neon span:nth-child(5n) {
+  background: linear-gradient(180deg, rgba(255, 255, 0, 0), rgba(255, 255, 0, 0.9));
+  filter: drop-shadow(0 0 6px rgba(255, 255, 0, 0.9));
+}
+
+/* ========== Geometric float (corporate-modern/party-retro) ========== */
+@keyframes floatUp {
+  0% {
+    transform: translateY(100vh) rotate(0deg);
+    opacity: 0;
+  }
+  10% {
+    opacity: 0.7;
+  }
+  100% {
+    transform: translateY(-20vh) rotate(360deg);
+    opacity: 0;
+  }
+}
+.anim-geometric span {
+  width: 14px;
+  height: 14px;
+  background: rgba(37, 99, 235, 0.8);
+  border-radius: 3px;
+  animation: floatUp linear infinite;
+}
+.anim-geometric span:nth-child(3n) {
+  border-radius: 50%;
+  background: rgba(100, 116, 139, 0.8);
+}
+.anim-geometric span:nth-child(5n) {
+  clip-path: polygon(50% 0, 0 100%, 100% 100%);
+  background: rgba(14, 165, 233, 0.8);
+}
+
+/* ========== Bubbles (seasonal-summer) ========== */
+@keyframes bubbleRise {
+  0% {
+    transform: translateY(100vh) scale(0.6);
+    opacity: 0;
+  }
+  10% {
+    opacity: 0.6;
+  }
+  100% {
+    transform: translateY(-10vh) scale(1);
+    opacity: 0;
+  }
+}
+.anim-bubbles span {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: rgba(0, 180, 216, 0.25);
+  box-shadow: inset -2px -4px 6px rgba(0, 0, 0, 0.08);
+  animation: bubbleRise ease-in infinite;
+}
+
+/* ========== Stars (birthday-elegant fallback) ========== */
+.anim-stars i::before {
+  content: '✦';
+}
+.anim-stars i {
+  color: rgba(255, 255, 255, 0.8);
+  text-shadow: 0 0 6px rgba(255, 255, 255, 0.7);
+  animation: ambientTwinkle 2.2s ease-in-out infinite;
+  /* ensure stars appear within viewport */
+  top: 30vh;
+}
+
+/* Utility: position/delay patterns for 20 children */
+.ambient-layer > * {
+  left: 50%;
+  top: -10vh;
+}
+.ambient-layer > *:nth-child(1) {
+  left: 5%;
+  animation-duration: 10s;
+  animation-delay: 0s;
+}
+.ambient-layer > *:nth-child(2) {
+  left: 12%;
+  animation-duration: 12s;
+  animation-delay: 1s;
+}
+.ambient-layer > *:nth-child(3) {
+  left: 20%;
+  animation-duration: 14s;
+  animation-delay: 2s;
+}
+.ambient-layer > *:nth-child(4) {
+  left: 28%;
+  animation-duration: 11s;
+  animation-delay: 0.5s;
+}
+.ambient-layer > *:nth-child(5) {
+  left: 35%;
+  animation-duration: 13s;
+  animation-delay: 1.5s;
+}
+.ambient-layer > *:nth-child(6) {
+  left: 42%;
+  animation-duration: 15s;
+  animation-delay: 2.5s;
+}
+.ambient-layer > *:nth-child(7) {
+  left: 49%;
+  animation-duration: 12s;
+  animation-delay: 0.8s;
+}
+.ambient-layer > *:nth-child(8) {
+  left: 56%;
+  animation-duration: 16s;
+  animation-delay: 1.8s;
+}
+.ambient-layer > *:nth-child(9) {
+  left: 63%;
+  animation-duration: 14s;
+  animation-delay: 2.8s;
+}
+.ambient-layer > *:nth-child(10) {
+  left: 70%;
+  animation-duration: 13s;
+  animation-delay: 0.2s;
+}
+.ambient-layer > *:nth-child(11) {
+  left: 77%;
+  animation-duration: 12s;
+  animation-delay: 1.2s;
+}
+.ambient-layer > *:nth-child(12) {
+  left: 84%;
+  animation-duration: 11s;
+  animation-delay: 2.2s;
+}
+.ambient-layer > *:nth-child(13) {
+  left: 91%;
+  animation-duration: 15s;
+  animation-delay: 0.7s;
+}
+.ambient-layer > *:nth-child(14) {
+  left: 8%;
+  animation-duration: 17s;
+  animation-delay: 1.7s;
+}
+.ambient-layer > *:nth-child(15) {
+  left: 16%;
+  animation-duration: 12s;
+  animation-delay: 2.7s;
+}
+.ambient-layer > *:nth-child(16) {
+  left: 24%;
+  animation-duration: 18s;
+  animation-delay: 0.9s;
+}
+.ambient-layer > *:nth-child(17) {
+  left: 40%;
+  animation-duration: 14s;
+  animation-delay: 1.9s;
+}
+.ambient-layer > *:nth-child(18) {
+  left: 60%;
+  animation-duration: 13s;
+  animation-delay: 2.9s;
+}
+.ambient-layer > *:nth-child(19) {
+  left: 76%;
+  animation-duration: 16s;
+  animation-delay: 0.4s;
+}
+.ambient-layer > *:nth-child(20) {
+  left: 92%;
+  animation-duration: 19s;
+  animation-delay: 1.4s;
+}
+
+/* Override vertical distribution for non-falling effects */
+.anim-sparkles > span:nth-child(1) {
+  top: 5vh;
+}
+.anim-sparkles > span:nth-child(2) {
+  top: 15vh;
+}
+.anim-sparkles > span:nth-child(3) {
+  top: 25vh;
+}
+.anim-sparkles > span:nth-child(4) {
+  top: 35vh;
+}
+.anim-sparkles > span:nth-child(5) {
+  top: 45vh;
+}
+.anim-sparkles > span:nth-child(6) {
+  top: 55vh;
+}
+.anim-sparkles > span:nth-child(7) {
+  top: 65vh;
+}
+.anim-sparkles > span:nth-child(8) {
+  top: 75vh;
+}
+.anim-sparkles > span:nth-child(9) {
+  top: 85vh;
+}
+.anim-sparkles > span:nth-child(10) {
+  top: 50vh;
+}
+.anim-sparkles > span:nth-child(11) {
+  top: 12vh;
+}
+.anim-sparkles > span:nth-child(12) {
+  top: 22vh;
+}
+.anim-sparkles > span:nth-child(13) {
+  top: 32vh;
+}
+.anim-sparkles > span:nth-child(14) {
+  top: 42vh;
+}
+.anim-sparkles > span:nth-child(15) {
+  top: 52vh;
+}
+.anim-sparkles > span:nth-child(16) {
+  top: 62vh;
+}
+.anim-sparkles > span:nth-child(17) {
+  top: 72vh;
+}
+.anim-sparkles > span:nth-child(18) {
+  top: 82vh;
+}
+.anim-sparkles > span:nth-child(19) {
+  top: 38vh;
+}
+.anim-sparkles > span:nth-child(20) {
+  top: 68vh;
+}
+
+.anim-stars > i:nth-child(1) {
+  top: 8vh;
+}
+.anim-stars > i:nth-child(2) {
+  top: 18vh;
+}
+.anim-stars > i:nth-child(3) {
+  top: 28vh;
+}
+.anim-stars > i:nth-child(4) {
+  top: 38vh;
+}
+.anim-stars > i:nth-child(5) {
+  top: 48vh;
+}
+.anim-stars > i:nth-child(6) {
+  top: 58vh;
+}
+.anim-stars > i:nth-child(7) {
+  top: 68vh;
+}
+.anim-stars > i:nth-child(8) {
+  top: 78vh;
+}
+.anim-stars > i:nth-child(9) {
+  top: 88vh;
+}
+.anim-stars > i:nth-child(10) {
+  top: 26vh;
+}
+.anim-stars > i:nth-child(11) {
+  top: 14vh;
+}
+.anim-stars > i:nth-child(12) {
+  top: 24vh;
+}
+.anim-stars > i:nth-child(13) {
+  top: 34vh;
+}
+.anim-stars > i:nth-child(14) {
+  top: 44vh;
+}
+.anim-stars > i:nth-child(15) {
+  top: 54vh;
+}
+.anim-stars > i:nth-child(16) {
+  top: 64vh;
+}
+.anim-stars > i:nth-child(17) {
+  top: 74vh;
+}
+.anim-stars > i:nth-child(18) {
+  top: 84vh;
+}
+.anim-stars > i:nth-child(19) {
+  top: 36vh;
+}
+.anim-stars > i:nth-child(20) {
+  top: 66vh;
+}

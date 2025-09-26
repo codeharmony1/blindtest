@@ -1,0 +1,321 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Démo Système de Thèmes - Blind Test Musical</title>
+    <link rel="stylesheet" href="apps/web/src/app/core/theme/theme-variables.css">
+    <style>
+        body {
+            font-family: var(--font-primary);
+            margin: 0;
+            padding: 2rem;
+            background: var(--color-background);
+            color: var(--color-text);
+            transition: all 0.3s ease;
+        }
+
+        .demo-container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .demo-header {
+            text-align: center;
+            margin-bottom: 3rem;
+        }
+
+        .demo-title {
+            font-family: var(--font-heading);
+            font-size: 3rem;
+            color: var(--color-primary);
+            margin-bottom: 1rem;
+        }
+
+        .demo-subtitle {
+            color: var(--color-text-secondary);
+            font-size: 1.2rem;
+        }
+
+        .theme-selector {
+            background: var(--color-surface);
+            border-radius: var(--radius-lg);
+            padding: 2rem;
+            margin-bottom: 3rem;
+            box-shadow: var(--shadow-md);
+        }
+
+        .theme-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+
+        .theme-button {
+            padding: 1rem;
+            border: 2px solid var(--color-border);
+            border-radius: var(--radius-md);
+            background: var(--color-surface);
+            cursor: pointer;
+            transition: all var(--animation-duration) var(--animation-easing);
+            text-align: center;
+        }
+
+        .theme-button:hover {
+            border-color: var(--color-primary);
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-lg);
+        }
+
+        .theme-button.active {
+            border-color: var(--color-primary);
+            background: var(--color-primary);
+            color: white;
+        }
+
+        .demo-content {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 2rem;
+        }
+
+        .demo-card {
+            background: var(--color-surface);
+            border-radius: var(--radius-lg);
+            padding: 2rem;
+            border: 2px solid var(--color-border);
+            box-shadow: var(--shadow-md);
+            transition: all var(--animation-duration) var(--animation-easing);
+        }
+
+        .demo-card:hover {
+            transform: translateY(-5px);
+            box-shadow: var(--shadow-xl);
+        }
+
+        .card-title {
+            font-family: var(--font-heading);
+            color: var(--color-primary);
+            margin-bottom: 1rem;
+            font-size: 1.5rem;
+        }
+
+        .demo-button {
+            background: var(--gradient-primary);
+            color: white;
+            border: none;
+            padding: 0.75rem 1.5rem;
+            border-radius: var(--radius-md);
+            cursor: pointer;
+            font-weight: 600;
+            transition: all var(--animation-duration) var(--animation-easing);
+            margin: 0.5rem 0.5rem 0.5rem 0;
+        }
+
+        .demo-button:hover {
+            transform: scale(1.05);
+            box-shadow: var(--shadow-lg);
+        }
+
+        .demo-input {
+            width: 100%;
+            padding: 0.75rem;
+            border: 2px solid var(--color-border);
+            border-radius: var(--radius-md);
+            background: var(--color-background);
+            color: var(--color-text);
+            margin-bottom: 1rem;
+        }
+
+        .demo-input:focus {
+            outline: none;
+            border-color: var(--color-primary);
+        }
+
+        .color-palette {
+            display: flex;
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+
+        .color-swatch {
+            width: 50px;
+            height: 50px;
+            border-radius: var(--radius-md);
+            border: 2px solid var(--color-border);
+        }
+
+        .color-primary { background: var(--color-primary); }
+        .color-secondary { background: var(--color-secondary); }
+        .color-accent { background: var(--color-accent); }
+    </style>
+</head>
+<body>
+    <div class="demo-container">
+        <header class="demo-header">
+            <h1 class="demo-title">🎵 Blind Test Musical</h1>
+            <p class="demo-subtitle">Démonstration du Système de Thèmes Dynamiques</p>
+        </header>
+
+        <div class="theme-selector">
+            <h3>Sélectionnez un thème :</h3>
+            <div class="theme-grid">
+                <div class="theme-button active" onclick="applyTheme('wedding-autumn')">
+                    🍂 Mariage Automne
+                </div>
+                <div class="theme-button" onclick="applyTheme('corporate-modern')">
+                    🏢 Entreprise Moderne
+                </div>
+                <div class="theme-button" onclick="applyTheme('birthday-fun')">
+                    🎉 Anniversaire Festif
+                </div>
+                <div class="theme-button" onclick="applyTheme('party-neon')">
+                    🔥 Soirée Néon
+                </div>
+                <div class="theme-button" onclick="applyTheme('seasonal-summer')">
+                    🏖️ Été Tropical
+                </div>
+            </div>
+        </div>
+
+        <div class="demo-content">
+            <div class="demo-card">
+                <h3 class="card-title">Interface Joueur</h3>
+                <p>Rejoignez un événement avec votre code :</p>
+                <input type="text" class="demo-input" placeholder="Code de l'événement" value="ABC123">
+                <button class="demo-button">Rejoindre la partie</button>
+                <div class="color-palette">
+                    <div class="color-swatch color-primary" title="Couleur primaire"></div>
+                    <div class="color-swatch color-secondary" title="Couleur secondaire"></div>
+                    <div class="color-swatch color-accent" title="Couleur accent"></div>
+                </div>
+            </div>
+
+            <div class="demo-card">
+                <h3 class="card-title">Interface DJ</h3>
+                <p>Contrôlez la musique et les manches :</p>
+                <button class="demo-button">Lancer la manche</button>
+                <button class="demo-button">Pause</button>
+                <button class="demo-button">Manche suivante</button>
+                <p>Le thème s'adapte automatiquement au type d'événement configuré par l'organisateur.</p>
+            </div>
+
+            <div class="demo-card">
+                <h3 class="card-title">Leaderboard</h3>
+                <p>Affichage des scores en temps réel :</p>
+                <div style="background: var(--color-background); padding: 1rem; border-radius: var(--radius-md); margin: 1rem 0;">
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem;">
+                        <span>🥇 Équipe Alpha</span>
+                        <span style="color: var(--color-primary); font-weight: bold;">150 pts</span>
+                    </div>
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem;">
+                        <span>🥈 Équipe Beta</span>
+                        <span style="color: var(--color-secondary); font-weight: bold;">120 pts</span>
+                    </div>
+                    <div style="display: flex; justify-content: space-between;">
+                        <span>🥉 Équipe Gamma</span>
+                        <span style="color: var(--color-accent); font-weight: bold;">95 pts</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Thèmes prédéfinis
+        const themes = {
+            'wedding-autumn': {
+                '--color-primary': '#8B4513',
+                '--color-secondary': '#DAA520',
+                '--color-accent': '#D2691E',
+                '--color-background': '#FDF5E6',
+                '--color-surface': '#FFFFFF',
+                '--color-text': '#2F1B14',
+                '--color-text-secondary': '#6B4423',
+                '--color-border': '#DEB887',
+                '--gradient-primary': 'linear-gradient(135deg, #8B4513 0%, #DAA520 100%)',
+                '--font-primary': "'Inter', sans-serif",
+                '--font-heading': "'Playfair Display', serif"
+            },
+            'corporate-modern': {
+                '--color-primary': '#2563EB',
+                '--color-secondary': '#0EA5E9',
+                '--color-accent': '#3B82F6',
+                '--color-background': '#F8FAFC',
+                '--color-surface': '#FFFFFF',
+                '--color-text': '#1E293B',
+                '--color-text-secondary': '#64748B',
+                '--color-border': '#E2E8F0',
+                '--gradient-primary': 'linear-gradient(135deg, #2563EB 0%, #0EA5E9 100%)',
+                '--font-primary': "'Inter', sans-serif",
+                '--font-heading': "'Inter', sans-serif"
+            },
+            'birthday-fun': {
+                '--color-primary': '#FF6B6B',
+                '--color-secondary': '#4ECDC4',
+                '--color-accent': '#FFE66D',
+                '--color-background': '#FFF5F5',
+                '--color-surface': '#FFFFFF',
+                '--color-text': '#2D3748',
+                '--color-text-secondary': '#718096',
+                '--color-border': '#FED7D7',
+                '--gradient-primary': 'linear-gradient(135deg, #FF6B6B 0%, #4ECDC4 50%, #FFE66D 100%)',
+                '--font-primary': "'Nunito', sans-serif",
+                '--font-heading': "'Nunito', sans-serif"
+            },
+            'party-neon': {
+                '--color-primary': '#FF0080',
+                '--color-secondary': '#00FFFF',
+                '--color-accent': '#FFFF00',
+                '--color-background': '#0A0A0A',
+                '--color-surface': '#1A1A1A',
+                '--color-text': '#FFFFFF',
+                '--color-text-secondary': '#CCCCCC',
+                '--color-border': '#333333',
+                '--gradient-primary': 'linear-gradient(135deg, #FF0080 0%, #00FFFF 50%, #FFFF00 100%)',
+                '--font-primary': "'Orbitron', sans-serif",
+                '--font-heading': "'Orbitron', sans-serif"
+            },
+            'seasonal-summer': {
+                '--color-primary': '#FF6B35',
+                '--color-secondary': '#00B4D8',
+                '--color-accent': '#FFBE0B',
+                '--color-background': '#FFF8E1',
+                '--color-surface': '#FFFFFF',
+                '--color-text': '#2E2E2E',
+                '--color-text-secondary': '#666666',
+                '--color-border': '#FFE082',
+                '--gradient-primary': 'linear-gradient(135deg, #FF6B35 0%, #00B4D8 100%)',
+                '--font-primary': "'Poppins', sans-serif",
+                '--font-heading': "'Poppins', sans-serif"
+            }
+        };
+
+        function applyTheme(themeName) {
+            const theme = themes[themeName];
+            if (!theme) return;
+
+            // Mettre à jour les variables CSS
+            const root = document.documentElement;
+            Object.entries(theme).forEach(([property, value]) => {
+                root.style.setProperty(property, value);
+            });
+
+            // Mettre à jour l'état actif des boutons
+            document.querySelectorAll('.theme-button').forEach(button => {
+                button.classList.remove('active');
+            });
+            event.target.classList.add('active');
+
+            console.log(`Thème appliqué: ${themeName}`);
+        }
+
+        // Initialiser avec le thème par défaut
+        document.addEventListener('DOMContentLoaded', () => {
+            console.log('🎨 Démo du système de thèmes chargée');
+            console.log('Cliquez sur les boutons pour changer de thème dynamiquement');
+        });
+    </script>
+</body>
+</html>

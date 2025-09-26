@@ -1,0 +1,108 @@
+<div class="autumn-theme autumn-fade-in">
+  <div class="autumn-leaves"></div>
+
+  <div class="autumn-container">
+    <header class="autumn-header">
+      <h1>
+        <span class="autumn-icon">🏆</span>
+        Classement des Équipes
+      </h1>
+      <div class="event-subtitle">Tableau d'honneur de la soirée</div>
+    </header>
+
+    <!-- Tableau de classement -->
+    <div class="autumn-card leaderboard-card" *ngIf="rows.length">
+      <h3>
+        <span class="autumn-section-icon">👑</span>
+        Résultats en Temps Réel
+      </h3>
+
+      <div class="leaderboard-table-container">
+        <table class="autumn-table leaderboard-table">
+          <thead>
+            <tr>
+              <th class="rank-column">Position</th>
+              <th class="team-column">Équipe</th>
+              <th class="points-column">Points</th>
+              <th class="medal-column">Distinction</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr
+              *ngFor="let r of rows; trackBy: trackByTeamId"
+              class="team-row"
+              [class.gold-position]="r.rank === 1"
+              [class.silver-position]="r.rank === 2"
+              [class.bronze-position]="r.rank === 3"
+            >
+              <td class="rank-cell">
+                <div class="rank-badge" [class]="getRankClass(r.rank)">
+                  {{ r.rank }}
+                </div>
+              </td>
+
+              <td class="team-cell">
+                <div class="team-info">
+                  <div class="team-icon">{{ getTeamIcon(r.rank) }}</div>
+                  <div class="team-name">{{ r.name }}</div>
+                </div>
+              </td>
+
+              <td class="points-cell">
+                <div class="points-display">
+                  <span class="points-value">{{ r.totalPoints }}</span>
+                  <span class="points-label">pts</span>
+                </div>
+              </td>
+
+              <td class="medal-cell">
+                <div class="medal" *ngIf="r.rank <= 3">
+                  {{ getMedal(r.rank) }}
+                </div>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Message si pas de données -->
+    <div class="autumn-card" *ngIf="!rows.length">
+      <div class="autumn-message message-info">
+        <span>📊</span>
+        <div>
+          <p><strong>Classement en attente</strong></p>
+          <p>Les résultats apparaîtront dès que les équipes commenceront à jouer !</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Statistiques supplémentaires -->
+    <div class="autumn-card stats-card" *ngIf="rows.length">
+      <h3>
+        <span class="autumn-section-icon">📈</span>
+        Statistiques de la Soirée
+      </h3>
+
+      <div class="stats-grid">
+        <div class="stat-item">
+          <div class="stat-icon">👥</div>
+          <div class="stat-value">{{ rows.length }}</div>
+          <div class="stat-label">Équipes</div>
+        </div>
+
+        <div class="stat-item">
+          <div class="stat-icon">🎯</div>
+          <div class="stat-value">{{ getTotalPoints() }}</div>
+          <div class="stat-label">Points Total</div>
+        </div>
+
+        <div class="stat-item" *ngIf="rows.length > 0">
+          <div class="stat-icon">⭐</div>
+          <div class="stat-value">{{ getAveragePoints() | number: '1.1-1' }}</div>
+          <div class="stat-label">Moyenne</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

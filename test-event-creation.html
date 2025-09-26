@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test - Création d'Événement avec Thème</title>
+    <style>
+        body {
+            font-family: system-ui, sans-serif;
+            max-width: 600px;
+            margin: 2rem auto;
+            padding: 2rem;
+            background: #f8fafc;
+        }
+
+        .form-container {
+            background: white;
+            padding: 2rem;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+        }
+
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+
+        label {
+            display: block;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+            color: #374151;
+        }
+
+        input, select {
+            width: 100%;
+            padding: 0.75rem;
+            border: 1px solid #d1d5db;
+            border-radius: 8px;
+            font-size: 1rem;
+        }
+
+        input:focus, select:focus {
+            outline: none;
+            border-color: #3b82f6;
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+        }
+
+        .theme-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+
+        .theme-option {
+            border: 2px solid #e5e7eb;
+            border-radius: 8px;
+            overflow: hidden;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            background: white;
+        }
+
+        .theme-option:hover {
+            border-color: #d1d5db;
+            transform: translateY(-2px);
+        }
+
+        .theme-option.selected {
+            border-color: #3b82f6;
+            box-shadow: 0 0 0 1px #3b82f6;
+        }
+
+        .theme-preview {
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+            text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
+        }
+
+        .theme-name {
+            padding: 0.5rem;
+            font-size: 0.875rem;
+            font-weight: 600;
+            text-align: center;
+        }
+
+        .btn {
+            background: #3b82f6;
+            color: white;
+            border: none;
+            padding: 0.75rem 2rem;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.2s ease;
+        }
+
+        .btn:hover {
+            background: #1d4ed8;
+        }
+
+        .result {
+            margin-top: 2rem;
+            padding: 1rem;
+            background: #f0f9ff;
+            border: 1px solid #0ea5e9;
+            border-radius: 8px;
+        }
+
+        .error {
+            background: #fef2f2;
+            border-color: #ef4444;
+        }
+    </style>
+</head>
+<body>
+    <div class="form-container">
+        <h1>🎵 Création d'Événement</h1>
+        <p>Test de sélection de thème pour un nouvel événement</p>
+
+        <form id="eventForm">
+            <div class="form-group">
+                <label for="name">Nom de l'événement</label>
+                <input type="text" id="name" name="name" value="Test Event" required>
+            </div>
+
+            <div class="form-group">
+                <label for="code">Code de l'événement</label>
+                <input type="text" id="code" name="code" value="TEST123" required>
+            </div>
+
+            <div class="form-group">
+                <label>Sélectionnez un thème</label>
+                <div class="theme-grid" id="themeGrid">
+                    <!-- Themes will be loaded here -->
+                </div>
+                <input type="hidden" id="themeId" name="themeId" value="wedding-autumn">
+            </div>
+
+            <button type="submit" class="btn">Créer l'événement</button>
+        </form>
+
+        <div id="result" style="display: none;"></div>
+    </div>
+
+    <script>
+        const themes = [
+            {
+                id: 'wedding-autumn',
+                name: 'Mariage Automne',
+                colors: { primary: '#8B4513', gradient: 'linear-gradient(135deg, #8B4513 0%, #DAA520 100%)' }
+            },
+            {
+                id: 'corporate-modern',
+                name: 'Entreprise Moderne',
+                colors: { primary: '#2563EB', gradient: 'linear-gradient(135deg, #2563EB 0%, #0EA5E9 100%)' }
+            },
+            {
+                id: 'birthday-fun',
+                name: 'Anniversaire Festif',
+                colors: { primary: '#FF6B6B', gradient: 'linear-gradient(135deg, #FF6B6B 0%, #4ECDC4 50%, #FFE66D 100%)' }
+            },
+            {
+                id: 'party-neon',
+                name: 'Soirée Néon',
+                colors: { primary: '#FF0080', gradient: 'linear-gradient(135deg, #FF0080 0%, #00FFFF 50%, #FFFF00 100%)' }
+            },
+            {
+                id: 'seasonal-summer',
+                name: 'Été Tropical',
+                colors: { primary: '#FF6B35', gradient: 'linear-gradient(135deg, #FF6B35 0%, #00B4D8 100%)' }
+            }
+        ];
+
+        let selectedThemeId = 'wedding-autumn';
+
+        function renderThemes() {
+            const grid = document.getElementById('themeGrid');
+            grid.innerHTML = '';
+
+            themes.forEach(theme => {
+                const themeOption = document.createElement('div');
+                themeOption.className = `theme-option ${theme.id === selectedThemeId ? 'selected' : ''}`;
+                themeOption.onclick = () => selectTheme(theme.id);
+
+                themeOption.innerHTML = `
+                    <div class="theme-preview" style="background: ${theme.colors.gradient || theme.colors.primary}">
+                        ${theme.name.charAt(0)}
+                    </div>
+                    <div class="theme-name">${theme.name}</div>
+                `;
+
+                grid.appendChild(themeOption);
+            });
+        }
+
+        function selectTheme(themeId) {
+            selectedThemeId = themeId;
+            document.getElementById('themeId').value = themeId;
+            renderThemes();
+        }
+
+        document.getElementById('eventForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            const formData = new FormData(e.target);
+            const data = {
+                organizerId: "3", // ID de test
+                name: formData.get('name'),
+                code: formData.get('code'),
+                settings: {
+                    themeId: formData.get('themeId'),
+                    defaultSongDuration: 15,
+                    defaultSongsPerRound: 10
+                }
+            };
+
+            const resultDiv = document.getElementById('result');
+            resultDiv.style.display = 'block';
+            resultDiv.innerHTML = '<p>Création en cours...</p>';
+
+            try {
+                const response = await fetch('http://localhost:3000/api/events', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(data)
+                });
+
+                const result = await response.json();
+
+                if (response.ok) {
+                    resultDiv.className = 'result';
+                    resultDiv.innerHTML = `
+                        <h3>✅ Événement créé avec succès!</h3>
+                        <p><strong>Code:</strong> ${result.code}</p>
+                        <p><strong>Nom:</strong> ${result.name}</p>
+                        <p><strong>Thème sélectionné:</strong> ${themes.find(t => t.id === selectedThemeId)?.name}</p>
+                        <p><em>L'événement a été créé avec le thème "${selectedThemeId}"</em></p>
+                    `;
+                } else {
+                    throw new Error(result.error?.message || 'Erreur inconnue');
+                }
+            } catch (error) {
+                resultDiv.className = 'result error';
+                resultDiv.innerHTML = `
+                    <h3>❌ Erreur</h3>
+                    <p>${error.message}</p>
+                `;
+            }
+        });
+
+        // Initialiser l'affichage
+        renderThemes();
+
+        console.log('🎨 Interface de test chargée');
+        console.log('Sélectionnez un thème et créez un événement pour tester la fonctionnalité');
+    </script>
+</body>
+</html>

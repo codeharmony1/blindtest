@@ -1,0 +1,70 @@
+<div class="autumn-theme autumn-fade-in">
+  <div class="autumn-leaves"></div>
+
+  <div class="autumn-container">
+    <header class="autumn-header">
+      <h1>
+        <span class="autumn-icon">👥</span>
+        Formation des Équipes
+      </h1>
+      <div class="event-subtitle">
+        Bienvenue <strong>{{ nickname }}</strong> !
+      </div>
+    </header>
+
+    <!-- Équipes existantes -->
+    <div class="autumn-card">
+      <h3>
+        <span class="autumn-section-icon">🏆</span>
+        Équipes Disponibles
+      </h3>
+
+      <div *ngIf="teams.length === 0" class="autumn-message message-info">
+        <span>⏳</span>
+        Chargement des équipes...
+      </div>
+
+      <div *ngIf="teams.length > 0" class="teams-grid">
+        <div *ngFor="let t of teams" class="team-card" (click)="selectTeam(t.id)">
+          <div class="team-icon">🎭</div>
+          <div class="team-name">{{ t.name }}</div>
+          <div class="team-action">Rejoindre</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Créer nouvelle équipe -->
+    <div class="autumn-card">
+      <h3>
+        <span class="autumn-section-icon">✨</span>
+        Créer une Nouvelle Équipe
+      </h3>
+
+      <div class="team-creation-form">
+        <label for="newTeam" class="autumn-label">Nom de votre équipe</label>
+        <input
+          id="newTeam"
+          [(ngModel)]="newTeam"
+          placeholder="Les Virtuoses d'Automne..."
+          class="autumn-input"
+          maxlength="30"
+          (keyup.enter)="createTeam()"
+        />
+
+        <button
+          (click)="createTeam()"
+          [disabled]="!newTeam.trim()"
+          class="btn-autumn btn-autumn-success"
+        >
+          <span class="btn-icon">🌟</span>
+          Créer l'Équipe
+        </button>
+      </div>
+
+      <div class="autumn-message message-info">
+        <span>💡</span>
+        Choisissez un nom créatif qui représente votre équipe pour cette soirée musicale !
+      </div>
+    </div>
+  </div>
+</div>

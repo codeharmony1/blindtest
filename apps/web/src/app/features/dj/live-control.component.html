@@ -1,0 +1,117 @@
+<div class="dj-console">
+  <header class="console-header">
+    <h1 class="console-title">
+      <span class="dj-icon">🎧</span>
+      Console DJ
+      <span class="event-code">{{ eventCode }}</span>
+    </h1>
+    <div class="status-indicator" [class.active]="currentSongId">
+      <span class="pulse"></span>
+      {{ currentSongId ? 'EN DIRECT' : 'HORS LIGNE' }}
+    </div>
+  </header>
+
+  <div class="console-grid">
+    <!-- Section Round -->
+    <div class="control-panel round-panel">
+      <h3 class="panel-title">
+        <span class="panel-icon">🎵</span>
+        Sélection Round
+      </h3>
+      <div class="input-group">
+        <select [(ngModel)]="roundId" class="round-select">
+          <option value="" disabled>Choisir un round...</option>
+          <option *ngFor="let r of rounds" [value]="r.id">
+            {{ r.name || 'Round ' + r.id }}
+          </option>
+        </select>
+        <button (click)="loadRounds()" class="btn btn-refresh" title="Actualiser">🔄</button>
+      </div>
+    </div>
+
+    <!-- Section Réponse Officielle -->
+    <div class="control-panel official-panel">
+      <h3 class="panel-title">
+        <span class="panel-icon">📝</span>
+        Réponse Officielle
+      </h3>
+      <div class="official-inputs">
+        <input
+          [(ngModel)]="officialTitle"
+          placeholder="Titre de la chanson"
+          class="input-field title-input"
+        />
+        <input
+          [(ngModel)]="officialArtist"
+          placeholder="Nom de l'artiste"
+          class="input-field artist-input"
+        />
+        <button (click)="saveOfficial()" [disabled]="!currentSongId" class="btn btn-save">
+          💾 Enregistrer
+        </button>
+      </div>
+    </div>
+
+    <!-- Section Contrôles Principaux -->
+    <div class="control-panel main-controls">
+      <h3 class="panel-title">
+        <span class="panel-icon">🎛️</span>
+        Contrôles Principal
+      </h3>
+
+      <div class="duration-control">
+        <label class="duration-label">Durée d'écoute</label>
+        <div class="duration-input-group">
+          <input
+            type="number"
+            [(ngModel)]="duration"
+            min="5"
+            max="60"
+            class="duration-input"
+            placeholder="15"
+          />
+          <span class="duration-unit">sec</span>
+        </div>
+      </div>
+
+      <div class="main-buttons">
+        <button (click)="next()" class="btn btn-next btn-large">
+          ⏭️ Suivant
+          <small>Fermer → Noter → Ouvrir</small>
+        </button>
+
+        <div class="action-buttons">
+          <button (click)="open()" [disabled]="!currentSongId" class="btn btn-play">
+            ▶️ Ouvrir
+          </button>
+          <button (click)="close()" [disabled]="!currentSongId" class="btn btn-stop">
+            ⏹️ Fermer
+          </button>
+          <button (click)="grade()" [disabled]="!currentSongId" class="btn btn-grade">
+            ✅ Noter
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Section Status -->
+    <div class="control-panel status-panel">
+      <h3 class="panel-title">
+        <span class="panel-icon">📊</span>
+        Status Actuel
+      </h3>
+      <div class="status-info">
+        <div class="current-song">
+          <span class="label">Chanson active:</span>
+          <div class="song-id" [class.no-song]="!currentSongId">
+            {{ currentSongId || 'Aucune chanson sélectionnée' }}
+          </div>
+        </div>
+        <div class="connection-status">
+          <span class="label">Connexion:</span>
+          <span class="status-badge connected">🟢 WebSocket connecté</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

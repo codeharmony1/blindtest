@@ -1,0 +1,110 @@
+/* Mobile responsive essentials (CSS build) */
+input,
+select,
+textarea {
+  font-size: 16px !important;
+}
+html,
+body {
+  height: 100%;
+  overflow-x: hidden;
+}
+@media screen and (max-width: 768px) {
+  html {
+    height: -webkit-fill-available;
+  }
+  body {
+    min-height: -webkit-fill-available;
+  }
+  body {
+    overscroll-behavior: none;
+    -webkit-overflow-scrolling: touch;
+  }
+  .autumn-theme,
+  .dj-console-ultra {
+    min-height: -webkit-fill-available;
+    min-height: 100vh;
+    min-height: 100dvh;
+  }
+}
+@media (max-width: 768px) {
+  button,
+  .btn-autumn,
+  .btn-ultra,
+  .team-card,
+  input,
+  select {
+    min-height: 44px;
+    min-width: 44px;
+  }
+  .autumn-container,
+  .console-grid-ultra {
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior: contain;
+  }
+  button,
+  .btn-autumn,
+  .btn-ultra,
+  .team-card {
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
+    -webkit-tap-highlight-color: transparent;
+  }
+}
+@media screen and (max-height: 500px) and (orientation: landscape) {
+  .autumn-header,
+  .console-header-ultra {
+    padding: 0.5rem !important;
+    margin-bottom: 0.5rem !important;
+  }
+  .autumn-header h1,
+  .console-title-ultra {
+    font-size: 1.5rem !important;
+  }
+  .autumn-card,
+  .control-panel-ultra {
+    padding: 0.8rem !important;
+    margin-bottom: 0.5rem !important;
+  }
+}
+@media screen and (max-width: 320px) {
+  .autumn-container,
+  .dj-console-ultra {
+    padding: 0.25rem !important;
+  }
+  .autumn-header h1,
+  .console-title-ultra {
+    font-size: 1.2rem !important;
+  }
+  .btn-autumn,
+  .btn-ultra {
+    padding: 0.6rem 0.8rem !important;
+    font-size: 0.8rem !important;
+  }
+}
+@media screen and (min-width: 768px) and (max-width: 1024px) and (orientation: portrait) {
+  .autumn-grid,
+  .console-grid-ultra {
+    grid-template-columns: 1fr 1fr;
+  }
+  .teams-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+@media print {
+  .autumn-leaves,
+  .musical-animation,
+  .dj-effects,
+  button,
+  .btn-autumn,
+  .btn-ultra {
+    display: none !important;
+  }
+  .autumn-theme,
+  .dj-console-ultra {
+    background: #fff !important;
+    color: #000 !important;
+  }
+}

@@ -1,0 +1,130 @@
+<div class="dj-deck">
+  <!-- Header compact et moderne -->
+  <div class="deck-header">
+    <div class="brand">
+      <div class="logo">🎧</div>
+      <div class="title">CONTRÔLE DJ</div>
+    </div>
+    <div class="event-info">
+      <span class="event-tag">{{ eventCode }}</span>
+    </div>
+    <div class="status-badge" [class.live]="currentSongId" [class.idle]="!currentSongId">
+      <div class="status-dot"></div>
+      <span>{{ currentSongId ? 'EN DIRECT' : 'EN ATTENTE' }}</span>
+    </div>
+    <div class="ambient-toggle" title="Activer/Désactiver l'ambiance" (click)="toggleAmbient()">
+      <span class="icon">✨</span>
+    </div>
+  </div>
+
+  <!-- Interface de contrôle moderne -->
+  <div class="deck-controls">
+    <!-- Section Sélection Round -->
+    <div class="control-section">
+      <div class="section-header">
+        <div class="section-icon">🎵</div>
+        <h3>Sélection Round</h3>
+      </div>
+      <div class="input-group">
+        <select [(ngModel)]="roundId" class="modern-select">
+          <option value="" disabled>Choisir un round...</option>
+          <option *ngFor="let r of rounds" [value]="r.id">
+            {{ r.name || 'Round ' + r.id }}
+          </option>
+        </select>
+        <button (click)="loadRounds()" class="icon-btn refresh-btn" title="Actualiser">
+          <span class="icon">🔄</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- Section Réponse Officielle -->
+    <div class="control-section">
+      <div class="section-header">
+        <div class="section-icon">📝</div>
+        <h3>Réponse Officielle</h3>
+      </div>
+      <div class="input-stack">
+        <input [(ngModel)]="officialTitle" placeholder="Titre de la chanson" class="modern-input" />
+        <input [(ngModel)]="officialArtist" placeholder="Nom de l'artiste" class="modern-input" />
+        <button (click)="saveOfficial()" [disabled]="!currentSongId" class="action-btn save-btn">
+          <span class="icon">💾</span>
+          <span>Sauvegarder</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- Section Contrôles Principaux -->
+    <div class="control-section main-controls">
+      <div class="section-header">
+        <div class="section-icon">🎛️</div>
+        <h3>Contrôles Principaux</h3>
+      </div>
+
+      <div class="duration-control">
+        <label>Durée</label>
+        <div class="input-group">
+          <input
+            type="number"
+            [(ngModel)]="duration"
+            min="5"
+            max="60"
+            placeholder="15"
+            class="modern-input number-input"
+          />
+          <span class="unit">sec</span>
+        </div>
+      </div>
+
+      <div class="button-group">
+        <button (click)="next()" class="primary-btn">
+          <span class="icon">⏭️</span>
+          <span>Suivant</span>
+          <small>Fermer → Noter → Ouvrir</small>
+        </button>
+
+        <div class="control-buttons">
+          <button (click)="open()" [disabled]="!currentSongId" class="action-btn play-btn">
+            <span class="icon">▶️</span>
+            <span>Jouer</span>
+          </button>
+          <button (click)="close()" [disabled]="!currentSongId" class="action-btn stop-btn">
+            <span class="icon">⏹️</span>
+            <span>Arrêter</span>
+          </button>
+          <button (click)="grade()" [disabled]="!currentSongId" class="action-btn grade-btn">
+            <span class="icon">✅</span>
+            <span>Noter</span>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Section Statut -->
+    <div class="control-section status-section">
+      <div class="section-header">
+        <div class="section-icon">📊</div>
+        <h3>Statut</h3>
+      </div>
+      <div class="status-grid">
+        <div class="status-card">
+          <label>Chanson Actuelle</label>
+          <div
+            class="status-value"
+            [class.active]="currentSongId"
+            [class.inactive]="!currentSongId"
+          >
+            {{ currentSongId || 'Aucune chanson sélectionnée' }}
+          </div>
+        </div>
+        <div class="status-card">
+          <label>Connexion</label>
+          <div class="status-value connected">
+            <span class="icon">🟢</span>
+            <span>Connecté</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

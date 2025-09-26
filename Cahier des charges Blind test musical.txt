@@ -1,0 +1,189 @@
+Blind test musical
+________________________________________
+1) Contexte & objectifs
+•	But : Application web temps réel (PWA) pour blind test musical en mariage, exploitable ensuite pour d’autres événements (revendable).
+•	Stack : Angular (PWA) + Node.js (Express) + Socket.IO + MariaDB (via XAMPP en dev ; VPS en prod).
+•	Cible : ~45 personnes, jeu par équipes, capitaine unique qui soumet les réponses.
+________________________________________
+2) Rôles & permissions (4 rôles)
+1.	Administrateur
+o	Crée les comptes organisateurs (si multi tenants), crée/configure l’événement, règle les paramètres, gère la purge, export CSV.
+2.	DJ
+o	Pilote la partie : lancer/stopper morceaux, suivant (relance timer), mode Playlist préparée ou Freestyle, déclenche correction et affichage.
+3.	Utilisateur (Joueur)
+o	Rejoint via QR code, choisit/crée équipe, nomme un capitaine. Le capitaine soumet la réponse d’équipe.
+4.	Affichage (Rétroprojecteur)
+o	Vue lecture seule : timer XXL, transitions, classement selon règles d’affichage (cf. §5.4).
+Contrôles d’accès : JWT courts côté joueurs/affichage ; session admin/DJ côté back. Rôles appliqués sur les endpoints / événements Socket.IO.
+________________________________________
+3) Règles de jeu (figées)
+•	Scoring par morceau :
+o	2 pts si Titre ET Artiste/Groupe corrects
+o	1 pt si Titre OU Artiste/Groupe correct
+o	0 pt sinon
+•	Round : séquence de N morceaux (défaut 20), chaque morceau 15 s (défaut).
+o	Paramétrable au niveau événement, round, et morceau.
+•	Réponse d’équipe : seule la dernière soumise avant 0:00 est prise en compte.
+•	Capitaine d’équipe : obligatoire (un bouton “Nommer capitaine” dans l’équipe).
+o	Possibilité d’ajouter manuellement des participants à l’équipe (si tous n’ont pas de téléphone) → compteur d’effectif > affichage, n’impacte pas le scoring.
+________________________________________
+4) Modes DJ
+4.1 Playlist préparée (recommandé)
+•	Avant l’événement : saisie manuelle ou import CSV (titre, artiste, alias, durée optionnelle), ordre drag & drop.
+•	En live : Lancer (ouvre soumissions 15 s) → Fin → Corriger → affichage selon §5.4 → Suivant.
+4.2 Freestyle (à la volée)
+•	À chaque morceau : le DJ saisit Titre + Artiste (par défaut pendant le timer), puis clique Suivant :
+o	clôture du morceau courant (si pas déjà clos par timer) + calcule scores,
+o	puis relance le minuteur 15 s pour le morceau suivant.
+Les deux modes peuvent coexister (slots prévus + ajouts à la volée).
+________________________________________
+5) Expérience utilisateur
+5.1 Joueur (PWA)
+•	Scan QR (par événement), pseudo, rejoindre/créer équipe → Nommer capitaine.
+•	Écran de round : Timer 15 s, champ de saisie (actif capitaine seulement), statut “enregistré / modifiable jusqu’à 0:00”.
+•	Boutons : Classement (vue dédiée), Règles (rappel), Quitter équipe (si nécessaire).
+5.2 DJ (live)
+•	Tableau de bord : indicateurs (nb équipes/joueurs, statut round), gros boutons Lancer / Corriger / Suivant, champs Titre/Artiste (Freestyle), raccourcis clavier.
+•	Liste réponses par équipe (indique match titre / match artiste), override possible.
+5.3 Admin
+•	Création événement (nom, thème, paramètres par défaut), gestion équipes, import CSV, réglages (cf. §6), export CSV des scores.
+5.4 Affichage (rétroprojecteur)
+•	Pendant le timer : configurable ; par défaut Option B (live) activée globalement,
+o	Mais règle d’affichage écran géant : on n’affiche le classement qu’après chaque chanson (pas pendant le timer).
+o	Pendant les pauses de round : afficher classement + réponses officielles.
+•	Cette matrice évite la contradiction :
+o	Paramètre A = “Leaderboard en continu pendant timer (global)” = ON (défaut).
+o	Paramètre B = “Afficher leaderboard live sur l’écran géant pendant le timer” = OFF (défaut) → respecte ta règle “uniquement après chaque chanson”.
+________________________________________
+6) Paramètres configurables (par événement, overrides round/morceau)
+•	Durée par morceau (défaut 15 s).
+•	Nombre de morceaux par round (défaut 20).
+•	Leaderboard :
+o	live pendant timer (global, défaut ON),
+o	live sur écran géant pendant timer (défaut OFF).
+•	Taille min/max d’équipe (défaut : non limité).
+•	Seuils de similarité (correction intelligente) : ajustables.
+•	Purge des données (défaut 7 jours).
+•	Thème/couleurs/logo (branding par événement).
+•	Alias par morceau (CSV ou UI).
+________________________________________
+7) Tolérance & matching (correction intelligente)
+•	Normalisation : minuscules, suppression accents/ponctuation/articles (“le/la/the”), tokens “feat./ft.”, “remix”, espaces, ordre atténué (tri ou TF IDF léger).
+•	Matching séparé Titre vs Artiste (distance de Levenshtein ou cosine).
+•	Alias : dictionnaire par morceau (ex. “ACDC” ↔ “AC/DC”, “MJ” → “Michael Jackson”).
+•	Décision : match_title booléen, match_artist booléen → 2/1/0 point(s).
+•	Override DJ/Admin possible post correction.
+________________________________________
+8) Données (MariaDB)
+organizers(id, email, password_hash, created_at)
+events(id, organizer_id, code, name, settings_json, created_at)
+
+teams(id, event_id, name, password, manual_participants_count, captain_player_id, created_at)
+players(id, event_id, team_id, nickname, is_captain, created_at)
+
+rounds(id, event_id, name, default_duration_s, total_songs, created_at)
+round_songs(id, round_id, idx, mode, title_official, artist_official,
+            aliases_json, duration_s, status, started_at, ended_at, created_at)
+
+answers(id, round_song_id, team_id, text_raw, text_norm, submitted_at,
+        match_title, match_artist, points)
+
+scores(event_id, team_id, total_points, updated_at)
+•	mode = prepared | freestyle ; status = pending | open | closed | scored.
+•	settings_json : flags (leaderboard live global / écran géant, tailles équipes, purge, seuils matching, thème).
+________________________________________
+9) API REST (exemples)
+•	Auth admin/DJ : POST /api/auth/login
+•	Événements : POST /api/events ; GET /api/events/:code/public
+•	Équipes & joueurs : POST /api/events/:code/teams ; POST /api/events/:code/join ; POST /api/teams/:id/captain ; PATCH /api/teams/:id/participants
+•	Rounds & morceaux :
+o	Prepared : POST /api/rounds/:roundId/songs/bulk (CSV) ; PATCH /api/songs/:id
+o	Freestyle : POST /api/rounds/:roundId/songs (title, artist, duration)
+o	Runtime : POST /api/songs/:id/open ; POST /api/songs/:id/close ; POST /api/songs/:id/grade
+•	Scores : GET /api/events/:code/leaderboard ; GET /api/events/:code/scores.csv
+________________________________________
+10) WebSocket (Socket.IO)
+•	Server → Clients
+o	round_started {songId, endsAt, duration}
+o	round_ended {songId}
+o	leaderboard_update {teams: [...] }
+o	official_answer {title, artist} (diffusé en pause de round uniquement, selon règle §5.4)
+•	Client → Server
+o	join_event {eventCode, teamId, nickname}
+o	submit_answer {songId, text} (rate limit : 1/s/équipe)
+Autorité du serveur : c’est l’horloge serveur qui tranche les 0:00 ; les clients peuvent afficher jusqu’à 0:00 exact.
+________________________________________
+11) Anti triche & robustesse
+•	Capitaine unique pour soumission.
+•	Rate limit : 1 édition / seconde / équipe.
+•	Vérrouillage à 0:00 côté serveur.
+•	JWT courts par équipe ; CORS limité ; logs Winston + rotation ; backups MariaDB.
+________________________________________
+12) Demo mode
+•	Route /demo : 3 faux morceaux, timer 7 s, classements fictifs ; aucun enregistrement en base.
+•	Bouton “Essayer en vrai” → renvoie vers le QR d’un événement.
+________________________________________
+13) Déploiement
+•	Dev : XAMPP (MariaDB), Node/Express local, Angular PWA, .env.
+•	Prod (VPS) : Nginx (reverse proxy + TLS), PM2 pour Node, MariaDB, sauvegardes ; variables d’env, CORS/headers, compression Gzip.
+________________________________________
+14) Tests & critères d’acceptation
+•	Fonctionnels :
+o	45 joueurs → création d’équipes, nomination de capitaine, soumission OK, verrou à 0:00, scoring 2/1/0 conforme, alias respectés.
+o	DJ Freestyle : Suivant relance bien le timer 15 s ; clôture/grade du morceau précédent si non fait.
+o	Playlist préparée : import CSV → ordre → enchaînement.
+•	UX :
+o	Rétroprojecteur : classement uniquement après chaque chanson ; en pause de round : classement + réponses.
+•	Perf : latence < 200 ms sur WS local/prod ; aucune chute à 45 connexions.
+•	Sécurité : pas de soumission possible après 0:00 ; rôle Affichage = lecture seule.
+________________________________________
+15) Plan d’implémentation & charges (heures)
+Estimation solo avec appui IA (codes modèles, snippets), pour un MVP pro prêt pour ton mariage ; fourchettes min–max réalistes :
+Phase A — Socle & données (8–12 h)
+•	Initialisation projets Angular/Node, config PWA, Socket.IO, TypeORM/Sequelize (2–3 h)
+•	Modèle MariaDB + migrations (3–4 h)
+•	Auth/rôles de base (admin/DJ/joueur/affichage) (3–5 h)
+Phase B — Flux joueurs & équipes (6–9 h)
+•	QR join, création/choix équipe, nomination capitaine, compteur participants manuels (4–6 h)
+•	Vue saisie réponse + timer client (2–3 h)
+Phase C — DJ & modes de jeu (10–15 h)
+•	Playlist préparée : CRUD morceaux, import CSV, ordre drag & drop (4–6 h)
+•	Freestyle : saisie Titre/Artiste + bouton Suivant (clôture/grade + relance timer) (3–5 h)
+•	Panneau réponses par équipe + Correction (2–4 h)
+Phase D — Matching & scoring (4–6 h)
+•	Pipeline normalisation + matching Titre/Artiste + alias (3–4 h)
+•	Score 2/1/0 + leaderboard cumulé (1–2 h)
+Phase E — Affichage & temps réel (5–8 h)
+•	Vue écran géant (timer XXL, transitions, classement après chanson, réponses en pause de round) (3–5 h)
+•	Diffusions WS + états (round_started, round_ended, leaderboard_update, official_answer) (2–3 h)
+Phase F — Demo mode & finitions (4–6 h)
+•	/demo (3 faux morceaux, 7 s, classements fictifs) (2–3 h)
+•	Anti triche (rate limit, verrou 0:00), exports CSV scores, thème de base (2–3 h)
+Phase G — Déploiement & QA (6–9 h)
+•	VPS : Nginx + TLS, PM2, envs, backups (3–5 h)
+•	Tests charge légère (45 clients simulés), corrections, polissage UX (3–4 h)
+Total MVP pro : 43–65 h
+Avec de l’habitude Angular/Node et une bonne utilisation de l’IA, viser ~45–55 h est raisonnable.
+Option “Pro v1” revendable (ajouts) (8–14 h)
+•	Comptes organisateurs multi événements, branding poussé par événement (3–5 h)
+•	Tableaux de bord métriques / journaux simples, paramétrage fin des seuils (2–4 h)
+•	Politique de purge paramétrable + page RGPD / mentions (2–3 h)
+________________________________________
+16) Livrables
+•	Schéma SQL + migrations.
+•	Spécs API & WS (routes, payloads).
+•	Maquettes filaires (simples) des 3 surfaces : Joueur / DJ Admin / Écran géant.
+•	Fichier CSV exemple.
+•	Fiche d’exploitation (déploiement VPS, sauvegardes, reset événement).
+________________________________________
+17) Points d’attention / risques
+•	Saisie Freestyle pendant le timer : bien verrouiller la clôture vs. relance “Suivant” pour éviter un chevauchement.
+•	Réseau salle : prévoir un mode hors connexion partiel PWA (assets & shell), mais le jeu exige la connexion.
+•	Latence : horloge serveur fait foi ; afficher clairement la fin à 0:00.
+________________________________________
+C’est bon pour toi ?
+Si tu valides ce cahier des charges, je te fournis dans la foulée :
+•	le script SQL (tables + indexes),
+•	le contrat d’API/WS détaillé (endpoints, événements, payloads),
+•	une arborescence projet Angular/Node prête à cloner (avec TODO précis).
+

@@ -1,0 +1,135 @@
+<div class="autumn-theme projector-display">
+  <div class="autumn-leaves"></div>
+
+  <div class="projector-container">
+    <!-- Header élégant -->
+    <header class="projector-header">
+      <h1 class="event-title">
+        <span class="event-icon">🍂</span>
+        Blind Test Musical
+        <span class="event-code-display">{{ eventCode }}</span>
+      </h1>
+      <div class="event-tagline">Une soirée musicale d'automne</div>
+      <button
+        class="btn-autumn btn-autumn-secondary"
+        (click)="toggleAmbient()"
+        style="margin-top: 1rem"
+      >
+        ✨ Ambiance
+      </button>
+    </header>
+
+    <!-- Phase de jeu actif (round en cours) -->
+    <div *ngIf="inRound" class="game-phase">
+      <div class="timer-display-large">
+        <div class="timer-circle">
+          <div class="timer-inner">
+            <div class="time-value">{{ remaining / 1000 | number: '1.0-1' }}</div>
+            <div class="time-unit">secondes</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="game-instruction">
+        <div class="instruction-icon">🎧</div>
+        <div class="instruction-text">Écoutez attentivement et trouvez la réponse !</div>
+      </div>
+
+      <div class="musical-animation">
+        <div class="note note-1">🎵</div>
+        <div class="note note-2">🎶</div>
+        <div class="note note-3">🎵</div>
+        <div class="note note-4">🎶</div>
+      </div>
+    </div>
+
+    <!-- Phase de pause (affichage du classement) -->
+    <div *ngIf="!inRound" class="pause-phase">
+      <!-- Réponse officielle si disponible -->
+      <div *ngIf="officialTitle || officialArtist" class="official-answer">
+        <h2 class="official-title">
+          <span class="official-icon">✨</span>
+          Réponse Officielle
+        </h2>
+        <div class="answer-display">
+          <div class="song-title" *ngIf="officialTitle">{{ officialTitle }}</div>
+          <div class="song-artist" *ngIf="officialArtist">{{ officialArtist }}</div>
+        </div>
+      </div>
+
+      <!-- Classement -->
+      <div class="leaderboard-display">
+        <h2 class="leaderboard-title">
+          <span class="leaderboard-icon">🏆</span>
+          Classement Actuel
+        </h2>
+
+        <div *ngIf="rows.length" class="podium-display">
+          <!-- Podium pour les 3 premiers -->
+          <div class="podium" *ngIf="rows.length >= 3">
+            <!-- 2ème place -->
+            <div class="podium-position silver" *ngIf="rows[1]">
+              <div class="position-medal">🥈</div>
+              <div class="position-rank">2ème</div>
+              <div class="position-team">{{ rows[1].name }}</div>
+              <div class="position-points">{{ rows[1].totalPoints }} pts</div>
+            </div>
+
+            <!-- 1ère place (plus haute) -->
+            <div class="podium-position gold" *ngIf="rows[0]">
+              <div class="position-medal">🥇</div>
+              <div class="position-rank">1ère</div>
+              <div class="position-team">{{ rows[0].name }}</div>
+              <div class="position-points">{{ rows[0].totalPoints }} pts</div>
+            </div>
+
+            <!-- 3ème place -->
+            <div class="podium-position bronze" *ngIf="rows[2]">
+              <div class="position-medal">🥉</div>
+              <div class="position-rank">3ème</div>
+              <div class="position-team">{{ rows[2].name }}</div>
+              <div class="position-points">{{ rows[2].totalPoints }} pts</div>
+            </div>
+          </div>
+
+          <!-- Tableau complet pour tous les classements -->
+          <div class="full-leaderboard">
+            <table class="autumn-table projector-table">
+              <thead>
+                <tr>
+                  <th>Position</th>
+                  <th>Équipe</th>
+                  <th>Points</th>
+                  <th>Distinction</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr *ngFor="let r of rows; trackBy: trackByTeamId" [class]="'rank-' + r.rank">
+                  <td class="rank-cell">
+                    <div class="rank-display">{{ r.rank }}</div>
+                  </td>
+                  <td class="team-cell">
+                    <div class="team-display">{{ r.name }}</div>
+                  </td>
+                  <td class="points-cell">
+                    <div class="points-display">{{ r.totalPoints }}</div>
+                  </td>
+                  <td class="medal-cell">
+                    <div class="medal-display" *ngIf="r.rank <= 3">
+                      {{ getMedal(r.rank) }}
+                    </div>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <div *ngIf="!rows.length" class="no-scores">
+          <div class="no-scores-icon">🎭</div>
+          <div class="no-scores-text">En attente des premiers résultats...</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

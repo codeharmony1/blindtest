@@ -1,0 +1,161 @@
+/* Variables CSS globales pour le système de thèmes */
+
+:root {
+  /* Couleurs par défaut (Mariage Automne) */
+  --color-primary: #8B4513;
+  --color-secondary: #DAA520;
+  --color-accent: #D2691E;
+  --color-background: #FDF5E6;
+  --color-surface: #FFFFFF;
+  --color-text: #2F1B14;
+  --color-text-secondary: #6B4423;
+  --color-border: #DEB887;
+
+  /* Gradients */
+  --gradient-primary: linear-gradient(135deg, #8B4513 0%, #DAA520 100%);
+  --gradient-secondary: linear-gradient(135deg, #DAA520 0%, #D2691E 100%);
+
+  /* Polices */
+  --font-primary: 'Inter', sans-serif;
+  --font-heading: 'Playfair Display', serif;
+
+  /* Animations */
+  --animation-duration: 0.3s;
+  --animation-easing: ease-in-out;
+
+  /* Espacements */
+  --spacing-xs: 0.25rem;
+  --spacing-sm: 0.5rem;
+  --spacing-md: 1rem;
+  --spacing-lg: 1.5rem;
+  --spacing-xl: 2rem;
+  --spacing-2xl: 3rem;
+
+  /* Rayons de bordure */
+  --radius-sm: 0.25rem;
+  --radius-md: 0.5rem;
+  --radius-lg: 0.75rem;
+  --radius-xl: 1rem;
+  --radius-2xl: 1.5rem;
+  --radius-full: 9999px;
+
+  /* Ombres */
+  --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+  --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+
+  /* Z-index */
+  --z-dropdown: 1000;
+  --z-sticky: 1020;
+  --z-fixed: 1030;
+  --z-modal-backdrop: 1040;
+  --z-modal: 1050;
+  --z-popover: 1060;
+  --z-tooltip: 1070;
+}
+
+/* Classes utilitaires pour les couleurs */
+.text-primary { color: var(--color-primary); }
+.text-secondary { color: var(--color-secondary); }
+.text-accent { color: var(--color-accent); }
+.text-muted { color: var(--color-text-secondary); }
+
+.bg-primary { background-color: var(--color-primary); }
+.bg-secondary { background-color: var(--color-secondary); }
+.bg-accent { background-color: var(--color-accent); }
+.bg-surface { background-color: var(--color-surface); }
+
+.border-primary { border-color: var(--color-primary); }
+.border-secondary { border-color: var(--color-secondary); }
+.border-default { border-color: var(--color-border); }
+
+/* Classes utilitaires pour les gradients */
+.bg-gradient-primary { background: var(--gradient-primary); }
+.bg-gradient-secondary { background: var(--gradient-secondary); }
+
+/* Classes utilitaires pour les polices */
+.font-primary { font-family: var(--font-primary); }
+.font-heading { font-family: var(--font-heading); }
+
+/* Classes utilitaires pour les animations */
+.transition-default {
+  transition: all var(--animation-duration) var(--animation-easing);
+}
+
+.transition-colors {
+  transition: color var(--animation-duration) var(--animation-easing),
+              background-color var(--animation-duration) var(--animation-easing),
+              border-color var(--animation-duration) var(--animation-easing);
+}
+
+.transition-transform {
+  transition: transform var(--animation-duration) var(--animation-easing);
+}
+
+/* Classes pour les thèmes spécifiques */
+.theme-wedding {
+  --gradient-primary: linear-gradient(135deg, #8B4513 0%, #DAA520 100%);
+}
+
+.theme-corporate {
+  --gradient-primary: linear-gradient(135deg, #2563EB 0%, #0EA5E9 100%);
+}
+
+.theme-birthday {
+  --gradient-primary: linear-gradient(135deg, #FF6B6B 0%, #4ECDC4 50%, #FFE66D 100%);
+}
+
+.theme-party {
+  --gradient-primary: linear-gradient(135deg, #FF0080 0%, #00FFFF 50%, #FFFF00 100%);
+}
+
+.theme-seasonal {
+  --gradient-primary: linear-gradient(135deg, #FF6B35 0%, #00B4D8 100%);
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  :root {
+    --spacing-xs: 0.125rem;
+    --spacing-sm: 0.25rem;
+    --spacing-md: 0.5rem;
+    --spacing-lg: 1rem;
+    --spacing-xl: 1.5rem;
+    --spacing-2xl: 2rem;
+  }
+}
+
+/* Dark theme support */
+@media (prefers-color-scheme: dark) {
+  :root {
+    --color-background: #1A202C;
+    --color-surface: #2D3748;
+    --color-text: #F7FAFC;
+    --color-text-secondary: #E2E8F0;
+    --color-border: #4A5568;
+  }
+}
+
+/* High contrast support */
+@media (prefers-contrast: high) {
+  :root {
+    --color-border: #000000;
+    --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.2);
+    --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.3);
+    --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.4);
+  }
+}
+
+/* Reduced motion support */
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --animation-duration: 0.01ms;
+  }
+
+  .transition-default,
+  .transition-colors,
+  .transition-transform {
+    transition: none;
+  }
+}

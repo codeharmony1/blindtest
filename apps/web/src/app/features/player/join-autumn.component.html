@@ -1,0 +1,49 @@
+<div class="autumn-theme autumn-fade-in">
+  <div class="autumn-leaves"></div>
+
+  <div class="autumn-container">
+    <header class="autumn-header">
+      <h1>
+        <span class="autumn-icon">🍂</span>
+        Rejoindre la Fête
+        <span class="event-code">{{ eventCode }}</span>
+      </h1>
+      <div *ngIf="eventName" class="event-subtitle">
+        {{ eventName }}
+      </div>
+    </header>
+
+    <div class="autumn-card">
+      <h3>
+        <span class="autumn-section-icon">👤</span>
+        Identifiez-vous
+      </h3>
+
+      <div class="join-form">
+        <label for="nickname" class="autumn-label">Votre pseudo</label>
+        <input
+          id="nickname"
+          [(ngModel)]="nickname"
+          placeholder="Entrez votre pseudo élégant..."
+          class="autumn-input"
+          maxlength="20"
+          (keyup.enter)="goTeam()"
+        />
+
+        <button
+          (click)="goTeam()"
+          [disabled]="!nickname.trim()"
+          class="btn-autumn btn-autumn-primary"
+        >
+          <span class="btn-icon">🌟</span>
+          Continuer l'Aventure
+        </button>
+      </div>
+
+      <div class="autumn-message message-info">
+        <span>ℹ️</span>
+        Choisissez un pseudo qui vous représente pour cette soirée spéciale !
+      </div>
+    </div>
+  </div>
+</div>
