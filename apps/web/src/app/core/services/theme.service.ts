@@ -301,6 +301,25 @@ export class ThemeService {
       case 'seasonal-summer':
         createNodes('anim-bubbles', 24, 'span');
         break;
+      // Nouveaux thèmes modernes
+      case 'modern-gradient':
+        createNodes('anim-modern-particles', 25, 'span');
+        break;
+      case 'cyberpunk-glow':
+        createNodes('anim-cyber-glitch', 30, 'span');
+        break;
+      case 'nature-zen':
+        createNodes('anim-nature-leaves', 20, 'i');
+        break;
+      case 'sunset-dreams':
+        createNodes('anim-sunset-rays', 22, 'span');
+        break;
+      case 'ocean-depths':
+        createNodes('anim-ocean-waves', 18, 'span');
+        break;
+      case 'cosmic-nebula':
+        createNodes('anim-cosmic-dust', 35, 'span');
+        break;
       default:
         // Fallback discret
         createNodes('anim-stars', 18, 'i');
