@@ -1,82 +1,8 @@
 /* === DJ INTERFACE MODERNE ET ÉPURÉE === */
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap');
+/* Google Fonts chargées dynamiquement par ThemeService si nécessaire. 
+  Pour respecter les budgets CSS Angular, on évite l'@import direct ici. */
 
-:root {
-  /* Couleurs modernes */
-  --primary: #3b82f6;
-  --primary-dark: #1d4ed8;
-  --success: #10b981;
-  --warning: #f59e0b;
-  --error: #ef4444;
-  --accent: #8b5cf6;
-
-  /* Backgrounds */
-  --bg-primary: #0f172a;
-  --bg-secondary: #1e293b;
-  --bg-card: #334155;
-  --bg-hover: #475569;
-
-  /* Text colors */
-  --text-primary: #f8fafc;
-  --text-secondary: #cbd5e1;
-  --text-muted: #94a3b8;
-
-  /* Borders */
-  --border: #475569;
-  --border-hover: #64748b;
-
-  /* Shadows */
-  --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
-  --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
-  --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
-  --shadow-xl: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
-
-  /* Typography */
-  --font-sans: 'Inter', sans-serif;
-  --font-mono: 'JetBrains Mono', monospace;
-}
-
-/* Reset */
-*,
-*::before,
-*::after {
-  box-sizing: border-box;
-  margin: 0;
-  padding: 0;
-}
-
-/* Animations subtiles */
-@keyframes fadeInUp {
-  from {
-    opacity: 0;
-    transform: translateY(20px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-@keyframes pulseGlow {
-  0%,
-  100% {
-    box-shadow: 0 0 0 0 rgba(59, 130, 246, 0.4);
-  }
-  50% {
-    box-shadow: 0 0 0 8px rgba(59, 130, 246, 0);
-  }
-}
-
-@keyframes slideIn {
-  from {
-    transform: translateX(-10px);
-    opacity: 0;
-  }
-  to {
-    transform: translateX(0);
-    opacity: 1;
-  }
-}
+/* Variables, reset, and common keyframes moved to global dj-tokens.css to reduce component CSS size */
 
 /* Container principal */
 .dj-deck {
@@ -108,11 +34,7 @@
   z-index: 3; /* au-dessus des calques d'ambiance */
 }
 
-.brand {
-  display: flex;
-  align-items: center;
-  gap: 1rem;
-}
+.brand { display:flex; align-items:center; gap:1rem; }
 
 .logo {
   font-size: 2rem;
@@ -132,11 +54,7 @@
   background-clip: text;
 }
 
-.event-info {
-  display: flex;
-  align-items: center;
-  gap: 1rem;
-}
+.event-info { display:flex; align-items:center; gap:1rem; }
 
 .event-tag {
   background: var(--bg-card);
@@ -309,21 +227,8 @@
   color: var(--primary);
 }
 
-/* Animation pulsation */
-@keyframes pulseButton {
-  0%, 100% {
-    transform: scale(1);
-    box-shadow: 0 0 0 0 rgba(59, 130, 246, 0.4);
-  }
-  50% {
-    transform: scale(1.02);
-    box-shadow: 0 0 0 10px rgba(59, 130, 246, 0);
-  }
-}
-
-.pulse-animation {
-  animation: pulseButton 2s infinite;
-}
+/* Animation pulsation (defined globally) */
+.pulse-animation { animation: pulseButton 2s infinite; }
 
 /* Info action primaire */
 .primary-action-info {
@@ -387,7 +292,6 @@
   flex-shrink: 0;
 }
 
-/* Sections pleine largeur */
 .control-section.full-width {
   grid-column: 1 / -1;
 }
@@ -408,7 +312,6 @@
   animation: fadeInUp 0.5s ease-out;
 }
 
-/* Liste des chansons */
 .songs-list-section {
   grid-column: span 2;
 }
@@ -482,12 +385,7 @@
   animation: pulseGlow 2s infinite;
 }
 
-.song-info {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  gap: 0.25rem;
-}
+.song-info { flex:1; display:flex; flex-direction:column; gap:0.25rem; }
 
 .song-title {
   font-weight: 600;
@@ -503,13 +401,7 @@
   color: var(--text-secondary);
 }
 
-.status-badge {
-  font-size: 0.75rem;
-  padding: 0.25rem 0.5rem;
-  border-radius: 6px;
-  font-weight: 600;
-  text-transform: uppercase;
-}
+/* base .status-badge already defined earlier; only modifiers below */
 
 .status-badge.pending {
   background: rgba(139, 92, 246, 0.2);
@@ -587,16 +479,7 @@
   border: 2px solid rgba(100, 116, 139, 0.3);
 }
 
-@keyframes pulse {
-  0%, 100% {
-    transform: scale(1);
-    opacity: 1;
-  }
-  50% {
-    transform: scale(1.05);
-    opacity: 0.9;
-  }
-}
+/* pulse keyframes are global */
 
 .song-status-selector {
   margin-left: auto;

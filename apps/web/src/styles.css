@@ -1,6 +1,8 @@
 /* Import global helper styles (as CSS) */
 @import './app/shared/styles/mobile-responsive.css';
 @import './app/shared/styles/ambient-animations.css';
+@import './app/shared/styles/dj-tokens.css';
+@import './app/shared/styles/autumn-wedding.scss';
 
 /* Global Styles */
 html,
