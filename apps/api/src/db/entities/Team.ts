@@ -16,12 +16,18 @@ import { Score } from "./Score";
 
 @Entity({ name: "teams" })
 @Index("uq_team_name_per_event", ["event_id", "name"], { unique: true })
+@Index("idx_team_tenant", ["tenant_id", "event_id"])
 export class Team {
   @PrimaryGeneratedColumn({ type: "bigint", unsigned: true })
   id!: string;
 
   @Column({ type: "bigint", unsigned: true })
   event_id!: string;
+
+  // Support multi-tenant
+  @Index()
+  @Column({ type: "varchar", length: 36 })
+  tenant_id!: string;
 
   @ManyToOne(() => Event, (e) => e.teams, { onDelete: "CASCADE" })
   @JoinColumn({ name: "event_id" })
@@ -54,4 +60,13 @@ export class Team {
 
   @OneToMany(() => Score, (s) => s.team)
   scores!: Score[];
+
+  // Méthodes helper multi-tenant
+  isOwnedByTenant(tenantId: string): boolean {
+    return this.tenant_id === tenantId;
+  }
+
+  canBeAccessedByTenant(tenantId: string): boolean {
+    return this.tenant_id === tenantId;
+  }
 }

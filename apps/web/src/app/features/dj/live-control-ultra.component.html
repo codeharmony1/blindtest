@@ -17,16 +17,43 @@
     </div>
   </div>
 
+  <!-- Guide de démarrage rapide -->
+  <div class="quick-guide">
+    <div class="guide-title">
+      <span class="icon">📋</span>
+      <strong>Guide rapide :</strong>
+    </div>
+    <div class="guide-steps">
+      <div class="step">
+        <span class="step-number">1</span>
+        <span>Sélectionnez un round</span>
+      </div>
+      <div class="step">
+        <span class="step-number">2</span>
+        <span>Cliquez sur une chanson ou "Suivant"</span>
+      </div>
+      <div class="step">
+        <span class="step-number">3</span>
+        <span>Les joueurs répondent pendant la durée définie</span>
+      </div>
+      <div class="step">
+        <span class="step-number">4</span>
+        <span>Le système ferme, note et passe automatiquement</span>
+      </div>
+    </div>
+  </div>
+
   <!-- Interface de contrôle moderne -->
   <div class="deck-controls">
-    <!-- Section Sélection Round -->
-    <div class="control-section">
+    <!-- 1️⃣ Section Sélection Round -->
+    <div class="control-section full-width">
       <div class="section-header">
-        <div class="section-icon">🎵</div>
-        <h3>Sélection Round</h3>
+        <div class="section-icon">1️⃣</div>
+        <h3>Sélection du Round</h3>
+        <div class="help-tooltip" title="Choisissez le round contenant les chansons à jouer">❓</div>
       </div>
       <div class="input-group">
-        <select [(ngModel)]="roundId" class="modern-select">
+        <select [(ngModel)]="roundId" (ngModelChange)="onRoundChange()" class="modern-select">
           <option value="" disabled>Choisir un round...</option>
           <option *ngFor="let r of rounds" [value]="r.id">
             {{ r.name || 'Round ' + r.id }}
@@ -36,33 +63,162 @@
           <span class="icon">🔄</span>
         </button>
       </div>
+      <div class="round-info-box" *ngIf="roundId && songs.length > 0">
+        ✅ {{ songs.length }} chanson(s) disponibles
+      </div>
+
+      <!-- Bouton pour créer un nouveau round -->
+      <button (click)="toggleCreateRound()" class="action-btn create-round-toggle" [class.active]="showCreateRound">
+        <span class="icon">{{ showCreateRound ? '➖' : '➕' }}</span>
+        <span>{{ showCreateRound ? 'Annuler' : 'Nouveau Round' }}</span>
+      </button>
+
+      <!-- Formulaire de création de round -->
+      <div class="create-round-form" *ngIf="showCreateRound">
+        <div class="input-stack">
+          <input [(ngModel)]="newRoundName" placeholder="Nom du round *" class="modern-input" />
+          <div class="input-row">
+            <div class="input-with-label">
+              <label>Durée par défaut (secondes)</label>
+              <input type="number" [(ngModel)]="newRoundDuration" min="5" max="60" class="modern-input number-input" />
+            </div>
+            <div class="input-with-label">
+              <label>Nombre de chansons</label>
+              <input type="number" [(ngModel)]="newRoundTotalSongs" min="1" max="100" class="modern-input number-input" />
+            </div>
+          </div>
+          <button (click)="createRound()" class="action-btn create-btn">
+            <span class="icon">✨</span>
+            <span>Créer le Round</span>
+          </button>
+        </div>
+      </div>
     </div>
 
-    <!-- Section Réponse Officielle -->
-    <div class="control-section">
+    <!-- 2️⃣ Section Liste des Chansons -->
+    <div class="control-section full-width" *ngIf="roundId">
       <div class="section-header">
-        <div class="section-icon">📝</div>
-        <h3>Réponse Officielle</h3>
+        <div class="section-icon">2️⃣</div>
+        <h3>Liste des Chansons - Cliquez pour lancer</h3>
+        <div class="header-actions">
+          <div class="csv-import-wrapper">
+            <button (click)="triggerFileInput()" class="import-csv-btn">
+              <span class="icon">📂</span>
+              <span class="btn-text">Importer CSV</span>
+            </button>
+            <div class="csv-tooltip">
+              <div class="tooltip-header">
+                <span class="info-icon">ℹ️</span>
+                <strong>Format CSV attendu</strong>
+              </div>
+              <div class="tooltip-content">
+                <div class="tooltip-row">
+                  <span class="label">Séparateur :</span>
+                  <code>,</code> (virgule)
+                </div>
+                <div class="tooltip-row">
+                  <span class="label">Encodage :</span>
+                  <code>UTF-8</code>
+                </div>
+                <div class="tooltip-row">
+                  <span class="label">Colonnes obligatoires :</span>
+                  <code>title</code>, <code>singer</code>, <code>band</code>
+                </div>
+                <div class="tooltip-row">
+                  <span class="label">Colonnes optionnelles :</span>
+                  <code>aliases</code> (Titres alternatifs, séparés par |)
+                </div>
+                <div class="tooltip-example">
+                  <span class="example-label">Exemple :</span>
+                  <pre>title,singer,band,aliases
+Bohemian Rhapsody,Freddie Mercury,Queen,Bohem|BR
+Let It Be,Paul McCartney,The Beatles,</pre>
+                </div>
+              </div>
+            </div>
+          </div>
+          <input
+            #fileInput
+            type="file"
+            accept=".csv"
+            (change)="onFileSelected($event)"
+            style="display: none"
+          />
+          <button (click)="toggleCreateSong()" class="add-song-btn-with-text" [class.active]="showCreateSong">
+            <span class="icon">{{ showCreateSong ? '✖️' : '➕' }}</span>
+            <span class="btn-text">{{ showCreateSong ? 'Annuler' : 'Ajouter une chanson' }}</span>
+          </button>
+        </div>
       </div>
-      <div class="input-stack">
-        <input [(ngModel)]="officialTitle" placeholder="Titre de la chanson" class="modern-input" />
-        <input [(ngModel)]="officialArtist" placeholder="Nom de l'artiste" class="modern-input" />
-        <button (click)="saveOfficial()" [disabled]="!currentSongId" class="action-btn save-btn">
-          <span class="icon">💾</span>
-          <span>Sauvegarder</span>
-        </button>
+
+      <!-- Formulaire de création de chanson -->
+      <div class="create-song-form" *ngIf="showCreateSong">
+        <div class="input-stack">
+          <input [(ngModel)]="newSongTitle" placeholder="Titre de la chanson *" class="modern-input" />
+          <input [(ngModel)]="newSongArtist" placeholder="Artiste (optionnel)" class="modern-input" />
+          <button (click)="createSong()" class="action-btn create-btn">
+            <span class="icon">✨</span>
+            <span>Créer</span>
+          </button>
+        </div>
+      </div>
+
+      <div class="songs-list" *ngIf="songs.length > 0">
+        <div
+          *ngFor="let song of songs"
+          class="song-item"
+          [class.current]="currentSongId === song.id"
+          [class.pending]="song.status === 'pending'"
+          [class.open]="song.status === 'open'"
+          [class.closed]="song.status === 'closed'"
+          [class.scored]="song.status === 'scored'"
+        >
+          <div class="song-number">{{ song.idx }}</div>
+          <div class="song-info" (click)="launchSong(song.id)">
+            <div class="song-title">
+              {{ song.title || 'Sans titre' }}
+            </div>
+            <div class="song-artist" *ngIf="song.artist">{{ song.artist }}</div>
+          </div>
+          <!-- Compte à rebours -->
+          <div class="song-countdown" *ngIf="getCountdown(song)" [class]="getCountdownClass(song)">
+            {{ getCountdown(song) }}
+          </div>
+          <!-- Sélecteur de statut -->
+          <div class="song-status-selector" (click)="$event.stopPropagation()">
+            <select
+              [value]="song.status"
+              (change)="changeStatus(song.id, $any($event.target).value)"
+              class="status-select"
+              [class]="song.status"
+            >
+              <option value="pending">⏸️ En attente</option>
+              <option value="open">▶️ En cours</option>
+              <option value="closed">⏹️ Fermée</option>
+              <option value="scored">✅ Notée</option>
+            </select>
+          </div>
+          <!-- Bouton de suppression -->
+          <button
+            (click)="deleteSong(song.id, $event)"
+            class="delete-song-btn"
+            title="Supprimer cette chanson"
+          >
+            🗑️
+          </button>
+        </div>
       </div>
     </div>
 
-    <!-- Section Contrôles Principaux -->
-    <div class="control-section main-controls">
+    <!-- 3️⃣ Section Contrôle de Lecture -->
+    <div class="control-section full-width main-controls">
       <div class="section-header">
-        <div class="section-icon">🎛️</div>
-        <h3>Contrôles Principaux</h3>
+        <div class="section-icon">3️⃣</div>
+        <h3>Contrôle de Lecture</h3>
       </div>
 
       <div class="duration-control">
-        <label>Durée</label>
+        <label>⏱️ Durée d'écoute</label>
         <div class="input-group">
           <input
             type="number"
@@ -72,36 +228,53 @@
             placeholder="15"
             class="modern-input number-input"
           />
-          <span class="unit">sec</span>
+          <span class="unit">secondes</span>
         </div>
       </div>
 
-      <div class="button-group">
-        <button (click)="next()" class="primary-btn">
-          <span class="icon">⏭️</span>
-          <span>Suivant</span>
-          <small>Fermer → Noter → Ouvrir</small>
-        </button>
+      <button (click)="next()" [disabled]="!roundId" class="primary-btn" [class.pulse-animation]="!currentSongId && roundId">
+        <span class="icon">⏭️</span>
+        <span>LANCER LA CHANSON SUIVANTE</span>
+        <small>⚡ Automatique : fermeture → notation → ouverture</small>
+      </button>
 
+      <details class="manual-controls">
+        <summary>Contrôles manuels (avancé)</summary>
         <div class="control-buttons">
           <button (click)="open()" [disabled]="!currentSongId" class="action-btn play-btn">
             <span class="icon">▶️</span>
-            <span>Jouer</span>
+            <span>Ouvrir</span>
           </button>
           <button (click)="close()" [disabled]="!currentSongId" class="action-btn stop-btn">
             <span class="icon">⏹️</span>
-            <span>Arrêter</span>
+            <span>Fermer</span>
           </button>
           <button (click)="grade()" [disabled]="!currentSongId" class="action-btn grade-btn">
             <span class="icon">✅</span>
             <span>Noter</span>
           </button>
         </div>
+      </details>
+    </div>
+
+    <!-- 4️⃣ Section Réponse Officielle -->
+    <div class="control-section">
+      <div class="section-header">
+        <div class="section-icon">📝</div>
+        <h3>Réponse Officielle (optionnel)</h3>
+      </div>
+      <div class="input-stack">
+        <input [(ngModel)]="officialTitle" placeholder="Titre officiel" class="modern-input" />
+        <input [(ngModel)]="officialArtist" placeholder="Artiste officiel" class="modern-input" />
+        <button (click)="saveOfficial()" [disabled]="!currentSongId" class="action-btn save-btn">
+          <span class="icon">💾</span>
+          <span>Sauvegarder</span>
+        </button>
       </div>
     </div>
 
-    <!-- Section Statut -->
-    <div class="control-section status-section">
+    <!-- 5️⃣ Section Statut -->
+    <div class="control-section full-width status-section">
       <div class="section-header">
         <div class="section-icon">📊</div>
         <h3>Statut</h3>
@@ -109,12 +282,8 @@
       <div class="status-grid">
         <div class="status-card">
           <label>Chanson Actuelle</label>
-          <div
-            class="status-value"
-            [class.active]="currentSongId"
-            [class.inactive]="!currentSongId"
-          >
-            {{ currentSongId || 'Aucune chanson sélectionnée' }}
+          <div class="status-value" [class.active]="currentSongId" [class.inactive]="!currentSongId">
+            {{ currentSongId || 'Aucune chanson' }}
           </div>
         </div>
         <div class="status-card">

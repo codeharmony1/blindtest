@@ -1,13 +1,14 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ViewChild } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { EventService, Event } from '../../../core/services/event.service';
+import { QrCodeModalComponent } from '../../../shared/components/qr-code-modal.component';
 
 @Component({
   selector: 'bt-events-list',
   standalone: true,
-  imports: [CommonModule, RouterLink, FormsModule],
+  imports: [CommonModule, RouterLink, FormsModule, QrCodeModalComponent],
   template: `
     <div class="events-list">
       <!-- Page Header -->
@@ -82,6 +83,11 @@ import { EventService, Event } from '../../../core/services/event.service';
           </div>
 
           <div class="event-actions">
+            <button
+              (click)="showQRCode(event)"
+              class="btn btn-sm btn-accent">
+              📱 QR Code
+            </button>
             <a
               [routerLink]="['/dj', event.code]"
               class="btn btn-sm btn-primary">
@@ -122,6 +128,13 @@ import { EventService, Event } from '../../../core/services/event.service';
           </a>
         </div>
       </ng-template>
+
+      <!-- QR Code Modal -->
+      <bt-qr-code-modal
+        #qrModal
+        [eventCode]="selectedEvent?.code || ''"
+        [eventName]="selectedEvent?.name || ''">
+      </bt-qr-code-modal>
     </div>
   `,
   styles: [`
@@ -202,6 +215,18 @@ import { EventService, Event } from '../../../core/services/event.service';
     .btn-ghost:hover {
       background: #f8fafc;
       color: #374151;
+    }
+
+    .btn-accent {
+      background: linear-gradient(135deg, #10b981, #059669);
+      color: white;
+      border: none;
+    }
+
+    .btn-accent:hover {
+      background: linear-gradient(135deg, #059669, #047857);
+      transform: translateY(-1px);
+      box-shadow: 0 4px 8px rgba(16, 185, 129, 0.3);
     }
 
     /* Filters */
@@ -438,7 +463,10 @@ import { EventService, Event } from '../../../core/services/event.service';
   `]
 })
 export class EventsListComponent implements OnInit {
+  @ViewChild('qrModal') qrModal!: QrCodeModalComponent;
+
   events: Event[] = [];
+  selectedEvent: Event | null = null;
 
   constructor(private eventService: EventService) {}
 
@@ -507,5 +535,12 @@ export class EventsListComponent implements OnInit {
     // TODO: Implémenter la duplication d'événement
     console.log('Dupliquer événement:', event);
     alert(`Fonctionnalité à venir: dupliquer "${event.name}"`);
+  }
+
+  showQRCode(event: Event) {
+    this.selectedEvent = event;
+    setTimeout(() => {
+      this.qrModal.open();
+    }, 0);
   }
 }

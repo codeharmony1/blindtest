@@ -1,5 +1,18 @@
 <div class="autumn-theme autumn-fade-in">
   <div class="autumn-leaves"></div>
+  <div class="autumn-decor">
+    <div class="decor-circle decor-circle-1"></div>
+    <div class="decor-circle decor-circle-2"></div>
+    <div class="decor-circle decor-circle-3"></div>
+    <svg class="decor-leaf decor-leaf-1" viewBox="0 0 40 40" fill="none" aria-hidden="true">
+      <path d="M20 5C20 5 10 10 8 20C6 30 12 35 20 35C20 35 20 20 20 5Z" fill="#c87250" />
+      <path d="M20 5C20 5 30 10 32 20C34 30 28 35 20 35C20 35 20 20 20 5Z" fill="#d9794d" />
+    </svg>
+    <svg class="decor-leaf decor-leaf-2" viewBox="0 0 40 40" fill="none" aria-hidden="true">
+      <path d="M20 5C20 5 10 10 8 20C6 30 12 35 20 35C20 35 20 20 20 5Z" fill="#d4a574" />
+      <path d="M20 5C20 5 30 10 32 20C34 30 28 35 20 35C20 35 20 20 20 5Z" fill="#c9a87f" />
+    </svg>
+  </div>
 
   <div class="autumn-container">
     <header class="autumn-header">
@@ -8,12 +21,39 @@
         Rejoindre la Fête
         <span class="event-code">{{ eventCode }}</span>
       </h1>
-      <div *ngIf="eventName" class="event-subtitle">
+      <div *ngIf="!loading && !notFound && eventName" class="event-subtitle">
         {{ eventName }}
       </div>
     </header>
 
-    <div class="autumn-card">
+    <!-- Loading state -->
+    <div class="autumn-card autumn-card-plain" *ngIf="loading">
+      <h3>
+        <span class="autumn-section-icon">⏳</span>
+        Chargement de l'événement…
+      </h3>
+      <div class="autumn-message message-info">
+        Merci de patienter, nous préparons votre entrée.
+      </div>
+    </div>
+
+    <!-- Not found state -->
+    <div class="autumn-card autumn-card-plain" *ngIf="!loading && notFound">
+      <h3>
+        <span class="autumn-section-icon">❌</span>
+        Événement introuvable
+      </h3>
+      <div class="autumn-message message-warning">
+        Le code "{{ eventCode }}" ne correspond à aucun événement actif. Vérifiez l'orthographe
+        auprès de l'organisateur.
+      </div>
+      <div class="join-form">
+        <button class="btn-autumn" (click)="goHome()">Retour à l'accueil</button>
+      </div>
+    </div>
+
+    <!-- Normal form -->
+    <div class="autumn-card autumn-card-plain" *ngIf="!loading && !notFound">
       <h3>
         <span class="autumn-section-icon">👤</span>
         Identifiez-vous
@@ -44,6 +84,12 @@
         <span>ℹ️</span>
         Choisissez un pseudo qui vous représente pour cette soirée spéciale !
       </div>
+    </div>
+
+    <div class="autumn-footer-dots">
+      <span></span>
+      <span></span>
+      <span></span>
     </div>
   </div>
 </div>

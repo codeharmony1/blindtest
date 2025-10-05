@@ -4,6 +4,8 @@ import { Event } from "../../db/entities/Event";
 import { Organizer } from "../../db/entities/Organizer";
 import { Round } from "../../db/entities/Round";
 import { Team } from "../../db/entities/Team";
+import { Tenant } from "../../db/entities/Tenant";
+import { env } from "../../config/env";
 
 const router = Router();
 
@@ -95,11 +97,36 @@ router.post("/events", async (req, res) => {
     if (!organizer)
       return res.status(404).json({ error: { code: "ORGANIZER_NOT_FOUND" } });
 
+    // Ensure default tenant exists (multi-tenant compatibility during transition)
+    const tenantRepo = AppDataSource.getRepository(Tenant);
+    const DEFAULT_TENANT_ID =
+      (env as any).DEFAULT_TENANT_ID ?? "00000000-0000-0000-0000-000000000001";
+    let tenant = await tenantRepo.findOne({ where: { id: DEFAULT_TENANT_ID } });
+    if (!tenant) {
+      await tenantRepo.insert({
+        id: DEFAULT_TENANT_ID,
+        name: "Default Tenant",
+        slug: "default",
+        subscription_plan: "ENTERPRISE",
+        subscription_status: "ACTIVE",
+        billing_email: process.env.SUPER_ADMIN_EMAIL || "admin@blindtest.local",
+        max_concurrent_events: 999,
+        max_players_per_event: 999,
+        is_active: true,
+      } as any);
+      tenant = await tenantRepo.findOne({ where: { id: DEFAULT_TENANT_ID } });
+    }
+
     const event = new Event();
     event.organizer = organizer;
     event.name = name;
     event.code = code ?? generateCode();
     event.settings_json = settings ? JSON.stringify(settings) : undefined;
+    // Assign tenant relation (and id) to satisfy FK constraint
+    if (tenant) {
+      (event as any).tenant = tenant;
+      (event as any).tenant_id = tenant.id;
+    }
 
     const saved = await AppDataSource.getRepository(Event).save(event);
     return res.status(201).json({

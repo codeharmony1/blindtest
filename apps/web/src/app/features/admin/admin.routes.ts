@@ -86,6 +86,21 @@ export const adminRoutes: Routes = [
         loadComponent: () =>
           import('./import-export.component').then((m) => m.ImportExportComponent),
       },
+      {
+        path: 'billing',
+        loadComponent: () =>
+          import('./billing/billing.component').then((m) => m.BillingComponent),
+      },
+      {
+        path: 'billing/checkout',
+        loadComponent: () =>
+          import('./billing/checkout.component').then((m) => m.CheckoutComponent),
+      },
+      {
+        path: 'billing/success',
+        loadComponent: () =>
+          import('./billing/success.component').then((m) => m.BillingSuccessComponent),
+      },
     ],
   },
 ];

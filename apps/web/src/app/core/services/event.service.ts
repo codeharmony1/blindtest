@@ -51,7 +51,7 @@ export interface UpdateEventResponse {
   providedIn: 'root',
 })
 export class EventService {
-  private readonly API_BASE = 'http://localhost:3000/api';
+  private readonly API_BASE = '/api';
   private readonly TEST_ORGANIZER_ID = '3'; // ID of test organizer
 
   private eventsSubject = new BehaviorSubject<Event[]>([]);

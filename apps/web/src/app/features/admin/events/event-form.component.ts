@@ -3,7 +3,7 @@ import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { Router, ActivatedRoute } from '@angular/router';
 import { HttpClient, HttpClientModule } from '@angular/common/http';
-import { ThemeConfig } from '../../../core/services/theme.service';
+import { ThemeConfig, ThemeService } from '../../../core/services/theme.service';
 import { EventService } from '../../../core/services/event.service';
 
 interface ThemePreview {
@@ -135,7 +135,7 @@ interface ApiTheme {
 
                 <!-- Liste des thèmes -->
                 <div
-                  *ngFor="let theme of availableThemes; trackBy: trackTheme"
+                  *ngFor="let theme of pagedThemes; trackBy: trackTheme"
                   class="theme-option"
                   [class.selected]="eventForm.get('themeId')?.value === theme.id"
                   (click)="selectTheme(theme.id)"
@@ -176,6 +176,35 @@ interface ApiTheme {
                     ></div>
                   </div>
                 </div>
+              </div>
+
+              <!-- Pagination -->
+              <div class="pagination" *ngIf="totalPages > 1">
+                <button
+                  type="button"
+                  class="page-btn"
+                  [disabled]="currentPage === 1"
+                  (click)="prevPage()"
+                >
+                  ◀
+                </button>
+                <button
+                  type="button"
+                  class="page-btn"
+                  *ngFor="let p of pageNumbers"
+                  [class.active]="p === currentPage"
+                  (click)="goToPage(p)"
+                >
+                  {{ p }}
+                </button>
+                <button
+                  type="button"
+                  class="page-btn"
+                  [disabled]="currentPage === totalPages"
+                  (click)="nextPage()"
+                >
+                  ▶
+                </button>
               </div>
             </div>
           </div>
@@ -267,33 +296,75 @@ interface ApiTheme {
           </div>
         </form>
 
-        <!-- Preview -->
-        <div class="preview-section">
-          <h3 class="preview-title">Aperçu</h3>
-          <div class="preview-card">
-            <div class="preview-header">
-              <div class="preview-info">
-                <h4 class="preview-name">{{ eventNamePreview }}</h4>
-                <p class="preview-code">Code: {{ eventCodePreview }}</p>
+        <aside class="preview-aside">
+          <!-- Preview -->
+          <div class="preview-section">
+            <h3 class="preview-title">Aperçu</h3>
+            <div class="preview-card" [ngStyle]="getPreviewThemeVars()">
+              <div class="preview-theme-banner" [style.background]="getGradientBackground()"></div>
+              <div class="preview-header">
+                <div class="preview-info">
+                  <h4 class="preview-name">{{ eventNamePreview }}</h4>
+                  <p class="preview-code">Code: {{ eventCodePreview }}</p>
+                </div>
+                <div
+                  class="preview-status"
+                  [style.background]="getBadgeBg()"
+                  [style.color]="getBadgeFg()"
+                >
+                  Brouillon
+                </div>
               </div>
-              <div class="preview-status">Brouillon</div>
-            </div>
-            <div class="preview-settings">
-              <div class="preview-setting">
-                <span class="setting-icon">⏱️</span>
-                <span>{{ songsDurationPreview }}s par chanson</span>
-              </div>
-              <div class="preview-setting">
-                <span class="setting-icon">🎵</span>
-                <span>{{ songsPerRoundPreview }} chansons/round</span>
-              </div>
-              <div class="preview-setting">
-                <span class="setting-icon">🎨</span>
-                <span>{{ getSelectedThemeName() }}</span>
+              <div class="preview-settings">
+                <div class="preview-setting">
+                  <span class="setting-icon">⏱️</span>
+                  <span>{{ songsDurationPreview }}s par chanson</span>
+                </div>
+                <div class="preview-setting">
+                  <span class="setting-icon">🎵</span>
+                  <span>{{ songsPerRoundPreview }} chansons/round</span>
+                </div>
+                <div class="preview-setting">
+                  <span class="setting-icon">🎨</span>
+                  <span>{{ getSelectedThemeName() }}</span>
+                </div>
               </div>
             </div>
           </div>
-        </div>
+
+          <!-- Player Preview -->
+          <div class="preview-section">
+            <h3 class="preview-title">Aperçu Joueur</h3>
+            <div class="preview-card">
+              <div class="player-device" [ngStyle]="getPlayerPreviewVars()">
+                <div class="player-header">
+                  <div class="player-title">{{ eventNamePreview }}</div>
+                  <div class="player-code">#{{ eventCodePreview }}</div>
+                </div>
+                <div class="player-content">
+                  <div class="player-timer">
+                    <div class="timer-circle">
+                      <div class="timer-value">{{ songsDurationPreview }}s</div>
+                    </div>
+                  </div>
+                  <div class="player-answer">
+                    <input type="text" placeholder="Votre réponse…" disabled />
+                  </div>
+                  <div class="player-buzzer">
+                    <button type="button" disabled>BUZZ!</button>
+                  </div>
+                  <div class="player-progress">
+                    <div class="bar"></div>
+                  </div>
+                </div>
+                <div class="player-footer">
+                  <div class="chip">🎵 {{ songsPerRoundPreview }} chansons/round</div>
+                  <div class="chip">🎨 {{ getSelectedThemeName() }}</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </aside>
       </div>
     </div>
   `,
@@ -327,6 +398,17 @@ interface ApiTheme {
         display: grid;
         grid-template-columns: 1fr 300px;
         gap: 2rem;
+      }
+
+      .preview-aside {
+        grid-column: 2;
+        position: sticky;
+        top: 2rem;
+        display: flex;
+        flex-direction: column;
+        gap: 1rem;
+        align-self: start;
+        height: fit-content;
       }
 
       /* Form Sections */
@@ -561,9 +643,12 @@ interface ApiTheme {
 
       /* Preview Section */
       .preview-section {
-        position: sticky;
-        top: 2rem;
-        height: fit-content;
+        position: relative;
+      }
+
+      .player-preview {
+        position: static;
+        margin-top: 1rem;
       }
 
       .preview-title {
@@ -579,6 +664,13 @@ interface ApiTheme {
         border-radius: 12px;
         padding: 1.5rem;
         box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+      }
+
+      .preview-theme-banner {
+        height: 52px;
+        border-radius: 10px;
+        margin: -0.5rem -0.5rem 1rem -0.5rem;
+        box-shadow: inset 0 -10px 24px rgba(0, 0, 0, 0.12);
       }
 
       .preview-header {
@@ -604,11 +696,113 @@ interface ApiTheme {
 
       .preview-status {
         padding: 0.25rem 0.75rem;
-        background: #fef3c7;
-        color: #92400e;
         border-radius: 20px;
         font-size: 0.75rem;
         font-weight: 600;
+      }
+
+      /* Player Preview */
+      .player-device {
+        border-radius: 16px;
+        border: 1px solid var(--p-border, #e5e7eb);
+        overflow: hidden;
+        background: var(--p-bg, #0b1020);
+        color: var(--p-text, #e5e7eb);
+        font-family: var(--p-font, 'Inter', system-ui, sans-serif);
+      }
+      .player-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 10px 14px;
+        background: var(--p-gradient, linear-gradient(135deg, #22d3ee, #6366f1));
+        color: #fff;
+      }
+      .player-title {
+        font-weight: 800;
+        letter-spacing: 0.2px;
+      }
+      .player-code {
+        font-family: 'JetBrains Mono', monospace;
+        opacity: 0.9;
+      }
+      .player-content {
+        padding: 14px;
+        display: grid;
+        gap: 12px;
+      }
+      .player-timer {
+        display: flex;
+        justify-content: center;
+      }
+      .timer-circle {
+        width: 86px;
+        height: 86px;
+        border-radius: 50%;
+        display: grid;
+        place-items: center;
+        background:
+          radial-gradient(circle at 30% 30%, var(--p-secondary, #60a5fa), transparent 70%),
+          radial-gradient(circle at 70% 70%, var(--p-primary, #22d3ee), transparent 70%),
+          rgba(255, 255, 255, 0.06);
+        border: 2px solid var(--p-border, #1f2937);
+        box-shadow:
+          inset 0 12px 32px rgba(0, 0, 0, 0.25),
+          0 2px 8px rgba(0, 0, 0, 0.2);
+      }
+      .timer-value {
+        font-weight: 900;
+        font-size: 1.1rem;
+        text-shadow: 0 1px 2px rgba(0, 0, 0, 0.25);
+      }
+      .player-answer input {
+        width: 100%;
+        padding: 10px 12px;
+        border-radius: 10px;
+        border: 1px solid var(--p-border, #2b3443);
+        background: rgba(255, 255, 255, 0.06);
+        color: var(--p-text, #e5e7eb);
+      }
+      .player-answer input::placeholder {
+        color: var(--p-text-secondary, #94a3b8);
+      }
+      .player-buzzer {
+        display: flex;
+        justify-content: center;
+      }
+      .player-buzzer button {
+        padding: 10px 20px;
+        border-radius: 999px;
+        border: 1px solid transparent;
+        background: linear-gradient(135deg, var(--p-primary, #22d3ee), var(--p-secondary, #6366f1));
+        color: #fff;
+        font-weight: 800;
+        letter-spacing: 0.5px;
+        box-shadow: 0 8px 20px rgba(99, 102, 241, 0.35);
+      }
+      .player-progress {
+        height: 8px;
+        background: rgba(255, 255, 255, 0.06);
+        border-radius: 999px;
+        overflow: hidden;
+      }
+      .player-progress .bar {
+        height: 100%;
+        width: 65%;
+        background: var(--p-gradient, linear-gradient(90deg, #22d3ee, #a855f7));
+      }
+      .player-footer {
+        display: flex;
+        gap: 8px;
+        padding: 10px 14px;
+        border-top: 1px solid var(--p-border, #1f2937);
+      }
+      .chip {
+        padding: 4px 8px;
+        border-radius: 999px;
+        background: rgba(255, 255, 255, 0.06);
+        border: 1px solid var(--p-border, #1f2937);
+        font-size: 0.8rem;
       }
 
       .preview-settings {
@@ -742,6 +936,38 @@ interface ApiTheme {
         margin: 0.5rem 0;
       }
 
+      /* Pagination */
+      .pagination {
+        display: flex;
+        align-items: center;
+        gap: 0.375rem;
+        margin-top: 0.75rem;
+        justify-content: center;
+      }
+      .page-btn {
+        min-width: 34px;
+        height: 34px;
+        padding: 0 0.5rem;
+        border-radius: 8px;
+        background: #f1f5f9;
+        border: 1px solid #cbd5e1;
+        color: #475569;
+        font-weight: 600;
+        cursor: pointer;
+      }
+      .page-btn:hover:not(:disabled) {
+        background: #e2e8f0;
+      }
+      .page-btn:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+      }
+      .page-btn.active {
+        background: #3b82f6;
+        color: white;
+        border-color: #2563eb;
+      }
+
       /* Responsive */
       @media (max-width: 768px) {
         .form-container {
@@ -753,8 +979,8 @@ interface ApiTheme {
           grid-template-columns: 1fr;
         }
 
-        .preview-section {
-          order: -1;
+        .preview-aside {
+          grid-column: 1 / -1;
           position: static;
         }
 
@@ -785,6 +1011,9 @@ export class EventFormComponent implements OnInit {
   isSubmitting = false;
   eventId: string | null = null;
   availableThemes: ApiTheme[] = [];
+  // Pagination
+  currentPage = 1;
+  readonly pageSize = 10;
 
   constructor(
     private fb: FormBuilder,
@@ -792,6 +1021,7 @@ export class EventFormComponent implements OnInit {
     private route: ActivatedRoute,
     private http: HttpClient,
     private eventService: EventService,
+    private themeService: ThemeService,
   ) {
     this.eventForm = this.createForm();
   }
@@ -845,7 +1075,7 @@ export class EventFormComponent implements OnInit {
           .get<{
             eventCode: string;
             settings: any;
-          }>(`http://localhost:3000/api/events/${ev.code}/settings`)
+          }>(`/api/events/${ev.code}/settings`)
           .subscribe({
             next: (resp) => {
               const s = resp.settings || {};
@@ -939,55 +1169,27 @@ export class EventFormComponent implements OnInit {
 
   loadThemes() {
     console.log('🎨 Chargement des thèmes...');
-    this.http.get<{ themes: ApiTheme[] }>('http://localhost:3000/api/themes').subscribe({
-      next: (response) => {
-        console.log('✅ Thèmes reçus:', response);
-        this.availableThemes = response.themes;
-        console.log('🎨 Thèmes disponibles:', this.availableThemes.length);
-      },
-      error: (error) => {
-        console.error('Erreur lors du chargement des thèmes:', error);
-        // Utiliser des thèmes par défaut en cas d'erreur
-        this.availableThemes = [
-          {
-            id: 'wedding-autumn',
-            name: 'Mariage Automne',
-            description: 'Couleurs chaudes et romantiques',
-            category: 'wedding',
-            preview: {
-              primary: '#8B4513',
-              secondary: '#DAA520',
-              background: '#FDF5E6',
-              gradient: 'linear-gradient(135deg, #8B4513 0%, #DAA520 100%)',
-            },
-          },
-          {
-            id: 'corporate-modern',
-            name: 'Entreprise Moderne',
-            description: 'Design professionnel et contemporain',
-            category: 'corporate',
-            preview: {
-              primary: '#2563EB',
-              secondary: '#0EA5E9',
-              background: '#F8FAFC',
-              gradient: 'linear-gradient(135deg, #2563EB 0%, #0EA5E9 100%)',
-            },
-          },
-          {
-            id: 'birthday-fun',
-            name: 'Anniversaire Festif',
-            description: 'Ambiance colorée et joyeuse',
-            category: 'birthday',
-            preview: {
-              primary: '#FF6B6B',
-              secondary: '#4ECDC4',
-              background: '#FFF5F5',
-              gradient: 'linear-gradient(135deg, #FF6B6B 0%, #4ECDC4 50%, #FFE66D 100%)',
-            },
-          },
-        ];
-      },
-    });
+    try {
+      const allThemes = this.themeService.getAllThemes();
+      this.availableThemes = allThemes.map((theme) => ({
+        id: theme.id,
+        name: theme.name,
+        description: theme.description,
+        category: theme.category,
+        preview: {
+          primary: theme.colors.primary,
+          secondary: theme.colors.secondary,
+          background: theme.colors.background,
+          gradient:
+            theme.colors.gradient ||
+            `linear-gradient(135deg, ${theme.colors.primary} 0%, ${theme.colors.secondary} 100%)`,
+        },
+      }));
+      console.log('✅ Thèmes chargés depuis le service local:', this.availableThemes.length);
+    } catch (error) {
+      console.error('Erreur lors du chargement des thèmes:', error);
+      this.availableThemes = [];
+    }
   }
 
   selectTheme(themeId: string) {
@@ -1030,6 +1232,32 @@ export class EventFormComponent implements OnInit {
     return theme.id;
   }
 
+  // --- Pagination helpers ---
+  get totalPages(): number {
+    return Math.max(1, Math.ceil(this.availableThemes.length / this.pageSize));
+  }
+
+  get pagedThemes(): ApiTheme[] {
+    const start = (this.currentPage - 1) * this.pageSize;
+    return this.availableThemes.slice(start, start + this.pageSize);
+  }
+
+  get pageNumbers(): number[] {
+    return Array.from({ length: this.totalPages }, (_, i) => i + 1);
+  }
+
+  goToPage(p: number) {
+    if (p >= 1 && p <= this.totalPages) this.currentPage = p;
+  }
+
+  nextPage() {
+    if (this.currentPage < this.totalPages) this.currentPage += 1;
+  }
+
+  prevPage() {
+    if (this.currentPage > 1) this.currentPage -= 1;
+  }
+
   // --- Template getters for safe dynamic previews ---
   get eventNamePreview(): string {
     const v = this.eventForm.get('name')?.value;
@@ -1049,5 +1277,88 @@ export class EventFormComponent implements OnInit {
   get songsPerRoundPreview(): number {
     const v = this.eventForm.get('defaultSongsPerRound')?.value;
     return typeof v === 'number' && v > 0 ? v : 10;
+  }
+
+  // --- Live preview helpers ---
+  private getSelectedThemeDef() {
+    const selectedThemeId = this.eventForm.get('themeId')?.value;
+    return this.availableThemes.find((t) => t.id === selectedThemeId);
+  }
+
+  getPreviewThemeVars() {
+    const t = this.getSelectedThemeDef();
+    if (!t) return {};
+    const primary = t.preview.primary || t.colors?.primary || '#3b82f6';
+    const secondary = t.preview.secondary || t.colors?.secondary || '#8b5cf6';
+    const surface = '#ffffff';
+    const border = '#e2e8f0';
+    const text = '#0f172a';
+    return {
+      background: surface,
+      borderColor: border,
+      color: text,
+      '--preview-primary': primary,
+      '--preview-secondary': secondary,
+    } as any;
+  }
+
+  getGradientBackground(): string {
+    const t = this.getSelectedThemeDef();
+    if (!t) return 'linear-gradient(135deg, #3b82f6, #8b5cf6)';
+    return (
+      t.preview.gradient ||
+      t.colors?.gradient ||
+      `linear-gradient(135deg, ${t.preview.primary || t.colors?.primary}, ${t.preview.secondary || t.colors?.secondary})`
+    );
+  }
+
+  getBadgeBg(): string {
+    const t = this.getSelectedThemeDef();
+    if (!t) return 'rgba(59,130,246,.12)';
+    const p = t.preview.primary || t.colors?.primary || '#3b82f6';
+    return this.hexToRgba(p, 0.15);
+  }
+
+  getBadgeFg(): string {
+    const t = this.getSelectedThemeDef();
+    if (!t) return '#1e40af';
+    const p = t.preview.primary || t.colors?.primary || '#1e40af';
+    return p;
+  }
+
+  private hexToRgba(hex: string, alpha = 1): string {
+    try {
+      const h = hex.replace('#', '');
+      const bigint = parseInt(h, 16);
+      const r = (bigint >> 16) & 255;
+      const g = (bigint >> 8) & 255;
+      const b = bigint & 255;
+      return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+    } catch {
+      return hex;
+    }
+  }
+
+  getPlayerPreviewVars() {
+    const t = this.getSelectedThemeDef();
+    const primary = t?.preview.primary || t?.colors?.primary || '#22d3ee';
+    const secondary = t?.preview.secondary || t?.colors?.secondary || '#6366f1';
+    const bg = t?.preview.background || t?.colors?.background || '#0b1020';
+    const text = '#e5e7eb';
+    const textSecondary = '#94a3b8';
+    const border = this.hexToRgba(primary, 0.25);
+    const gradient =
+      t?.preview.gradient ||
+      t?.colors?.gradient ||
+      `linear-gradient(135deg, ${primary}, ${secondary})`;
+    return {
+      '--p-primary': primary,
+      '--p-secondary': secondary,
+      '--p-bg': bg,
+      '--p-text': text,
+      '--p-text-secondary': textSecondary,
+      '--p-border': border,
+      '--p-gradient': gradient,
+    } as any;
   }
 }

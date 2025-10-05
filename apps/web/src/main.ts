@@ -5,11 +5,16 @@ import { HTTP_INTERCEPTORS } from '@angular/common/http';
 import { AppComponent } from './app/app.component';
 import { routes } from './app/app.routes';
 import { DjErrorInterceptor } from './app/core/interceptors/dj-error.interceptor';
+import { tenantAuthInterceptor } from './app/core/interceptors/tenant-auth.interceptor';
+import { superAdminAuthInterceptor } from './app/core/interceptors/super-admin-auth.interceptor';
 
 bootstrapApplication(AppComponent, {
   providers: [
     provideRouter(routes),
-    provideHttpClient(),
+    provideHttpClient(
+      // Super-admin interceptor en PREMIER pour traiter /api/backstage avant tenant
+      withInterceptors([superAdminAuthInterceptor, tenantAuthInterceptor]),
+    ),
     {
       provide: HTTP_INTERCEPTORS,
       useClass: DjErrorInterceptor,

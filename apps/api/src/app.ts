@@ -17,6 +17,11 @@ import scoreRoutes from "./modules/scores/routes";
 import authRoutes from "./modules/auth/routes";
 import csvRoutes from "./modules/csv/routes";
 import settingsRoutes from "./modules/settings/routes";
+// Nouvelles routes multi-tenant
+import tenantRoutes from "./modules/tenants/routes";
+import paymentRoutes from "./modules/payments/routes";
+// Super-admin routes
+import superAdminRoutes from "./modules/super-admin/routes";
 
 const app = express();
 
@@ -77,6 +82,8 @@ app.use(
 app.use(compression());
 
 // Body parsing with size limits
+// Raw body parser for Stripe webhooks (doit être avant express.json)
+app.use('/api/payments/webhooks/stripe', express.raw({ type: 'application/json' }));
 app.use(express.json({ limit: "2mb" }));
 app.use(express.urlencoded({ extended: true, limit: "2mb" }));
 
@@ -87,6 +94,12 @@ if (env.NODE_ENV === "production") {
 
 // Request logging
 app.use(requestLogger);
+
+// Debug: log toutes les requêtes
+app.use((req, res, next) => {
+  console.log("📥 Incoming request:", req.method, req.path, "Auth:", req.headers.authorization ? "PRESENT" : "ABSENT");
+  next();
+});
 
 // Input sanitization
 app.use(sanitizeInput);
@@ -112,7 +125,14 @@ app.get("/api/health", (_req, res) => {
 // Auth routes with specific rate limiting
 app.use("/api", authRateLimit, authRoutes);
 
-// API routes
+// Super-admin routes (URL non-évidente)
+app.use("/api/backstage", superAdminRoutes);
+
+// Routes multi-tenant (publiques et protégées)
+app.use("/api", tenantRoutes);
+app.use("/api", paymentRoutes);
+
+// API routes legacy (avec isolation tenant automatique si nécessaire)
 app.use("/api", eventRoutes);
 app.use("/api", teamRoutes);
 app.use("/api", playerRoutes);

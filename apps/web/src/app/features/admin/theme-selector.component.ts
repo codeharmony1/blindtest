@@ -3,6 +3,8 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { HttpClient } from '@angular/common/http';
 import { ActivatedRoute } from '@angular/router';
+import { ThemeService } from '../../core/services/theme.service';
+import { ThemeConfig } from '../../../../../api/src/types/themes';
 
 interface ThemePreview {
   id: string;
@@ -22,31 +24,11 @@ interface ThemeResponse {
   categories: string[];
 }
 
-interface ThemeConfig {
-  id: string;
-  name: string;
-  description: string;
-  category: string;
-  colors: {
-    primary: string;
-    secondary: string;
-    accent: string;
-    background: string;
-    surface: string;
-    text: string;
-    textSecondary: string;
-    border: string;
-    gradient?: string;
-  };
-  fonts: {
-    primary: string;
-    heading: string;
-  };
-  imagery?: {
-    backgroundPattern?: string;
-    iconStyle?: string;
-    illustrations?: string[];
-  };
+interface PaginationConfig {
+  currentPage: number;
+  itemsPerPage: number;
+  totalItems: number;
+  totalPages: number;
 }
 
 @Component({
@@ -79,10 +61,24 @@ interface ThemeConfig {
         </button>
       </div>
 
+      <!-- Pagination Info -->
+      <div class="pagination-info" *ngIf="!loading && filteredThemes.length > 0">
+        <span>{{ getPaginationInfo() }}</span>
+        <div class="items-per-page">
+          <label>Thèmes par page:</label>
+          <select [(ngModel)]="pagination.itemsPerPage" (change)="updatePagination()">
+            <option value="6">6</option>
+            <option value="9">9</option>
+            <option value="12">12</option>
+            <option value="18">18</option>
+          </select>
+        </div>
+      </div>
+
       <!-- Grille des thèmes -->
       <div class="themes-grid" *ngIf="!loading">
         <div
-          *ngFor="let theme of filteredThemes"
+          *ngFor="let theme of paginatedThemes"
           class="theme-card"
           [class.selected]="currentThemeId === theme.id"
           (click)="selectTheme(theme.id)"
@@ -114,21 +110,124 @@ interface ThemeConfig {
         </div>
       </div>
 
+      <!-- Pagination Controls -->
+      <div class="pagination-controls" *ngIf="!loading && pagination.totalPages > 1">
+        <button
+          class="pagination-btn"
+          [disabled]="pagination.currentPage === 1"
+          (click)="goToPage(1)">
+          ≪
+        </button>
+        <button
+          class="pagination-btn"
+          [disabled]="pagination.currentPage === 1"
+          (click)="goToPage(pagination.currentPage - 1)">
+          ‹
+        </button>
+
+        <span class="page-numbers">
+          <button
+            *ngFor="let page of getPageNumbers()"
+            class="pagination-btn page-number"
+            [class.active]="page === pagination.currentPage"
+            [disabled]="page === '...'"
+            (click)="page !== '...' && goToPage(+page)">
+            {{ page }}
+          </button>
+        </span>
+
+        <button
+          class="pagination-btn"
+          [disabled]="pagination.currentPage === pagination.totalPages"
+          (click)="goToPage(pagination.currentPage + 1)">
+          ›
+        </button>
+        <button
+          class="pagination-btn"
+          [disabled]="pagination.currentPage === pagination.totalPages"
+          (click)="goToPage(pagination.totalPages)">
+          ≫
+        </button>
+      </div>
+
       <!-- Loading state -->
       <div class="loading-state" *ngIf="loading">
         <div class="spinner"></div>
         <p>Chargement des thèmes...</p>
       </div>
 
+      <!-- Aperçu du thème sélectionné -->
+      <div class="theme-preview-section" *ngIf="selectedThemeId && selectedTheme">
+        <div class="preview-header">
+          <h3>🎯 Aperçu : {{ selectedTheme.name }}</h3>
+          <p class="preview-description">{{ selectedTheme.description }}</p>
+        </div>
+
+        <div class="theme-demo player-preview" [style]="getThemeStyles(selectedTheme)">
+          <!-- Aperçu écran joueur -->
+          <div class="player-preview-container">
+            <header class="player-header">
+              <h1>
+                <span class="player-icon">🎵</span>
+                Round Musical en Cours
+              </h1>
+              <div class="player-info">
+                <div class="team-badge">Équipe #3</div>
+                <div class="player-name">Alex Martin</div>
+              </div>
+            </header>
+
+            <!-- Timer et statut -->
+            <div class="player-card timer-card">
+              <div class="timer-display">
+                <div class="timer-icon">⏱️</div>
+                <div class="timer-content">
+                  <div class="timer-label">Temps restant</div>
+                  <div class="timer-value">12.5s</div>
+                </div>
+              </div>
+              <div class="progress-bar">
+                <div class="progress-fill" style="width: 42%;"></div>
+              </div>
+            </div>
+
+            <!-- Formulaire de réponse -->
+            <div class="player-card answer-card">
+              <h3>
+                <span class="player-section-icon">✍️</span>
+                Votre Réponse
+              </h3>
+              <div class="answer-form">
+                <label class="player-label">Titre et/ou Artiste de la chanson</label>
+                <input
+                  value="Bohemian Rhapsody - Queen"
+                  class="player-input answer-input"
+                  readonly
+                />
+                <button class="player-button primary">
+                  <span class="btn-icon">📝</span>
+                  Envoyer la Réponse
+                </button>
+              </div>
+              <div class="player-message">
+                <span>💡</span>
+                <strong>Astuce :</strong> La dernière réponse avant la fin du temps imparti sera prise en compte !
+              </div>
+            </div>
+
+            <!-- Navigation -->
+            <div class="player-card navigation-card">
+              <button class="player-button success">
+                <span class="btn-icon">🏆</span>
+                Voir le Classement
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
       <!-- Actions -->
       <div class="actions" *ngIf="!loading">
-        <button
-          class="btn-secondary"
-          (click)="previewTheme()"
-          [disabled]="!selectedThemeId"
-        >
-          Aperçu
-        </button>
         <button
           class="btn-primary"
           (click)="applyTheme()"
@@ -136,41 +235,6 @@ interface ThemeConfig {
         >
           {{ applying ? 'Application...' : 'Appliquer le Thème' }}
         </button>
-      </div>
-
-      <!-- Aperçu détaillé -->
-      <div class="theme-detail-modal" *ngIf="previewMode" (click)="closePreview()">
-        <div class="modal-content" (click)="$event.stopPropagation()">
-          <div class="modal-header">
-            <h3>Aperçu : {{ selectedTheme?.name }}</h3>
-            <button class="close-btn" (click)="closePreview()">×</button>
-          </div>
-          <div class="modal-body" *ngIf="selectedTheme">
-            <div class="theme-demo" [style]="getThemeStyles(selectedTheme)">
-              <div class="demo-header">
-                <h1>Blind Test Musical</h1>
-                <nav>
-                  <a href="#" class="nav-link">Accueil</a>
-                  <a href="#" class="nav-link">Équipes</a>
-                  <a href="#" class="nav-link">Scores</a>
-                </nav>
-              </div>
-              <div class="demo-content">
-                <div class="demo-card">
-                  <h3>Round 1 - Pop Music</h3>
-                  <p>20 chansons • 15 secondes chacune</p>
-                  <button class="demo-button">Commencer</button>
-                </div>
-                <div class="demo-leaderboard">
-                  <h4>Classement</h4>
-                  <div class="demo-team">1. Team Alpha - 1250 pts</div>
-                  <div class="demo-team">2. Team Beta - 980 pts</div>
-                  <div class="demo-team">3. Team Gamma - 750 pts</div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
       </div>
 
       <!-- Messages -->
@@ -401,120 +465,226 @@ interface ThemeConfig {
       cursor: not-allowed;
     }
 
-    .theme-detail-modal {
-      position: fixed;
-      inset: 0;
-      background: rgba(0,0,0,0.5);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      z-index: 1000;
-    }
 
-    .modal-content {
-      background: white;
+    .theme-demo {
+      min-height: 500px;
       border-radius: 12px;
-      max-width: 90vw;
-      max-height: 90vh;
-      overflow: hidden;
-    }
-
-    .modal-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      padding: 1rem 1.5rem;
-      border-bottom: 1px solid #E2E8F0;
-    }
-
-    .close-btn {
-      background: none;
-      border: none;
-      font-size: 1.5rem;
-      cursor: pointer;
-      color: #718096;
-    }
-
-    .modal-body {
       padding: 1.5rem;
       overflow-y: auto;
       max-height: 70vh;
     }
 
-    .theme-demo {
-      min-height: 400px;
-      border-radius: 8px;
-      padding: 1rem;
+    .player-preview-container {
+      max-width: 600px;
+      margin: 0 auto;
     }
 
-    .demo-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
+    .player-header {
+      text-align: center;
       margin-bottom: 2rem;
-      padding-bottom: 1rem;
-      border-bottom: 1px solid rgba(255,255,255,0.2);
     }
 
-    .demo-header h1 {
-      margin: 0;
-      font-size: 1.5rem;
+    .player-header h1 {
+      margin: 0 0 1rem 0;
+      font-size: 1.8rem;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.5rem;
     }
 
-    .demo-header nav {
+    .player-icon {
+      font-size: 2rem;
+    }
+
+    .player-info {
       display: flex;
       gap: 1rem;
+      align-items: center;
+      justify-content: center;
+      margin-top: 1rem;
     }
 
-    .nav-link {
-      text-decoration: none;
+    .team-badge {
+      background: var(--color-primary);
+      color: var(--color-surface);
       padding: 0.5rem 1rem;
-      border-radius: 4px;
-      transition: background 0.3s ease;
+      border-radius: 20px;
+      font-weight: 600;
+      font-size: 0.9rem;
     }
 
-    .nav-link:hover {
-      background: rgba(255,255,255,0.1);
-    }
-
-    .demo-content {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 2rem;
-    }
-
-    .demo-card {
-      padding: 1.5rem;
-      border-radius: 8px;
-      background: rgba(255,255,255,0.1);
-    }
-
-    .demo-card h3 {
-      margin: 0 0 0.5rem 0;
-    }
-
-    .demo-card p {
-      margin: 0 0 1rem 0;
-      opacity: 0.8;
-    }
-
-    .demo-button {
-      padding: 0.5rem 1rem;
-      border: none;
-      border-radius: 4px;
-      cursor: pointer;
+    .player-name {
+      color: var(--color-text);
+      font-size: 1.2rem;
       font-weight: 500;
     }
 
-    .demo-leaderboard h4 {
-      margin: 0 0 1rem 0;
+    .player-card {
+      background: var(--color-surface);
+      border: 2px solid var(--color-border);
+      border-radius: 12px;
+      padding: 1.5rem;
+      margin-bottom: 1.5rem;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
     }
 
-    .demo-team {
-      padding: 0.5rem;
-      margin-bottom: 0.5rem;
-      background: rgba(255,255,255,0.1);
+    .timer-card {
+      text-align: center;
+    }
+
+    .timer-display {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 1rem;
+      margin-bottom: 1rem;
+    }
+
+    .timer-icon {
+      font-size: 2.5rem;
+    }
+
+    .timer-content {
+      text-align: left;
+    }
+
+    .timer-label {
+      color: var(--color-text-secondary);
+      font-size: 0.9rem;
+      margin-bottom: 0.25rem;
+    }
+
+    .timer-value {
+      font-size: 2.5rem;
+      font-weight: 700;
+      color: var(--color-primary);
+    }
+
+    .progress-bar {
+      width: 100%;
+      height: 8px;
+      background: var(--color-border);
       border-radius: 4px;
+      overflow: hidden;
+    }
+
+    .progress-fill {
+      height: 100%;
+      background: linear-gradient(90deg, var(--color-secondary), var(--color-accent));
+      transition: width 0.3s ease;
+    }
+
+    .answer-card h3 {
+      margin: 0 0 1.5rem 0;
+      color: var(--color-text);
+      font-size: 1.2rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .player-section-icon {
+      font-size: 1.3rem;
+    }
+
+    .answer-form {
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+    }
+
+    .player-label {
+      color: var(--color-text);
+      font-weight: 500;
+      margin-bottom: 0.5rem;
+    }
+
+    .player-input {
+      padding: 1rem;
+      border: 2px solid var(--color-border);
+      border-radius: 8px;
+      background: var(--color-background);
+      color: var(--color-text);
+      font-size: 1rem;
+      font-family: var(--font-primary);
+    }
+
+    .player-input:focus {
+      outline: none;
+      border-color: var(--color-primary);
+      box-shadow: 0 0 0 3px rgba(var(--color-primary), 0.1);
+    }
+
+    .player-button {
+      padding: 1rem 2rem;
+      border: none;
+      border-radius: 8px;
+      font-size: 1rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.5rem;
+      font-family: var(--font-primary);
+    }
+
+    .player-button.primary {
+      background: var(--color-primary);
+      color: var(--color-surface);
+    }
+
+    .player-button.success {
+      background: var(--color-secondary);
+      color: var(--color-surface);
+    }
+
+    .player-button:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+    }
+
+    .player-message {
+      display: flex;
+      align-items: flex-start;
+      gap: 0.5rem;
+      background: rgba(var(--color-accent), 0.1);
+      border: 1px solid var(--color-border);
+      border-radius: 8px;
+      padding: 1rem;
+      margin-top: 1rem;
+      color: var(--color-text);
+      font-size: 0.9rem;
+    }
+
+    .navigation-card {
+      text-align: center;
+    }
+
+    .theme-preview-section {
+      margin-top: 3rem;
+      padding-top: 2rem;
+      border-top: 2px solid #E2E8F0;
+    }
+
+    .preview-header {
+      text-align: center;
+      margin-bottom: 2rem;
+    }
+
+    .preview-header h3 {
+      color: #2D3748;
+      font-size: 1.5rem;
+      margin-bottom: 0.5rem;
+    }
+
+    .preview-description {
+      color: #718096;
+      font-size: 1rem;
+      margin: 0;
     }
 
     .message {
@@ -534,6 +704,76 @@ interface ThemeConfig {
       background: #FED7D7;
       color: #C53030;
       border: 1px solid #FEB2B2;
+    }
+
+    .pagination-info {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 1rem;
+      padding: 0.5rem;
+      background: #F7FAFC;
+      border-radius: 8px;
+      font-size: 0.9rem;
+      color: #4A5568;
+    }
+
+    .items-per-page {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .items-per-page select {
+      padding: 0.25rem 0.5rem;
+      border: 1px solid #E2E8F0;
+      border-radius: 4px;
+      background: white;
+    }
+
+    .pagination-controls {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 0.5rem;
+      margin-top: 2rem;
+      flex-wrap: wrap;
+    }
+
+    .pagination-btn {
+      padding: 0.5rem 0.75rem;
+      border: 1px solid #E2E8F0;
+      background: white;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      font-weight: 500;
+      min-width: 40px;
+    }
+
+    .pagination-btn:hover:not(:disabled) {
+      background: #EDF2F7;
+      border-color: #CBD5E0;
+    }
+
+    .pagination-btn:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    .pagination-btn.active {
+      background: #4299E1;
+      color: white;
+      border-color: #4299E1;
+    }
+
+    .page-numbers {
+      display: flex;
+      gap: 0.25rem;
+    }
+
+    .page-number {
+      min-width: 40px;
     }
 
     @media (max-width: 768px) {
@@ -560,21 +800,29 @@ export class ThemeSelectorComponent implements OnInit {
   themes: ThemePreview[] = [];
   categories: string[] = [];
   filteredThemes: ThemePreview[] = [];
+  paginatedThemes: ThemePreview[] = [];
   selectedCategory = 'all';
   selectedThemeId: string | null = null;
   currentThemeId: string | null = null;
   selectedTheme: ThemeConfig | null = null;
   loading = true;
   applying = false;
-  previewMode = false;
   successMessage = '';
   errorMessage = '';
+
+  pagination: PaginationConfig = {
+    currentPage: 1,
+    itemsPerPage: 9,
+    totalItems: 0,
+    totalPages: 0
+  };
 
   private eventCode: string = '';
 
   constructor(
     private http: HttpClient,
-    private route: ActivatedRoute
+    private route: ActivatedRoute,
+    private themeService: ThemeService
   ) {}
 
   ngOnInit() {
@@ -584,18 +832,29 @@ export class ThemeSelectorComponent implements OnInit {
   }
 
   loadThemes() {
-    this.http.get<ThemeResponse>('/api/themes').subscribe({
-      next: (response) => {
-        this.themes = response.themes;
-        this.categories = response.categories.filter(cat => cat !== 'custom');
-        this.filteredThemes = this.themes;
-        this.loading = false;
-      },
-      error: (error) => {
-        this.errorMessage = 'Erreur lors du chargement des thèmes';
-        this.loading = false;
-      }
-    });
+    try {
+      const allThemes = this.themeService.getAllThemes();
+      this.themes = allThemes.map(theme => ({
+        id: theme.id,
+        name: theme.name,
+        description: theme.description,
+        category: theme.category,
+        preview: {
+          primary: theme.colors.primary,
+          secondary: theme.colors.secondary,
+          background: theme.colors.background,
+          gradient: theme.colors.gradient
+        }
+      }));
+
+      this.categories = this.themeService.getCategories().filter(cat => cat !== 'custom');
+      this.filteredThemes = this.themes;
+      this.updatePagination();
+      this.loading = false;
+    } catch (error) {
+      this.errorMessage = 'Erreur lors du chargement des thèmes';
+      this.loading = false;
+    }
   }
 
   loadCurrentTheme() {
@@ -616,6 +875,8 @@ export class ThemeSelectorComponent implements OnInit {
     } else {
       this.filteredThemes = this.themes.filter(theme => theme.category === category);
     }
+    this.pagination.currentPage = 1;
+    this.updatePagination();
   }
 
   getCategoryLabel(category: string): string {
@@ -632,32 +893,108 @@ export class ThemeSelectorComponent implements OnInit {
 
   selectTheme(themeId: string) {
     this.selectedThemeId = themeId;
+    // Charger automatiquement l'aperçu du thème sélectionné
+    this.loadThemePreview(themeId);
   }
 
-  previewTheme() {
-    if (!this.selectedThemeId) return;
-
-    this.http.get<ThemeConfig>(`/api/themes/${this.selectedThemeId}`).subscribe({
-      next: (theme) => {
+  private loadThemePreview(themeId: string) {
+    try {
+      const theme = this.themeService.getThemeById(themeId);
+      if (theme) {
         this.selectedTheme = theme;
-        this.previewMode = true;
-      },
-      error: (error) => {
-        this.errorMessage = 'Erreur lors du chargement de l\'aperçu';
+      } else {
+        this.selectedTheme = null;
+        this.errorMessage = 'Thème introuvable';
       }
-    });
+    } catch (error) {
+      this.selectedTheme = null;
+      this.errorMessage = 'Erreur lors du chargement de l\'aperçu';
+    }
   }
 
-  closePreview() {
-    this.previewMode = false;
-    this.selectedTheme = null;
+
+  updatePagination() {
+    this.pagination.totalItems = this.filteredThemes.length;
+    this.pagination.totalPages = Math.ceil(this.pagination.totalItems / this.pagination.itemsPerPage);
+
+    if (this.pagination.currentPage > this.pagination.totalPages) {
+      this.pagination.currentPage = Math.max(1, this.pagination.totalPages);
+    }
+
+    const startIndex = (this.pagination.currentPage - 1) * this.pagination.itemsPerPage;
+    const endIndex = startIndex + this.pagination.itemsPerPage;
+    this.paginatedThemes = this.filteredThemes.slice(startIndex, endIndex);
   }
+
+  goToPage(page: number) {
+    if (page >= 1 && page <= this.pagination.totalPages) {
+      this.pagination.currentPage = page;
+      this.updatePagination();
+    }
+  }
+
+  getPageNumbers(): (number | string)[] {
+    const pages: (number | string)[] = [];
+    const totalPages = this.pagination.totalPages;
+    const currentPage = this.pagination.currentPage;
+
+    if (totalPages <= 7) {
+      for (let i = 1; i <= totalPages; i++) {
+        pages.push(i);
+      }
+    } else {
+      pages.push(1);
+
+      if (currentPage > 4) {
+        pages.push('...');
+      }
+
+      let start = Math.max(2, currentPage - 1);
+      let end = Math.min(totalPages - 1, currentPage + 1);
+
+      if (currentPage <= 4) {
+        end = 5;
+      }
+      if (currentPage >= totalPages - 3) {
+        start = totalPages - 4;
+      }
+
+      for (let i = start; i <= end; i++) {
+        pages.push(i);
+      }
+
+      if (currentPage < totalPages - 3) {
+        pages.push('...');
+      }
+
+      pages.push(totalPages);
+    }
+
+    return pages;
+  }
+
+  getPaginationInfo(): string {
+    const start = (this.pagination.currentPage - 1) * this.pagination.itemsPerPage + 1;
+    const end = Math.min(start + this.pagination.itemsPerPage - 1, this.pagination.totalItems);
+    return `Affichage de ${start} à ${end} sur ${this.pagination.totalItems} thèmes`;
+  }
+
 
   getThemeStyles(theme: ThemeConfig): any {
     return {
       'background': theme.colors.gradient || theme.colors.background,
       'color': theme.colors.text,
-      'font-family': theme.fonts.primary
+      'font-family': theme.fonts.primary,
+      '--color-primary': theme.colors.primary,
+      '--color-secondary': theme.colors.secondary,
+      '--color-accent': theme.colors.accent,
+      '--color-background': theme.colors.background,
+      '--color-surface': theme.colors.surface,
+      '--color-text': theme.colors.text,
+      '--color-text-secondary': theme.colors.textSecondary,
+      '--color-border': theme.colors.border,
+      '--font-primary': theme.fonts.primary,
+      '--font-heading': theme.fonts.heading
     };
   }
 

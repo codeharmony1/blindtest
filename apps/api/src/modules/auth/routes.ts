@@ -92,7 +92,7 @@ router.post("/auth/login", async (req, res) => {
     });
 
     // Si pas de staff existant et que c'est le propriétaire de l'événement, créer automatiquement
-    if (!staff && event.organizer.id === organizer.id) {
+    if (!staff && event.organizer?.id === organizer.id) {
       staff = staffRepo.create({
         event_id: event.id,
         organizer_id: organizer.id,

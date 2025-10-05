@@ -1,5 +1,18 @@
 <div class="autumn-theme autumn-fade-in">
   <div class="autumn-leaves"></div>
+  <div class="autumn-decor">
+    <div class="decor-circle decor-circle-1"></div>
+    <div class="decor-circle decor-circle-2"></div>
+    <div class="decor-circle decor-circle-3"></div>
+    <svg class="decor-leaf decor-leaf-1" viewBox="0 0 40 40" fill="none" aria-hidden="true">
+      <path d="M20 5C20 5 10 10 8 20C6 30 12 35 20 35C20 35 20 20 20 5Z" fill="#c87250" />
+      <path d="M20 5C20 5 30 10 32 20C34 30 28 35 20 35C20 35 20 20 20 5Z" fill="#d9794d" />
+    </svg>
+    <svg class="decor-leaf decor-leaf-2" viewBox="0 0 40 40" fill="none" aria-hidden="true">
+      <path d="M20 5C20 5 10 10 8 20C6 30 12 35 20 35C20 35 20 20 20 5Z" fill="#d4a574" />
+      <path d="M20 5C20 5 30 10 32 20C34 30 28 35 20 35C20 35 20 20 20 5Z" fill="#c9a87f" />
+    </svg>
+  </div>
 
   <div class="autumn-container">
     <!-- Message d'erreur si pas de session -->
@@ -19,16 +32,19 @@
 
     <!-- Interface de jeu -->
     <ng-container *ngIf="session">
-      <header class="autumn-header">
-        <h1>
-          <span class="autumn-icon">🎵</span>
-          Round Musical en Cours
-        </h1>
-        <div class="player-info">
-          <div class="team-badge">Équipe #{{ session.teamId }}</div>
-          <div class="player-name">{{ session.nickname }}</div>
+      <div class="autumn-card round-status-card">
+        <div class="status-left">
+          <span class="status-icon">🎵</span>
+          <div class="status-texts">
+            <p class="status-label">Blind Test – Mariage d'automne</p>
+            <h2 class="status-title">Manche musicale en cours</h2>
+          </div>
         </div>
-      </header>
+        <div class="status-meta">
+          <span class="status-team">Équipe #{{ session.teamId }}</span>
+          <span class="status-player">— {{ session.nickname }}</span>
+        </div>
+      </div>
 
       <!-- Timer et statut -->
       <div class="autumn-card timer-card" *ngIf="songId">
@@ -52,29 +68,30 @@
       </div>
 
       <!-- Message d'attente si pas de chanson -->
-      <div *ngIf="!songId" class="autumn-card">
-        <div class="autumn-message message-info">
-          <span>🎧</span>
-          <div>
-            <p><strong>En attente du prochain morceau...</strong></p>
-            <p>Le DJ prépare la prochaine chanson à deviner !</p>
-          </div>
+      <div *ngIf="!songId" class="autumn-card waiting-card">
+        <span class="waiting-icon">✨</span>
+        <div class="waiting-texts">
+          <p class="waiting-title">En attente du prochain morceau…</p>
+          <p class="waiting-subtitle">Le DJ prépare la prochaine piste à deviner.</p>
         </div>
       </div>
 
       <!-- Formulaire de réponse -->
       <div class="autumn-card answer-card">
-        <h3>
-          <span class="autumn-section-icon">✍️</span>
-          Votre Réponse
-        </h3>
+        <div class="answer-header">
+          <span class="answer-icon">✍️</span>
+          <div>
+            <h3>Votre réponse</h3>
+            <p class="answer-subtitle">Indiquez le titre et/ou l'artiste que vous reconnaissez.</p>
+          </div>
+        </div>
 
         <div class="answer-form">
-          <label for="answer" class="autumn-label"> Titre et/ou Artiste de la chanson </label>
+          <label for="answer" class="autumn-label">Titre et/ou artiste du morceau</label>
           <input
             id="answer"
             [(ngModel)]="answer"
-            placeholder="ex: Billie Jean - Michael Jackson"
+            placeholder="ex. Billie Jean – Michael Jackson"
             class="autumn-input answer-input"
             [disabled]="!songId || sending"
             (keyup.enter)="send()"
@@ -89,16 +106,21 @@
           >
             <span class="btn-icon" *ngIf="!sending">📝</span>
             <span class="btn-icon" *ngIf="sending">⏳</span>
-            <span *ngIf="!sending">Envoyer la Réponse</span>
-            <span *ngIf="sending">Envoi en cours...</span>
+            <span *ngIf="!sending">Envoyer</span>
+            <span *ngIf="sending">Envoi en cours…</span>
           </button>
         </div>
+      </div>
 
-        <div class="autumn-message message-info">
-          <span>💡</span>
-          <strong>Astuce :</strong> La dernière réponse avant la fin du temps imparti sera prise en
-          compte !
-        </div>
+      <div class="autumn-card info-card">
+        <span class="info-icon">💡</span>
+        <p>Seule la dernière réponse envoyée avant la fin du temps imparti sera prise en compte.</p>
+      </div>
+
+      <div class="autumn-footer-dots">
+        <span></span>
+        <span></span>
+        <span></span>
       </div>
 
       <!-- Navigation -->

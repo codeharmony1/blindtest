@@ -6,8 +6,7 @@ import { RoundSong } from "../../db/entities/RoundSong";
 import { Team } from "../../db/entities/Team";
 import { Player } from "../../db/entities/Player";
 import { requirePlayer, AuthedPlayer } from "../../middlewares/auth";
-import { matchTitleArtist } from "../../services/matching.service";
-import { computePoints } from "../../services/scoring.service";
+import { matchingService } from "../../services/matching.service";
 import { answerRateLimit } from "../../middlewares/rate-limit";
 import { requireSongOpen, requireStrictTimeWindow, TemporalRequest } from "../../middlewares/temporal-security";
 
@@ -57,17 +56,8 @@ router.post(
       });
     }
 
-    // Matching (peut donner 0 si les officiels ne sont pas encore saisis; grade corrigera après)
-    const aliases = song.aliases_json
-      ? (JSON.parse(song.aliases_json) as string[])
-      : [];
-    const m = matchTitleArtist(
-      text,
-      song.title_official ?? undefined,
-      song.artist_official ?? undefined,
-      aliases,
-    );
-    const pts = computePoints(m.matchTitle, m.matchArtist);
+    // Matching intelligent avec Levenshtein et alias
+    const matchResult = await matchingService.scoreAnswer(text, song.id);
 
     // Upsert dernière réponse (unique par (song, team))
     let answer = await ansRepo.findOne({
@@ -79,11 +69,11 @@ router.post(
       answer.team_id = team.id;
     }
     answer.text_raw = text;
-    answer.text_norm = null;
+    answer.text_norm = matchResult.normalizedAnswer;
     answer.submitted_at = now; // horloge serveur
-    answer.match_title = m.matchTitle;
-    answer.match_artist = m.matchArtist;
-    answer.points = pts;
+    answer.match_title = matchResult.matchTitle;
+    answer.match_artist = matchResult.matchArtist;
+    answer.points = matchResult.points;
 
     const saved = await ansRepo.save(answer);
     return res.json({

@@ -679,7 +679,7 @@ export class SongsManagerComponent implements OnInit {
   }
 
   loadEventInfo() {
-    this.http.get<Event>(`http://localhost:3000/api/events/id/${this.eventId}`).subscribe({
+    this.http.get<Event>(`/api/events/id/${this.eventId}`).subscribe({
       next: (event) => {
         this.currentEvent = event;
       },
@@ -690,7 +690,7 @@ export class SongsManagerComponent implements OnInit {
   }
 
   loadRoundInfo() {
-    this.http.get<Round>(`http://localhost:3000/api/rounds/${this.roundId}`).subscribe({
+    this.http.get<Round>(`/api/rounds/${this.roundId}`).subscribe({
       next: (round) => {
         this.currentRound = round;
       },
@@ -701,17 +701,15 @@ export class SongsManagerComponent implements OnInit {
   }
 
   loadSongs() {
-    this.http
-      .get<{ songs: Song[] }>(`http://localhost:3000/api/rounds/${this.roundId}/songs`)
-      .subscribe({
-        next: (response) => {
-          this.songs = response.songs;
-        },
-        error: (error) => {
-          console.error('Erreur lors du chargement des chansons:', error);
-          this.songs = [];
-        },
-      });
+    this.http.get<{ songs: Song[] }>(`/api/rounds/${this.roundId}/songs`).subscribe({
+      next: (response) => {
+        this.songs = response.songs;
+      },
+      error: (error) => {
+        console.error('Erreur lors du chargement des chansons:', error);
+        this.songs = [];
+      },
+    });
   }
 
   getNextIndex(): number {
@@ -739,7 +737,7 @@ export class SongsManagerComponent implements OnInit {
         aliases: aliases,
       };
 
-      this.http.post(`http://localhost:3000/api/rounds/${this.roundId}/songs`, songData).subscribe({
+      this.http.post(`/api/rounds/${this.roundId}/songs`, songData).subscribe({
         next: (response) => {
           console.log('✅ Chanson ajoutée:', response);
           this.isSubmitting = false;
@@ -752,7 +750,14 @@ export class SongsManagerComponent implements OnInit {
         error: (error) => {
           console.error("❌ Erreur lors de l'ajout:", error);
           this.isSubmitting = false;
-          alert("Erreur lors de l'ajout de la chanson.");
+
+          // Gestion spécifique de l'erreur SONG_LIMIT_REACHED (plan DEMO)
+          if (error.status === 403 && error.error?.error?.code === 'SONG_LIMIT_REACHED') {
+            const errorData = error.error.error;
+            alert(`⚠️ Limite atteinte !\n\n${errorData.message}\n\nActuellement : ${errorData.current}/${errorData.limit} chansons`);
+          } else {
+            alert("Erreur lors de l'ajout de la chanson.");
+          }
         },
       });
     }
@@ -769,22 +774,27 @@ export class SongsManagerComponent implements OnInit {
     const formData = new FormData();
     formData.append('csvFile', this.selectedFile);
 
-    this.http
-      .post(`http://localhost:3000/api/rounds/${this.roundId}/import-csv`, formData)
-      .subscribe({
-        next: (response: any) => {
-          console.log('✅ Import CSV réussi:', response);
-          this.isUploading = false;
-          this.selectedFile = null;
-          this.loadSongs(); // Refresh list
-          alert(`${response.imported} chansons importées avec succès !`);
-        },
-        error: (error) => {
-          console.error("❌ Erreur lors de l'import:", error);
-          this.isUploading = false;
+    this.http.post(`/api/rounds/${this.roundId}/import-csv`, formData).subscribe({
+      next: (response: any) => {
+        console.log('✅ Import CSV réussi:', response);
+        this.isUploading = false;
+        this.selectedFile = null;
+        this.loadSongs(); // Refresh list
+        alert(`${response.imported} chansons importées avec succès !`);
+      },
+      error: (error) => {
+        console.error("❌ Erreur lors de l'import:", error);
+        this.isUploading = false;
+
+        // Gestion spécifique de l'erreur SONG_LIMIT_REACHED (plan DEMO)
+        if (error.status === 403 && error.error?.error?.code === 'SONG_LIMIT_REACHED') {
+          const errorData = error.error.error;
+          alert(`⚠️ Limite atteinte !\n\n${errorData.message}\n\nActuellement : ${errorData.current}/${errorData.limit} chansons`);
+        } else {
           alert("Erreur lors de l'import CSV.");
-        },
-      });
+        }
+      },
+    });
   }
 
   editSong(song: Song) {

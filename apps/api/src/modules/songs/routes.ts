@@ -6,7 +6,9 @@ import { RoundSong } from "../../db/entities/RoundSong";
 import { Answer } from "../../db/entities/Answer";
 import { Score } from "../../db/entities/Score";
 import { Team } from "../../db/entities/Team";
-import { matchTitleArtist } from "../../services/matching.service";
+import { Event } from "../../db/entities/Event";
+import { Tenant } from "../../db/entities/Tenant";
+import { matchingService } from "../../services/matching.service";
 import { computePoints } from "../../services/scoring.service";
 import { io } from "../../ws/socket";
 
@@ -26,9 +28,38 @@ router.post("/rounds/:roundId/songs", async (req, res) => {
 
   const round = await AppDataSource.getRepository(Round).findOne({
     where: { id: String(req.params.roundId) },
+    relations: ["event", "event.tenant"]
   });
   if (!round)
     return res.status(404).json({ error: { code: "ROUND_NOT_FOUND" } });
+
+  // Vérification des limites du plan DEMO
+  const event = round.event as Event;
+  if (event && event.tenant_id) {
+    const tenant = await AppDataSource.getRepository(Tenant).findOne({
+      where: { id: event.tenant_id }
+    });
+
+    if (tenant && tenant.subscription_plan === 'DEMO' && tenant.max_songs_per_event) {
+      // Compter le nombre de chansons déjà existantes pour cet événement
+      const existingSongsCount = await AppDataSource.getRepository(RoundSong)
+        .createQueryBuilder("song")
+        .innerJoin("song.round", "round")
+        .where("round.event_id = :eventId", { eventId: event.id })
+        .getCount();
+
+      if (existingSongsCount >= tenant.max_songs_per_event) {
+        return res.status(403).json({
+          error: {
+            code: "SONG_LIMIT_REACHED",
+            message: `Plan DEMO limité à ${tenant.max_songs_per_event} chansons par événement. Passez à un plan payant pour ajouter plus de chansons.`,
+            limit: tenant.max_songs_per_event,
+            current: existingSongsCount
+          }
+        });
+      }
+    }
+  }
 
   const rs = new RoundSong();
   rs.round = round;
@@ -327,37 +358,35 @@ router.post("/songs/:songId/grade", async (req, res) => {
 
   await AppDataSource.getRepository(RoundSong).save(ctx.song);
 
-  // Recalcul des réponses (points) pour ce morceau
+  // Recalcul des réponses (points) pour ce morceau avec matching intelligent
   const ansRepo = AppDataSource.getRepository(Answer);
   const answers = await ansRepo.find({ where: { round_song_id: ctx.song.id } });
 
-  const aliases: string[] = ctx.song.aliases_json
-    ? JSON.parse(ctx.song.aliases_json)
-    : [];
   const results: Array<{
     teamId: string;
     matchTitle: boolean;
     matchArtist: boolean;
     points: number;
+    titleSimilarity?: number;
+    artistSimilarity?: number;
   }> = [];
 
   for (const a of answers) {
-    const m = matchTitleArtist(
-      a.text_raw,
-      ctx.song.title_official ?? undefined,
-      ctx.song.artist_official ?? undefined,
-      aliases,
-    );
-    const pts = computePoints(m.matchTitle, m.matchArtist);
-    a.match_title = m.matchTitle;
-    a.match_artist = m.matchArtist;
-    a.points = pts;
+    const matchResult = await matchingService.scoreAnswer(a.text_raw, ctx.song.id);
+
+    a.match_title = matchResult.matchTitle;
+    a.match_artist = matchResult.matchArtist;
+    a.points = matchResult.points;
+    a.text_norm = matchResult.normalizedAnswer;
+
     await ansRepo.save(a); // triggers SQL mettront à jour scores
     results.push({
       teamId: a.team_id,
       matchTitle: a.match_title,
       matchArtist: a.match_artist,
       points: a.points,
+      titleSimilarity: matchResult.titleSimilarity,
+      artistSimilarity: matchResult.artistSimilarity
     });
   }
 
@@ -389,6 +418,152 @@ router.post("/songs/:songId/grade", async (req, res) => {
     results,
     leaderboard,
   });
+});
+
+// POST /api/songs/:songId/aliases - Ajouter/modifier des alias pour une chanson
+router.post("/songs/:songId/aliases", async (req, res) => {
+  try {
+    const { aliases } = req.body ?? {};
+
+    if (!Array.isArray(aliases)) {
+      return res.status(400).json({
+        error: { code: "BAD_REQUEST", message: "aliases must be an array" }
+      });
+    }
+
+    const songRepo = AppDataSource.getRepository(RoundSong);
+    const song = await songRepo.findOne({ where: { id: String(req.params.songId) } });
+
+    if (!song) {
+      return res.status(404).json({ error: { code: "SONG_NOT_FOUND" } });
+    }
+
+    // Stocker les alias en JSON
+    // Format: ["alias1", "alias2", "artist:Artist Alias"]
+    song.aliases_json = JSON.stringify(aliases);
+    const saved = await songRepo.save(song);
+
+    return res.json({
+      songId: saved.id,
+      aliases: JSON.parse(saved.aliases_json || "[]"),
+      updated: true
+    });
+  } catch (error) {
+    return res.status(500).json({
+      error: { code: "SERVER_ERROR", message: String(error) }
+    });
+  }
+});
+
+// GET /api/songs/:songId/aliases - Récupérer les alias d'une chanson
+router.get("/songs/:songId/aliases", async (req, res) => {
+  try {
+    const songRepo = AppDataSource.getRepository(RoundSong);
+    const song = await songRepo.findOne({ where: { id: String(req.params.songId) } });
+
+    if (!song) {
+      return res.status(404).json({ error: { code: "SONG_NOT_FOUND" } });
+    }
+
+    const aliases = song.aliases_json ? JSON.parse(song.aliases_json) : [];
+
+    return res.json({
+      songId: song.id,
+      title: song.title_official,
+      artist: song.artist_official,
+      aliases
+    });
+  } catch (error) {
+    return res.status(500).json({
+      error: { code: "SERVER_ERROR", message: String(error) }
+    });
+  }
+});
+
+// POST /api/songs/:songId/suggest-aliases - Suggérer des alias basés sur les réponses
+router.post("/songs/:songId/suggest-aliases", async (req, res) => {
+  try {
+    const ctx = await getEventContextFromSong(req.params.songId);
+    if (!ctx.song) {
+      return res.status(404).json({ error: { code: "SONG_NOT_FOUND" } });
+    }
+
+    // Récupérer toutes les réponses pour cette chanson
+    const ansRepo = AppDataSource.getRepository(Answer);
+    const answers = await ansRepo.find({
+      where: { round_song_id: ctx.song.id }
+    });
+
+    if (answers.length === 0) {
+      return res.json({
+        songId: ctx.song.id,
+        suggestions: [],
+        message: "No answers yet to analyze"
+      });
+    }
+
+    const playerAnswers = answers.map(a => a.text_raw);
+    const suggestions = matchingService.suggestAliases(
+      playerAnswers,
+      ctx.song.title_official || "",
+      ctx.song.artist_official || ""
+    );
+
+    return res.json({
+      songId: ctx.song.id,
+      title: ctx.song.title_official,
+      artist: ctx.song.artist_official,
+      suggestions,
+      totalAnswers: answers.length
+    });
+  } catch (error) {
+    return res.status(500).json({
+      error: { code: "SERVER_ERROR", message: String(error) }
+    });
+  }
+});
+
+// DELETE /api/songs/:id - Supprimer une chanson
+router.delete("/:id", async (req, res) => {
+  const { id } = req.params;
+  const songRepo = AppDataSource.getRepository(RoundSong);
+
+  try {
+    const song = await songRepo.findOne({
+      where: { id: String(id) },
+      relations: ["round", "round.event"],
+    });
+
+    if (!song) {
+      return res.status(404).json({
+        error: { code: "NOT_FOUND", message: "Song not found" }
+      });
+    }
+
+    const eventCode = (song.round as any).event?.code as string | undefined;
+    const roundId = song.round_id;
+
+    await songRepo.delete({ id: String(id) });
+
+    // Emit WebSocket event
+    if (eventCode) {
+      io.to(`event:${eventCode}`).emit("song_deleted", {
+        songId: id,
+        roundId: roundId,
+      });
+    }
+
+    return res.json({
+      message: "Song deleted successfully",
+      songId: id,
+      roundId: roundId
+    });
+  } catch (error) {
+    console.error("Error deleting song:", error);
+    return res.status(500).json({
+      error: { code: "DELETE_ERROR", message: String(error) }
+    });
+  }
 });
 
 export default router;

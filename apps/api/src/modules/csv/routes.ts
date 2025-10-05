@@ -8,6 +8,7 @@ import { RoundSong } from "../../db/entities/RoundSong";
 import { Score } from "../../db/entities/Score";
 import { Team } from "../../db/entities/Team";
 import { Answer } from "../../db/entities/Answer";
+import { Tenant } from "../../db/entities/Tenant";
 
 const router = Router();
 const upload = multer({ storage: multer.memoryStorage() });
@@ -24,7 +25,10 @@ router.post("/rounds/:roundId/import-csv", upload.single('csv'), async (req, res
     const roundRepo = AppDataSource.getRepository(Round);
     const songRepo = AppDataSource.getRepository(RoundSong);
 
-    const round = await roundRepo.findOne({ where: { id: String(req.params.roundId) } });
+    const round = await roundRepo.findOne({
+      where: { id: String(req.params.roundId) },
+      relations: ["event", "event.tenant"]
+    });
     if (!round) {
       return res.status(404).json({ error: { code: "ROUND_NOT_FOUND" } });
     }
@@ -50,17 +54,20 @@ router.post("/rounds/:roundId/import-csv", upload.single('csv'), async (req, res
       });
     }
 
-    // Validate CSV format
-    const requiredColumns = ['title', 'artist'];
+    // Validate CSV format - Accept either old format (title, artist) or new format (title, singer, band)
     const firstRecord = records[0];
-    const missingColumns = requiredColumns.filter(col => !(col in firstRecord));
+    const hasOldFormat = 'title' in firstRecord && 'artist' in firstRecord;
+    const hasNewFormat = 'title' in firstRecord && ('singer' in firstRecord || 'band' in firstRecord);
 
-    if (missingColumns.length > 0) {
+    if (!hasOldFormat && !hasNewFormat) {
       return res.status(400).json({
         error: {
           code: "INVALID_CSV_FORMAT",
-          message: `Missing required columns: ${missingColumns.join(', ')}`,
-          expectedColumns: ['title', 'artist', 'aliases (optional)', 'duration (optional)']
+          message: `Missing required columns. Expected either: [title, artist] or [title, singer, band]`,
+          expectedColumns: {
+            format1: ['title', 'artist', 'aliases (optional)', 'duration (optional)'],
+            format2: ['title', 'singer', 'band', 'aliases (optional)']
+          }
         }
       });
     }
@@ -71,22 +78,72 @@ router.post("/rounds/:roundId/import-csv", upload.single('csv'), async (req, res
       await songRepo.delete({ round_id: round.id });
     }
 
+    // Vérification des limites du plan DEMO
+    const event = round.event as Event;
+    if (event && event.tenant_id) {
+      const tenant = await AppDataSource.getRepository(Tenant).findOne({
+        where: { id: event.tenant_id }
+      });
+
+      if (tenant && tenant.subscription_plan === 'DEMO' && tenant.max_songs_per_event) {
+        // Compter le nombre de chansons existantes pour cet événement
+        const existingSongsCount = await AppDataSource.getRepository(RoundSong)
+          .createQueryBuilder("song")
+          .innerJoin("song.round", "round")
+          .where("round.event_id = :eventId", { eventId: event.id })
+          .getCount();
+
+        // Vérifier si l'import dépasserait la limite
+        const totalAfterImport = existingSongsCount + records.length;
+        if (totalAfterImport > tenant.max_songs_per_event) {
+          return res.status(403).json({
+            error: {
+              code: "SONG_LIMIT_REACHED",
+              message: `Plan DEMO limité à ${tenant.max_songs_per_event} chansons par événement. Import refusé car vous avez ${existingSongsCount} chansons et tentez d'en ajouter ${records.length} (total: ${totalAfterImport}). Passez à un plan payant pour ajouter plus de chansons.`,
+              limit: tenant.max_songs_per_event,
+              current: existingSongsCount,
+              attempted: records.length,
+              wouldBe: totalAfterImport
+            }
+          });
+        }
+      }
+    }
+
     // Import songs
     const importedSongs = [];
     let idx = await songRepo.count({ where: { round_id: round.id } }) + 1;
 
     for (const record of records) {
-      const { title, artist, aliases, duration } = record;
+      const { title, artist, singer, band, aliases, duration } = record;
 
-      if (!title || !artist) {
+      // Determine artist field: use new format (singer/band) if available, otherwise fall back to old format (artist)
+      let artistField = '';
+      if (singer || band) {
+        // New format: combine singer and band
+        const parts = [];
+        if (singer && singer.trim()) parts.push(singer.trim());
+        if (band && band.trim()) parts.push(band.trim());
+        artistField = parts.join(' - ');
+      } else if (artist) {
+        // Old format: use artist directly
+        artistField = artist.trim();
+      }
+
+      if (!title || !artistField) {
         console.warn('Skipping invalid record:', record);
         continue;
       }
 
-      // Parse aliases
+      // Parse aliases - support both | and , as separators
       let aliasesArray: string[] = [];
       if (aliases && typeof aliases === 'string') {
-        aliasesArray = aliases.split(',').map(a => a.trim()).filter(a => a.length > 0);
+        // Try pipe separator first, then comma
+        if (aliases.includes('|')) {
+          aliasesArray = aliases.split('|').map(a => a.trim()).filter(a => a.length > 0);
+        } else {
+          aliasesArray = aliases.split(',').map(a => a.trim()).filter(a => a.length > 0);
+        }
       }
 
       // Parse duration
@@ -103,7 +160,7 @@ router.post("/rounds/:roundId/import-csv", upload.single('csv'), async (req, res
         idx: idx++,
         mode: "prepared" as any,
         title_official: title.trim(),
-        artist_official: artist.trim(),
+        artist_official: artistField,
         aliases_json: aliasesArray.length > 0 ? JSON.stringify(aliasesArray) : undefined,
         duration_s: durationSeconds,
         status: "pending" as any

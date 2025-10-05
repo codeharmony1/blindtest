@@ -7,7 +7,7 @@ import { RoundSong } from "../../db/entities/RoundSong";
 import { Answer } from "../../db/entities/Answer";
 import { Score } from "../../db/entities/Score";
 import { Team } from "../../db/entities/Team";
-import { matchTitleArtist } from "../../services/matching.service";
+import { matchingService } from "../../services/matching.service";
 import { computePoints } from "../../services/scoring.service";
 import { io } from "../../ws/socket";
 
@@ -52,22 +52,16 @@ async function gradeSongInternal(
     }
   }
 
-  // Recalcule points selon titre/artiste officiels
+  // Recalcule points selon titre/artiste officiels avec matching intelligent
   const ansRepo = AppDataSource.getRepository(Answer);
   const answers = await ansRepo.find({ where: { round_song_id: song.id } });
-  const aliases: string[] = song.aliases_json
-    ? JSON.parse(song.aliases_json)
-    : [];
+
   for (const a of answers) {
-    const m = matchTitleArtist(
-      a.text_raw,
-      song.title_official ?? undefined,
-      song.artist_official ?? undefined,
-      aliases,
-    );
-    a.match_title = m.matchTitle;
-    a.match_artist = m.matchArtist;
-    a.points = computePoints(m.matchTitle, m.matchArtist);
+    const matchResult = await matchingService.scoreAnswer(a.text_raw, song.id);
+    a.match_title = matchResult.matchTitle;
+    a.match_artist = matchResult.matchArtist;
+    a.points = matchResult.points;
+    a.text_norm = matchResult.normalizedAnswer;
     await ansRepo.save(a);
   }
   song.status = "scored";
@@ -255,6 +249,8 @@ router.get("/rounds/:roundId/songs", async (req, res) => {
       status: song.status,
       mode: song.mode,
       aliases: song.aliases_json ? JSON.parse(song.aliases_json) : [],
+      startedAt: song.started_at,
+      endedAt: song.ended_at,
     }));
 
     return res.json({ songs: formattedSongs });

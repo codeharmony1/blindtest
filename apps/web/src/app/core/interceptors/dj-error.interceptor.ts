@@ -29,12 +29,12 @@ export class DjErrorInterceptor implements HttpInterceptor {
 
   private isDjApiCall(url: string): boolean {
     return (
-      url.includes('/api/songs/') &&
-      (url.includes('/open') ||
-        url.includes('/close') ||
-        url.includes('/grade') ||
-        url.includes('/next') ||
-        !!url.match(/\/api\/songs\/\d+$/)) // PATCH /api/songs/{id}
+      (url.includes('/api/songs/') &&
+        (url.includes('/open') ||
+          url.includes('/close') ||
+          url.includes('/grade') ||
+          !!url.match(/\/api\/songs\/\d+$/))) || // PATCH /api/songs/{id}
+      url.includes('/api/rounds/') && url.includes('/next') // POST /api/rounds/{id}/next
     );
   }
 }

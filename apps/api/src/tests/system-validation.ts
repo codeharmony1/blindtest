@@ -73,13 +73,18 @@ class SystemValidator {
   private async validateServices(): Promise<void> {
     // Test matching service
     try {
-      const { matchTitleArtist } = await import('../services/matching.service');
-      const result = matchTitleArtist("Billie Jean", "Billie Jean", "Michael Jackson", ["MJ"]);
+      const { matchingService } = await import('../services/matching.service');
 
-      if (result.matchTitle && result.matchArtist) {
-        this.addResult('Services', 'OK', 'Matching service working correctly');
+      // Test normalisation
+      const normalized = matchingService.normalize("Billie Jean - Michael Jackson");
+
+      // Test similarité
+      const similarity = matchingService.similarity("Billie Jean", "billie jean");
+
+      if (normalized && similarity === 100) {
+        this.addResult('Services', 'OK', 'Matching service working correctly (normalization & similarity)');
       } else {
-        this.addResult('Services', 'ERROR', 'Matching service not working');
+        this.addResult('Services', 'ERROR', 'Matching service not working as expected');
       }
     } catch (error) {
       this.addResult('Services', 'ERROR', 'Matching service failed to load', error);

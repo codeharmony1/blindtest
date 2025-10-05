@@ -13,12 +13,18 @@ import { Team } from "./Team";
 @Index("uq_answer_per_song_team", ["round_song_id", "team_id"], {
   unique: true,
 })
+@Index("idx_answer_tenant", ["tenant_id", "round_song_id"])
 export class Answer {
   @PrimaryGeneratedColumn({ type: "bigint", unsigned: true })
   id!: string;
 
   @Column({ type: "bigint", unsigned: true })
   round_song_id!: string;
+
+  // Support multi-tenant
+  @Index()
+  @Column({ type: "varchar", length: 36 })
+  tenant_id!: string;
 
   @ManyToOne(() => RoundSong, (rs) => rs.answers, { onDelete: "CASCADE" })
   @JoinColumn({ name: "round_song_id" })
@@ -48,4 +54,13 @@ export class Answer {
 
   @Column({ type: "smallint", unsigned: true, default: 0 })
   points!: number;
+
+  // Méthodes helper multi-tenant
+  isOwnedByTenant(tenantId: string): boolean {
+    return this.tenant_id === tenantId;
+  }
+
+  canBeAccessedByTenant(tenantId: string): boolean {
+    return this.tenant_id === tenantId;
+  }
 }

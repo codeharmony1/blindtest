@@ -16,12 +16,18 @@ export type SongStatus = "pending" | "open" | "closed" | "scored";
 
 @Entity({ name: "round_songs" })
 @Index("uq_roundsong_position", ["round_id", "idx"], { unique: true })
+@Index("idx_roundsong_tenant", ["tenant_id", "round_id"])
 export class RoundSong {
   @PrimaryGeneratedColumn({ type: "bigint", unsigned: true })
   id!: string;
 
   @Column({ type: "bigint", unsigned: true })
   round_id!: string;
+
+  // Support multi-tenant
+  @Index()
+  @Column({ type: "varchar", length: 36 })
+  tenant_id!: string;
 
   @ManyToOne(() => Round, (r) => r.songs, { onDelete: "CASCADE" })
   @JoinColumn({ name: "round_id" })
@@ -67,4 +73,13 @@ export class RoundSong {
 
   @OneToMany(() => Answer, (a) => a.song)
   answers!: Answer[];
+
+  // Méthodes helper multi-tenant
+  isOwnedByTenant(tenantId: string): boolean {
+    return this.tenant_id === tenantId;
+  }
+
+  canBeAccessedByTenant(tenantId: string): boolean {
+    return this.tenant_id === tenantId;
+  }
 }

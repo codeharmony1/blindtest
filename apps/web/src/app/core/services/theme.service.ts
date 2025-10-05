@@ -2,39 +2,9 @@ import { Injectable, DOCUMENT } from '@angular/core';
 import { Inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { BehaviorSubject, Observable } from 'rxjs';
+import { PREDEFINED_THEMES, ThemeConfig, ThemeColors, getThemeById, getThemesByCategory, DEFAULT_THEME } from '../../../../../api/src/types/themes';
 
-export interface ThemeColors {
-  primary: string;
-  secondary: string;
-  accent: string;
-  background: string;
-  surface: string;
-  text: string;
-  textSecondary: string;
-  border: string;
-  gradient?: string;
-}
-
-export interface ThemeConfig {
-  id: string;
-  name: string;
-  description: string;
-  category: string;
-  colors: ThemeColors;
-  fonts: {
-    primary: string;
-    heading: string;
-  };
-  imagery?: {
-    backgroundPattern?: string;
-    iconStyle?: 'outline' | 'filled' | 'duotone';
-    illustrations?: string[];
-  };
-  animations?: {
-    duration: 'fast' | 'normal' | 'slow';
-    easing: 'ease' | 'ease-in' | 'ease-out' | 'ease-in-out';
-  };
-}
+export type { ThemeConfig, ThemeColors };
 
 @Injectable({
   providedIn: 'root',
@@ -44,27 +14,7 @@ export class ThemeService {
   public currentTheme$ = this.currentThemeSubject.asObservable();
   private ambientEl: HTMLElement | null = null;
 
-  private readonly defaultTheme: ThemeConfig = {
-    id: 'wedding-autumn',
-    name: 'Mariage Automne',
-    description: 'Couleurs chaudes et romantiques pour un mariage automnal',
-    category: 'wedding',
-    colors: {
-      primary: '#8B4513',
-      secondary: '#DAA520',
-      accent: '#D2691E',
-      background: '#FDF5E6',
-      surface: '#FFFFFF',
-      text: '#2F1B14',
-      textSecondary: '#6B4423',
-      border: '#DEB887',
-      gradient: 'linear-gradient(135deg, #8B4513 0%, #DAA520 100%)',
-    },
-    fonts: {
-      primary: "'Inter', sans-serif",
-      heading: "'Playfair Display', serif",
-    },
-  };
+  private readonly defaultTheme: ThemeConfig = DEFAULT_THEME;
 
   constructor(
     private http: HttpClient,
@@ -371,6 +321,27 @@ export class ThemeService {
   // Reset vers le thème par défaut
   resetToDefault() {
     this.applyTheme(this.defaultTheme);
+  }
+
+  // Obtient tous les thèmes prédéfinis
+  getAllThemes(): ThemeConfig[] {
+    return PREDEFINED_THEMES;
+  }
+
+  // Obtient les thèmes par catégorie
+  getThemesByCategory(category: ThemeConfig['category']): ThemeConfig[] {
+    return getThemesByCategory(category);
+  }
+
+  // Obtient un thème par ID
+  getThemeById(themeId: string): ThemeConfig | undefined {
+    return getThemeById(themeId);
+  }
+
+  // Obtient toutes les catégories disponibles
+  getCategories(): ThemeConfig['category'][] {
+    const categories = new Set(PREDEFINED_THEMES.map(theme => theme.category));
+    return Array.from(categories);
   }
 
   // Crée un thème personnalisé basé sur des couleurs

@@ -9,6 +9,14 @@ import { Round } from "./entities/Round";
 import { RoundSong } from "./entities/RoundSong";
 import { Answer } from "./entities/Answer";
 import { Score } from "./entities/Score";
+// Nouvelles entités multi-tenant
+import { Tenant } from "./entities/Tenant";
+import { TenantUser } from "./entities/TenantUser";
+import { TenantSession } from "./entities/TenantSession";
+import { Payment } from "./entities/Payment";
+// Entités super-admin
+import { SuperAdmin } from "./entities/SuperAdmin";
+import { AuditLog } from "./entities/AuditLog";
 
 export const AppDataSource = new DataSource({
   type: "mysql",
@@ -21,6 +29,7 @@ export const AppDataSource = new DataSource({
   synchronize: false, // DB déjà créée via script SQL
   logging: true,
   entities: [
+    // Entités legacy
     Organizer,
     Event,
     EventStaff,
@@ -30,6 +39,14 @@ export const AppDataSource = new DataSource({
     RoundSong,
     Answer,
     Score,
+    // Nouvelles entités multi-tenant
+    Tenant,
+    TenantUser,
+    TenantSession,
+    Payment,
+    // Entités super-admin
+    SuperAdmin,
+    AuditLog,
   ],
-  migrations: [],
+  migrations: ["src/db/migrations/*.ts"],
 });

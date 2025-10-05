@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { environment } from '../../../environments/environment.development';
-import { Observable } from 'rxjs';
+import { Observable, map } from 'rxjs';
 
 @Injectable({ providedIn: 'root' })
 export class ApiService {
@@ -20,6 +20,28 @@ export class ApiService {
     return this.http.get<
       Array<{ id: string; name: string | null; defaultDuration: number; totalSongs: number }>
     >(`${this.base}/events/${code}/rounds`, { headers });
+  }
+  createRound(code: string, payload: { name?: string; defaultDuration?: number; totalSongs?: number }) {
+    return this.http.post<{
+      id: string;
+      name: string | null;
+      defaultDuration: number;
+      totalSongs: number;
+    }>(`${this.base}/events/${code}/rounds`, payload);
+  }
+  getRoundSongs(roundId: string) {
+    return this.http
+      .get<{
+        songs: Array<{
+          id: string;
+          idx: number;
+          mode: string;
+          title: string | null;
+          artist: string | null;
+          status: string;
+        }>;
+      }>(`${this.base}/rounds/${roundId}/songs`)
+      .pipe(map((response) => response.songs));
   }
 
   // Teams / Players
@@ -60,11 +82,30 @@ export class ApiService {
       endsAt: string;
     }>(`${this.base}/rounds/${roundId}/next`, duration ? { duration } : {});
   }
+  createSong(
+    roundId: string,
+    payload: {
+      mode: 'freestyle' | 'prepared';
+      idx: number;
+      title?: string;
+      artist?: string;
+      aliases?: string[];
+      duration?: number;
+    },
+  ) {
+    return this.http.post<{ id: string; idx: number; mode: string }>(
+      `${this.base}/rounds/${roundId}/songs`,
+      payload,
+    );
+  }
   patchSong(
     songId: string,
-    payload: { title?: string; artist?: string; aliases?: string[]; duration?: number },
+    payload: { title?: string; artist?: string; aliases?: string[]; duration?: number; status?: string },
   ) {
     return this.http.patch(`${this.base}/songs/${songId}`, payload);
+  }
+  deleteSong(songId: string) {
+    return this.http.delete(`${this.base}/songs/${songId}`);
   }
   openSong(songId: string, duration?: number) {
     return this.http.post(`${this.base}/songs/${songId}/open`, duration ? { duration } : {});

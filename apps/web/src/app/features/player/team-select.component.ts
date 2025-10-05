@@ -14,152 +14,301 @@ import { ThemeService } from '../../core/services/theme.service';
   styleUrls: ['../../shared/styles/autumn-wedding.scss'],
   styles: [
     `
+      .autumn-theme {
+        position: relative;
+      }
+
+      .autumn-container {
+        position: relative;
+        z-index: 1;
+        display: flex;
+        flex-direction: column;
+        gap: 2rem;
+      }
+
+      .autumn-decor {
+        position: absolute;
+        inset: 0;
+        pointer-events: none;
+        z-index: 0;
+      }
+
+      .autumn-decor .decor-circle {
+        position: absolute;
+        border-radius: 50%;
+        filter: blur(0.5px);
+        opacity: 0.18;
+      }
+
+      .decor-circle-1 {
+        top: 2.5rem;
+        left: 1.5rem;
+        width: 6rem;
+        height: 6rem;
+        background: #d9794d;
+      }
+
+      .decor-circle-2 {
+        top: 8rem;
+        right: 2.5rem;
+        width: 4.5rem;
+        height: 4.5rem;
+        background: #d4a574;
+      }
+
+      .decor-circle-3 {
+        bottom: 6rem;
+        left: 3rem;
+        width: 5.5rem;
+        height: 5.5rem;
+        background: #c87250;
+      }
+
+      .decor-leaf {
+        position: absolute;
+        width: 2.5rem;
+        height: 2.5rem;
+        opacity: 0.4;
+      }
+
+      .decor-leaf-1 {
+        top: 1.8rem;
+        left: 0.75rem;
+      }
+
+      .decor-leaf-2 {
+        bottom: 4.5rem;
+        right: 1.5rem;
+      }
+
+      .autumn-card-plain::before {
+        display: none;
+      }
+
+      .event-subtitle {
+        font-size: 1.2rem;
+        margin-top: 1rem;
+        color: rgba(255, 249, 240, 0.9);
+        font-style: italic;
+        opacity: 0.95;
+      }
+
       .teams-grid {
         display: grid;
-        grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+        grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
         gap: 1.5rem;
         margin-top: 1.5rem;
       }
 
       .team-card {
-        background: linear-gradient(135deg, var(--autumn-cream), var(--autumn-soft-yellow));
-        border: 2px solid var(--autumn-gold);
-        border-radius: 12px;
-        padding: 1.5rem;
-        text-align: center;
         cursor: pointer;
-        transition: all 0.3s ease;
-        position: relative;
+        border-radius: 22px;
+        background: rgba(255, 255, 255, 0.95);
+        border: 2px solid #e8dcc8;
+        box-shadow: 0 18px 36px rgba(74, 52, 40, 0.12);
+        transition:
+          transform 0.3s ease,
+          box-shadow 0.3s ease,
+          border-color 0.3s ease;
         overflow: hidden;
+        position: relative;
       }
 
-      /* Mobile optimizations for team selection */
-      @media (max-width: 768px) {
-        .teams-grid {
-          grid-template-columns: 1fr;
-          gap: 1rem;
-          margin-top: 1rem;
-        }
-
-        .team-card {
-          padding: 1.2rem;
-          display: flex;
-          align-items: center;
-          text-align: left;
-          gap: 1rem;
-        }
-
-        .team-icon {
-          font-size: 2rem;
-          flex: none;
-        }
-
-        .team-name {
-          font-size: 1.1rem;
-          flex: 1;
-        }
-
-        .team-action {
-          font-size: 0.8rem;
-          text-align: right;
-          flex: none;
-        }
-
-        .team-creation-form {
-          gap: 1.2rem;
-        }
-      }
-
-      @media (max-width: 480px) {
-        .team-card {
-          padding: 1rem;
-          flex-direction: column;
-          text-align: center;
-          gap: 0.8rem;
-        }
-
-        .team-icon {
-          font-size: 2.5rem;
-        }
-
-        .team-name {
-          font-size: 1rem;
-        }
-
-        .team-action {
-          font-size: 0.75rem;
-          text-align: center;
-        }
-
-        .team-creation-form {
-          gap: 1rem;
-        }
+      .team-card::after {
+        content: '';
+        position: absolute;
+        inset: 0;
+        background: linear-gradient(135deg, rgba(212, 165, 116, 0.18), rgba(184, 115, 51, 0.08));
+        opacity: 0;
+        transition: opacity 0.3s ease;
+        pointer-events: none;
       }
 
       .team-card:hover {
-        transform: translateY(-4px);
-        border-color: var(--autumn-copper);
-        box-shadow: 0 8px 24px var(--autumn-shadow);
+        transform: translateY(-6px);
+        box-shadow: 0 22px 44px rgba(74, 52, 40, 0.18);
+        border-color: #d4a574;
       }
 
-      .team-card::before {
-        content: '';
-        position: absolute;
-        top: 0;
-        left: -100%;
-        width: 100%;
-        height: 100%;
-        background: linear-gradient(90deg, transparent, rgba(212, 175, 55, 0.2), transparent);
-        transition: left 0.5s ease;
+      .team-card:hover::after {
+        opacity: 1;
       }
 
-      .team-card:hover::before {
-        left: 100%;
+      .team-card-content {
+        display: flex;
+        align-items: center;
+        gap: 1.2rem;
+        padding: 1.6rem 1.8rem;
+        position: relative;
+        z-index: 1;
       }
 
       .team-icon {
-        font-size: 2.5rem;
-        margin-bottom: 0.8rem;
+        width: 3.2rem;
+        height: 3.2rem;
+        border-radius: 16px;
+        background: rgba(247, 239, 225, 0.9);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.8rem;
+        color: #d9794d;
+        box-shadow: 0 8px 18px rgba(212, 165, 116, 0.35);
+      }
+
+      .team-details {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        gap: 0.25rem;
+      }
+
+      .team-label {
+        font-size: 0.75rem;
+        letter-spacing: 1px;
+        text-transform: uppercase;
+        color: #c9a87f;
       }
 
       .team-name {
-        font-size: 1.2rem;
+        font-size: 1.25rem;
         font-weight: 600;
-        color: var(--autumn-burgundy);
-        margin-bottom: 0.8rem;
+        color: #4a3828;
       }
 
       .team-action {
-        color: var(--autumn-brown);
+        display: flex;
+        flex-direction: column;
+        align-items: flex-end;
+        gap: 0.3rem;
         font-size: 0.9rem;
-        font-weight: 500;
+        font-weight: 600;
+        color: #c87250;
         text-transform: uppercase;
-        letter-spacing: 1px;
+        letter-spacing: 0.8px;
+      }
+
+      .team-arrow {
+        font-size: 1.1rem;
+        color: #d9794d;
       }
 
       .team-creation-form {
         display: flex;
         flex-direction: column;
-        gap: 1.5rem;
+        gap: 1.6rem;
       }
 
       .autumn-label {
         font-weight: 600;
-        color: var(--autumn-burgundy);
-        margin-bottom: 0.5rem;
-        font-size: 1.1rem;
+        color: #8b6f47;
+        font-size: 1rem;
+      }
+
+      .autumn-input {
+        font-size: 1.05rem;
+        padding: 1.1rem 1.4rem;
+        background: #faf8f4;
+        border: 2px solid #e8dcc8;
+        border-radius: 18px;
+        color: #4a3828;
+      }
+
+      .autumn-input::placeholder {
+        color: #c9a87f;
+      }
+
+      .btn-autumn {
+        border-radius: 16px;
+        padding: 1.1rem;
+        font-size: 1.05rem;
+        font-weight: 600;
+        text-transform: none;
+        letter-spacing: 0.4px;
+        background: linear-gradient(135deg, #d4a574 0%, #b87333 100%);
+        box-shadow: 0 16px 30px rgba(184, 92, 71, 0.25);
+      }
+
+      .btn-autumn:hover:not(:disabled) {
+        box-shadow: 0 18px 34px rgba(184, 92, 71, 0.3);
+      }
+
+      .btn-autumn:disabled {
+        background: linear-gradient(135deg, #d7d2ca, #bdb7af);
+        color: #6f6a62;
+        box-shadow: none;
       }
 
       .btn-icon {
         margin-right: 0.5rem;
       }
 
-      .event-subtitle {
-        font-size: 1.3rem;
-        margin-top: 1rem;
-        color: var(--autumn-cream);
-        font-style: italic;
-        opacity: 0.9;
+      .autumn-message {
+        display: flex;
+        align-items: center;
+        gap: 0.8rem;
+      }
+
+      .autumn-message span:first-child {
+        font-size: 1.4rem;
+      }
+
+      .autumn-footer-dots {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        gap: 0.6rem;
+        margin: 2rem auto 0;
+        opacity: 0.35;
+      }
+
+      .autumn-footer-dots span {
+        display: inline-block;
+        width: 0.55rem;
+        height: 0.55rem;
+        border-radius: 50%;
+        background: #d4a574;
+      }
+
+      .autumn-footer-dots span:nth-child(2) {
+        background: #d9794d;
+      }
+
+      .autumn-footer-dots span:nth-child(3) {
+        background: #c87250;
+      }
+
+      @media (max-width: 768px) {
+        .teams-grid {
+          grid-template-columns: 1fr;
+          gap: 1.2rem;
+        }
+
+        .team-card-content {
+          flex-direction: column;
+          align-items: flex-start;
+        }
+
+        .team-action {
+          flex-direction: row;
+          align-items: center;
+          gap: 0.5rem;
+        }
+
+        .team-arrow {
+          display: inline-block;
+        }
+      }
+
+      @media (max-width: 480px) {
+        .team-card-content {
+          align-items: center;
+          text-align: center;
+        }
+
+        .team-action {
+          align-items: center;
+        }
       }
     `,
   ],
