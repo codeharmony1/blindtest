@@ -1,0 +1,107 @@
+{
+  "timestamp": "2025-10-12T20:01:21.344Z",
+  "summary": {
+    "total": 8,
+    "passed": 7,
+    "failed": 1,
+    "skipped": 0
+  },
+  "results": [
+    {
+      "test": "Tenant créé",
+      "status": "PASS",
+      "message": "ID: b4dbe4db-be59-4863-836b-bee576843a73, Slug: game-test-1760299275023"
+    },
+    {
+      "test": "Événement créé",
+      "status": "PASS",
+      "message": "Code: GAMEUHBFQL",
+      "data": {
+        "event": {
+          "id": "27",
+          "code": "GAMEUHBFQL",
+          "name": "Test Game - 5 Équipes",
+          "createdAt": "2025-10-12T20:01:15.000Z"
+        }
+      }
+    },
+    {
+      "test": "5 équipes créées",
+      "status": "PASS",
+      "message": "5 équipes",
+      "data": {
+        "teams": [
+          {
+            "id": "46",
+            "name": "🎸 Les Rockeurs"
+          },
+          {
+            "id": "47",
+            "name": "🎤 Les Chanteurs"
+          },
+          {
+            "id": "48",
+            "name": "🎹 Les Pianistes"
+          },
+          {
+            "id": "49",
+            "name": "🥁 Les Batteurs"
+          },
+          {
+            "id": "50",
+            "name": "🎺 Les Jazzmen"
+          }
+        ]
+      }
+    },
+    {
+      "test": "Joueurs ajoutés",
+      "status": "PASS",
+      "message": "16 joueurs créés"
+    },
+    {
+      "test": "Round avec chansons",
+      "status": "PASS",
+      "message": "5 chansons ajoutées"
+    },
+    {
+      "test": "Jeu démarré",
+      "status": "PASS",
+      "message": "Mode automatique"
+    },
+    {
+      "test": "Réponses simulées",
+      "status": "PASS",
+      "message": "0 réponses enregistrées"
+    },
+    {
+      "test": "Scores calculés",
+      "status": "FAIL",
+      "message": "Status: 404"
+    }
+  ],
+  "eventCode": "GAMEUHBFQL",
+  "teams": [
+    {
+      "id": "46",
+      "name": "🎸 Les Rockeurs"
+    },
+    {
+      "id": "47",
+      "name": "🎤 Les Chanteurs"
+    },
+    {
+      "id": "48",
+      "name": "🎹 Les Pianistes"
+    },
+    {
+      "id": "49",
+      "name": "🥁 Les Batteurs"
+    },
+    {
+      "id": "50",
+      "name": "🎺 Les Jazzmen"
+    }
+  ],
+  "songs": 5
+}

@@ -1,0 +1,232 @@
+/* Styles pour l'affichage détaillé des scores du projecteur (extrait pour réduire la taille du composant) */
+
+.detailed-scores-container {
+  width: 100%;
+  overflow-x: auto;
+  background: rgba(255, 255, 255, 0.7);
+  backdrop-filter: blur(8px);
+  border-radius: 1rem;
+  padding: 1rem;
+  margin-top: 4rem;
+  padding-top: 2rem;
+  border-top: 3px solid rgba(212, 165, 116, 0.3);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+}
+
+.detailed-scores-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: clamp(0.7rem, 1.5vw, 1rem);
+}
+
+.detailed-scores-table thead {
+  background: linear-gradient(135deg, var(--autumn-gold), var(--autumn-copper));
+  color: var(--autumn-warm-white);
+}
+
+.song-header {
+  text-align: left;
+  padding: 0.8rem 1rem;
+  font-weight: 700;
+  min-width: 200px;
+  position: sticky;
+  left: 0;
+  background: linear-gradient(135deg, var(--autumn-gold), var(--autumn-copper));
+  z-index: 2;
+}
+
+.team-header {
+  text-align: center;
+  padding: 0.8rem 0.5rem;
+  font-weight: 600;
+  min-width: 80px;
+  max-width: 120px;
+  word-wrap: break-word;
+  hyphens: auto;
+}
+
+.detailed-scores-table tbody tr {
+  border-bottom: 1px solid rgba(232, 220, 200, 0.3);
+  transition: background-color 0.2s ease;
+}
+
+.detailed-scores-table tbody tr:hover {
+  background: rgba(232, 220, 200, 0.2);
+}
+
+.song-cell {
+  padding: 0.6rem 1rem;
+  background: rgba(255, 255, 255, 0.9);
+  position: sticky;
+  left: 0;
+  z-index: 1;
+  border-right: 2px solid rgba(232, 220, 200, 0.5);
+}
+
+.song-info {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+}
+
+.song-number {
+  font-size: 0.75em;
+  font-weight: 700;
+  color: var(--autumn-burgundy);
+  opacity: 0.8;
+}
+
+.song-title {
+  font-weight: 600;
+  color: var(--autumn-brown);
+  line-height: 1.2;
+}
+
+.song-artist {
+  font-size: 0.85em;
+  font-style: italic;
+  color: var(--autumn-brown);
+  opacity: 0.7;
+}
+
+.score-cell {
+  text-align: center;
+  padding: 0.6rem 0.5rem;
+  background: rgba(255, 255, 255, 0.5);
+}
+
+.score-cell.has-points {
+  background: rgba(184, 134, 11, 0.15);
+}
+
+.score-value {
+  font-size: 1.1em;
+  font-weight: 600;
+  color: var(--autumn-brown);
+}
+
+.score-cell.has-points .score-value {
+  color: var(--autumn-burgundy);
+  font-weight: 700;
+}
+
+.total-row {
+  background: linear-gradient(135deg, rgba(184, 134, 11, 0.2), rgba(205, 127, 50, 0.2));
+  font-weight: 700;
+  border-top: 3px solid var(--autumn-gold);
+}
+
+.total-label {
+  padding: 1rem;
+  font-size: 1.2em;
+  color: var(--autumn-burgundy);
+  background: rgba(255, 255, 255, 0.9);
+  position: sticky;
+  left: 0;
+  z-index: 1;
+}
+
+.total-cell {
+  text-align: center;
+  padding: 1rem 0.5rem;
+}
+
+.total-value {
+  font-size: 1.3em;
+  font-weight: 700;
+  color: var(--autumn-burgundy);
+}
+
+.display-mode-toggle {
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.display-mode-toggle:hover {
+  transform: scale(1.05);
+}
+
+/* Responsive */
+@media (max-width: 1200px) {
+  .detailed-scores-table {
+    font-size: clamp(0.6rem, 1.3vw, 0.9rem);
+  }
+
+  .song-header {
+    min-width: 150px;
+    padding: 0.6rem 0.8rem;
+  }
+
+  .team-header {
+    min-width: 60px;
+    max-width: 100px;
+    padding: 0.6rem 0.4rem;
+  }
+}
+
+@media (max-width: 768px) {
+  .detailed-scores-container {
+    padding: 0.5rem;
+  }
+
+  .detailed-scores-table {
+    font-size: clamp(0.5rem, 1.2vw, 0.75rem);
+  }
+
+  .song-header {
+    min-width: 120px;
+    padding: 0.5rem 0.6rem;
+  }
+
+  .team-header {
+    min-width: 50px;
+    max-width: 80px;
+    padding: 0.5rem 0.3rem;
+  }
+
+  .song-cell {
+    padding: 0.5rem 0.6rem;
+  }
+
+  .score-cell {
+    padding: 0.5rem 0.3rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .detailed-scores-table {
+    font-size: clamp(0.45rem, 1vw, 0.65rem);
+  }
+
+  .song-header {
+    min-width: 100px;
+    padding: 0.4rem 0.5rem;
+  }
+
+  .team-header {
+    min-width: 40px;
+    max-width: 60px;
+    padding: 0.4rem 0.2rem;
+  }
+
+  .song-cell {
+    padding: 0.4rem 0.5rem;
+  }
+
+  .score-cell {
+    padding: 0.4rem 0.2rem;
+  }
+
+  .total-label {
+    padding: 0.8rem 0.5rem;
+    font-size: 1em;
+  }
+
+  .total-cell {
+    padding: 0.8rem 0.2rem;
+  }
+
+  .total-value {
+    font-size: 1.1em;
+  }
+}

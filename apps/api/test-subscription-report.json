@@ -1,0 +1,313 @@
+{
+  "summary": {
+    "totalTests": 21,
+    "successCount": 21,
+    "failureCount": 0,
+    "successRate": 100,
+    "byPlan": {
+      "DEMO": {
+        "total": 7,
+        "success": 7,
+        "failure": 0,
+        "successRate": 100
+      },
+      "PER_EVENT": {
+        "total": 7,
+        "success": 7,
+        "failure": 0,
+        "successRate": 100
+      },
+      "MONTHLY": {
+        "total": 7,
+        "success": 7,
+        "failure": 0,
+        "successRate": 100
+      }
+    }
+  },
+  "results": [
+    {
+      "plan": "DEMO",
+      "testName": "Inscription",
+      "success": true,
+      "details": {
+        "tenantId": "fe558f82-6b57-4a58-acfb-5a01e46038a3",
+        "slug": "test-demo-1760337324374",
+        "plan": "DEMO",
+        "expiresAt": null,
+        "userEmail": "test-demo-1760337324374@test.local",
+        "userRole": "OWNER"
+      },
+      "timestamp": "2025-10-13T06:35:24.811Z"
+    },
+    {
+      "plan": "DEMO",
+      "testName": "Connexion",
+      "success": true,
+      "details": {
+        "userEmail": "test-demo-1760337324374@test.local",
+        "tenantName": "Test Organization DEMO",
+        "plan": "DEMO"
+      },
+      "timestamp": "2025-10-13T06:35:24.996Z"
+    },
+    {
+      "plan": "DEMO",
+      "testName": "Informations du tenant",
+      "success": true,
+      "details": {
+        "plan": "DEMO",
+        "status": "ACTIVE",
+        "limits": {
+          "maxEvents": 999,
+          "maxPlayersPerEvent": 999,
+          "maxUsers": 5
+        },
+        "usage": {
+          "eventsCount": 0,
+          "usersCount": 1,
+          "activeSessionsCount": 0,
+          "totalPlayersCount": 0
+        }
+      },
+      "timestamp": "2025-10-13T06:35:25.109Z"
+    },
+    {
+      "plan": "DEMO",
+      "testName": "Création d'événement",
+      "success": true,
+      "details": {
+        "eventId": "28",
+        "eventCode": "MKACLB",
+        "name": "Test Event DEMO"
+      },
+      "timestamp": "2025-10-13T06:35:25.203Z"
+    },
+    {
+      "plan": "DEMO",
+      "testName": "Liste des utilisateurs",
+      "success": true,
+      "details": {
+        "userCount": 1,
+        "users": [
+          {
+            "email": "test-demo-1760337324374@test.local",
+            "role": "OWNER",
+            "isActive": true
+          }
+        ]
+      },
+      "timestamp": "2025-10-13T06:35:25.216Z"
+    },
+    {
+      "plan": "DEMO",
+      "testName": "Création d'un nouvel utilisateur",
+      "success": true,
+      "details": {
+        "userId": "570c35a9-b868-4f42-a845-df591137c2ed",
+        "email": "user2-demo-1760337324374@test.local",
+        "role": "ADMIN"
+      },
+      "timestamp": "2025-10-13T06:35:25.494Z"
+    },
+    {
+      "plan": "DEMO",
+      "testName": "Vérification de la disponibilité du slug",
+      "success": true,
+      "details": {
+        "existingSlugAvailable": false,
+        "newSlugAvailable": true
+      },
+      "timestamp": "2025-10-13T06:35:25.537Z"
+    },
+    {
+      "plan": "PER_EVENT",
+      "testName": "Inscription",
+      "success": true,
+      "details": {
+        "tenantId": "4432f445-392e-4971-940b-83383ef03c65",
+        "slug": "test-per_event-1760337325538",
+        "plan": "PER_EVENT",
+        "expiresAt": null,
+        "userEmail": "test-per_event-1760337325538@test.local",
+        "userRole": "OWNER"
+      },
+      "timestamp": "2025-10-13T06:35:25.803Z"
+    },
+    {
+      "plan": "PER_EVENT",
+      "testName": "Connexion",
+      "success": true,
+      "details": {
+        "userEmail": "test-per_event-1760337325538@test.local",
+        "tenantName": "Test Organization PER_EVENT",
+        "plan": "PER_EVENT"
+      },
+      "timestamp": "2025-10-13T06:35:25.970Z"
+    },
+    {
+      "plan": "PER_EVENT",
+      "testName": "Informations du tenant",
+      "success": true,
+      "details": {
+        "plan": "PER_EVENT",
+        "status": "ACTIVE",
+        "limits": {
+          "maxEvents": 1,
+          "maxPlayersPerEvent": 999,
+          "maxUsers": 10
+        },
+        "usage": {
+          "eventsCount": 0,
+          "usersCount": 1,
+          "activeSessionsCount": 0,
+          "totalPlayersCount": 0
+        }
+      },
+      "timestamp": "2025-10-13T06:35:26.041Z"
+    },
+    {
+      "plan": "PER_EVENT",
+      "testName": "Création d'événement",
+      "success": true,
+      "details": {
+        "eventId": "29",
+        "eventCode": "6E5L7F",
+        "name": "Test Event PER_EVENT"
+      },
+      "timestamp": "2025-10-13T06:35:26.234Z"
+    },
+    {
+      "plan": "PER_EVENT",
+      "testName": "Liste des utilisateurs",
+      "success": true,
+      "details": {
+        "userCount": 1,
+        "users": [
+          {
+            "email": "test-per_event-1760337325538@test.local",
+            "role": "OWNER",
+            "isActive": true
+          }
+        ]
+      },
+      "timestamp": "2025-10-13T06:35:26.246Z"
+    },
+    {
+      "plan": "PER_EVENT",
+      "testName": "Création d'un nouvel utilisateur",
+      "success": true,
+      "details": {
+        "userId": "5bfe989f-d459-4516-b192-a3b1dd736fd2",
+        "email": "user2-per_event-1760337325538@test.local",
+        "role": "ADMIN"
+      },
+      "timestamp": "2025-10-13T06:35:26.444Z"
+    },
+    {
+      "plan": "PER_EVENT",
+      "testName": "Vérification de la disponibilité du slug",
+      "success": true,
+      "details": {
+        "existingSlugAvailable": false,
+        "newSlugAvailable": true
+      },
+      "timestamp": "2025-10-13T06:35:26.495Z"
+    },
+    {
+      "plan": "MONTHLY",
+      "testName": "Inscription",
+      "success": true,
+      "details": {
+        "tenantId": "89827574-051d-4768-b199-cde251790790",
+        "slug": "test-monthly-1760337326495",
+        "plan": "MONTHLY",
+        "expiresAt": null,
+        "userEmail": "test-monthly-1760337326495@test.local",
+        "userRole": "OWNER"
+      },
+      "timestamp": "2025-10-13T06:35:26.662Z"
+    },
+    {
+      "plan": "MONTHLY",
+      "testName": "Connexion",
+      "success": true,
+      "details": {
+        "userEmail": "test-monthly-1760337326495@test.local",
+        "tenantName": "Test Organization MONTHLY",
+        "plan": "MONTHLY"
+      },
+      "timestamp": "2025-10-13T06:35:26.852Z"
+    },
+    {
+      "plan": "MONTHLY",
+      "testName": "Informations du tenant",
+      "success": true,
+      "details": {
+        "plan": "MONTHLY",
+        "status": "ACTIVE",
+        "limits": {
+          "maxEvents": 999,
+          "maxPlayersPerEvent": 999,
+          "maxUsers": 999
+        },
+        "usage": {
+          "eventsCount": 0,
+          "usersCount": 1,
+          "activeSessionsCount": 0,
+          "totalPlayersCount": 0
+        }
+      },
+      "timestamp": "2025-10-13T06:35:26.914Z"
+    },
+    {
+      "plan": "MONTHLY",
+      "testName": "Création d'événement",
+      "success": true,
+      "details": {
+        "eventId": "30",
+        "eventCode": "7YLEPU",
+        "name": "Test Event MONTHLY"
+      },
+      "timestamp": "2025-10-13T06:35:26.993Z"
+    },
+    {
+      "plan": "MONTHLY",
+      "testName": "Liste des utilisateurs",
+      "success": true,
+      "details": {
+        "userCount": 1,
+        "users": [
+          {
+            "email": "test-monthly-1760337326495@test.local",
+            "role": "OWNER",
+            "isActive": true
+          }
+        ]
+      },
+      "timestamp": "2025-10-13T06:35:27.003Z"
+    },
+    {
+      "plan": "MONTHLY",
+      "testName": "Création d'un nouvel utilisateur",
+      "success": true,
+      "details": {
+        "userId": "a090d833-828a-45d3-92e1-22ee4335969f",
+        "email": "user2-monthly-1760337326495@test.local",
+        "role": "ADMIN"
+      },
+      "timestamp": "2025-10-13T06:35:27.192Z"
+    },
+    {
+      "plan": "MONTHLY",
+      "testName": "Vérification de la disponibilité du slug",
+      "success": true,
+      "details": {
+        "existingSlugAvailable": false,
+        "newSlugAvailable": true
+      },
+      "timestamp": "2025-10-13T06:35:27.233Z"
+    }
+  ],
+  "timestamp": "2025-10-13T06:35:27.234Z"
+}

@@ -4,10 +4,12 @@ import { RoundSong } from '../db/entities/RoundSong';
 export interface MatchResult {
   matchTitle: boolean;
   matchArtist: boolean;
+  matchGroup: boolean;
   points: number;
   normalizedAnswer: string;
   titleSimilarity: number;
   artistSimilarity: number;
+  groupSimilarity: number;
 }
 
 /**
@@ -93,15 +95,21 @@ export class MatchingService {
   /**
    * Calcule le pourcentage de similarité entre deux chaînes (0-100%)
    * Basé sur la distance de Levenshtein
+   * Note: Normalise les chaînes avant de les comparer
    */
   similarity(a: string, b: string): number {
     if (!a || !b) return 0;
-    if (a === b) return 100;
 
-    const maxLength = Math.max(a.length, b.length);
+    // Normaliser avant comparaison pour ignorer casse, accents, etc.
+    const normalizedA = this.normalize(a);
+    const normalizedB = this.normalize(b);
+
+    if (normalizedA === normalizedB) return 100;
+
+    const maxLength = Math.max(normalizedA.length, normalizedB.length);
     if (maxLength === 0) return 100;
 
-    const distance = this.levenshteinDistance(a, b);
+    const distance = this.levenshteinDistance(normalizedA, normalizedB);
     return Math.round(((maxLength - distance) / maxLength) * 100);
   }
 
@@ -161,10 +169,14 @@ export class MatchingService {
   }
 
   /**
-   * Score une réponse selon les règles du jeu
-   * - 2 points si Titre ET Artiste corrects
-   * - 1 point si Titre OU Artiste correct
+   * Score une réponse selon les nouvelles règles du jeu :
+   * - 2 points si Titre + (Artiste OU Groupe)
+   * - 1 point si Titre seul OU (Artiste/Groupe seul)
    * - 0 point sinon
+   *
+   * Le joueur écrit tout dans un seul champ, le système détecte automatiquement
+   * ce qui correspond au titre, artiste ou groupe.
+   * Priorité si ambiguïté : Groupe > Artiste > Titre
    */
   async scoreAnswer(
     answerText: string,
@@ -180,68 +192,134 @@ export class MatchingService {
     }
 
     const normalizedAnswer = this.normalize(answerText);
-
-    // Parser la réponse (format attendu: "Titre - Artiste" ou "Titre" seul)
-    let answerTitle = '';
-    let answerArtist = '';
-
-    if (answerText.includes('-')) {
-      const parts = answerText.split('-').map(p => p.trim());
-      answerTitle = parts[0] || '';
-      answerArtist = parts[1] || '';
-    } else {
-      answerTitle = answerText.trim();
-    }
-
-    // Normaliser les éléments
-    const normalizedAnswerTitle = this.normalize(answerTitle);
-    const normalizedAnswerArtist = this.normalize(answerArtist);
     const normalizedOfficialTitle = this.normalize(song.title_official || '');
     const normalizedOfficialArtist = this.normalize(song.artist_official || '');
+    const normalizedOfficialGroup = this.normalize(song.group_official || '');
 
     // Parser les alias
     const aliases = this.parseAliases(song.aliases_json);
 
-    // Vérifier correspondance titre
-    const matchTitle = this.matchWithAliases(
-      normalizedAnswerTitle,
-      normalizedOfficialTitle,
-      aliases.title,
-      threshold
-    );
-
-    // Calculer similarité titre
-    const titleSimilarity = this.similarity(normalizedAnswerTitle, normalizedOfficialTitle);
-
-    // Vérifier correspondance artiste (si fourni)
+    // Flags de matching
+    let matchTitle = false;
     let matchArtist = false;
-    let artistSimilarity = 0;
+    let matchGroup = false;
 
-    if (normalizedAnswerArtist) {
-      matchArtist = this.matchWithAliases(
-        normalizedAnswerArtist,
-        normalizedOfficialArtist,
-        aliases.artist,
-        threshold
-      );
-      artistSimilarity = this.similarity(normalizedAnswerArtist, normalizedOfficialArtist);
+    // Similarités
+    let titleSimilarity = 0;
+    let artistSimilarity = 0;
+    let groupSimilarity = 0;
+
+    // Stratégie : tester chaque mot/token de la réponse contre titre/artiste/groupe
+    // avec priorité Groupe > Artiste > Titre
+
+    const words = normalizedAnswer.split(/\s+/).filter(w => w.length > 0);
+    const fullAnswer = normalizedAnswer;
+
+    // 1. Vérifier correspondance avec le GROUPE (priorité haute)
+    if (normalizedOfficialGroup) {
+      // Tester la réponse complète
+      if (this.isMatch(fullAnswer, normalizedOfficialGroup, threshold)) {
+        matchGroup = true;
+        groupSimilarity = this.similarity(fullAnswer, normalizedOfficialGroup);
+      }
+
+      // Tester les mots individuels et combinaisons
+      if (!matchGroup) {
+        for (let i = 0; i < words.length; i++) {
+          for (let j = i + 1; j <= words.length; j++) {
+            const phrase = words.slice(i, j).join(' ');
+            if (this.isMatch(phrase, normalizedOfficialGroup, threshold)) {
+              matchGroup = true;
+              groupSimilarity = this.similarity(phrase, normalizedOfficialGroup);
+              break;
+            }
+          }
+          if (matchGroup) break;
+        }
+      }
     }
 
-    // Calculer les points
+    // 2. Vérifier correspondance avec l'ARTISTE (priorité moyenne)
+    if (normalizedOfficialArtist) {
+      // Tester la réponse complète
+      if (this.isMatch(fullAnswer, normalizedOfficialArtist, threshold)) {
+        matchArtist = true;
+        artistSimilarity = this.similarity(fullAnswer, normalizedOfficialArtist);
+      }
+
+      // Tester les mots individuels et combinaisons
+      if (!matchArtist) {
+        for (let i = 0; i < words.length; i++) {
+          for (let j = i + 1; j <= words.length; j++) {
+            const phrase = words.slice(i, j).join(' ');
+            if (this.isMatch(phrase, normalizedOfficialArtist, threshold)) {
+              matchArtist = true;
+              artistSimilarity = this.similarity(phrase, normalizedOfficialArtist);
+              break;
+            }
+          }
+          if (matchArtist) break;
+        }
+      }
+    }
+
+    // 3. Vérifier correspondance avec le TITRE (priorité basse)
+    if (normalizedOfficialTitle) {
+      // Tester la réponse complète
+      if (this.isMatch(fullAnswer, normalizedOfficialTitle, threshold)) {
+        matchTitle = true;
+        titleSimilarity = this.similarity(fullAnswer, normalizedOfficialTitle);
+      }
+
+      // Tester avec alias
+      if (!matchTitle) {
+        matchTitle = this.matchWithAliases(
+          fullAnswer,
+          normalizedOfficialTitle,
+          aliases.title,
+          threshold
+        );
+        titleSimilarity = this.similarity(fullAnswer, normalizedOfficialTitle);
+      }
+
+      // Tester les mots individuels et combinaisons
+      if (!matchTitle) {
+        for (let i = 0; i < words.length; i++) {
+          for (let j = i + 1; j <= words.length; j++) {
+            const phrase = words.slice(i, j).join(' ');
+            if (this.isMatch(phrase, normalizedOfficialTitle, threshold)) {
+              matchTitle = true;
+              titleSimilarity = this.similarity(phrase, normalizedOfficialTitle);
+              break;
+            }
+          }
+          if (matchTitle) break;
+        }
+      }
+    }
+
+    // Calculer les points selon les nouvelles règles
     let points = 0;
-    if (matchTitle && matchArtist) {
+
+    // 2 points : Titre + (Artiste OU Groupe)
+    if (matchTitle && (matchArtist || matchGroup)) {
       points = 2;
-    } else if (matchTitle || matchArtist) {
+    }
+    // 1 point : Titre seul OU (Artiste/Groupe seul)
+    else if (matchTitle || matchArtist || matchGroup) {
       points = 1;
     }
+    // 0 point sinon
 
     return {
       matchTitle,
       matchArtist,
+      matchGroup,
       points,
       normalizedAnswer,
       titleSimilarity,
-      artistSimilarity
+      artistSimilarity,
+      groupSimilarity
     };
   }
 

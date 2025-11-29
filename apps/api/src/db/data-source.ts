@@ -4,6 +4,7 @@ import { Organizer } from "./entities/Organizer";
 import { Event } from "./entities/Event";
 import { EventStaff } from "./entities/EventStaff";
 import { Team } from "./entities/Team";
+import { Table } from "./entities/Table";
 import { Player } from "./entities/Player";
 import { Round } from "./entities/Round";
 import { RoundSong } from "./entities/RoundSong";
@@ -17,6 +18,8 @@ import { Payment } from "./entities/Payment";
 // Entités super-admin
 import { SuperAdmin } from "./entities/SuperAdmin";
 import { AuditLog } from "./entities/AuditLog";
+// Entités auth
+import { PasswordResetToken } from "./entities/PasswordResetToken";
 
 export const AppDataSource = new DataSource({
   type: "mysql",
@@ -34,6 +37,7 @@ export const AppDataSource = new DataSource({
     Event,
     EventStaff,
     Team,
+    Table,
     Player,
     Round,
     RoundSong,
@@ -47,6 +51,8 @@ export const AppDataSource = new DataSource({
     // Entités super-admin
     SuperAdmin,
     AuditLog,
+    // Entités auth
+    PasswordResetToken,
   ],
   migrations: ["src/db/migrations/*.ts"],
 });

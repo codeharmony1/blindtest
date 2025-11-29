@@ -48,11 +48,42 @@ export class Event {
   @Column({ type: "varchar", length: 255 })
   name!: string;
 
+  @Column({ type: "enum", enum: ["TEAM", "SOLO"], default: "TEAM" })
+  game_mode!: "TEAM" | "SOLO";
+
+  @Column({ type: "boolean", default: false })
+  table_mode!: boolean;
+
+  @Column({
+    type: "enum",
+    enum: ["DRAFT", "ACTIVE", "COMPLETED"],
+    default: "ACTIVE"
+  })
+  status!: "DRAFT" | "ACTIVE" | "COMPLETED";
+
+  @Column({ type: "varchar", length: 255, nullable: true })
+  dj_pin_hash?: string; // Hash bcrypt du PIN DJ (6 chiffres)
+
   @Column({ type: "longtext", nullable: true })
   settings_json?: string; // JSON string
 
   @CreateDateColumn()
   created_at!: Date;
+
+  @Column({ type: "datetime", nullable: true })
+  completed_at?: Date | null;
+
+  @Column({ type: "datetime", nullable: true })
+  start_date?: Date | null; // Date de début planifiée de l'événement
+
+  @Column({ type: "datetime", nullable: true })
+  end_date?: Date | null; // Date de fin planifiée de l'événement
+
+  @Column({ type: "datetime", nullable: true })
+  actual_start_date?: Date | null; // Date réelle de démarrage (quand DJ démarre)
+
+  @Column({ type: "datetime", nullable: true })
+  code_expires_at?: Date | null; // Date d'expiration du code (end_date + buffer)
 
   @OneToMany(() => EventStaff, (es) => es.event)
   staff!: EventStaff[];
@@ -81,5 +112,28 @@ export class Event {
 
   canBeAccessedByTenant(tenantId: string): boolean {
     return this.tenant_id === tenantId;
+  }
+
+  // Méthodes helper pour le lifecycle
+  isCodeActive(): boolean {
+    const now = new Date();
+    if (!this.code_expires_at) return true; // Codes sans expiration restent actifs (legacy)
+    return now <= this.code_expires_at;
+  }
+
+  canReuseCode(): boolean {
+    return !this.isCodeActive();
+  }
+
+  isEventActive(): boolean {
+    const now = new Date();
+    if (!this.start_date || !this.end_date) return this.status === 'ACTIVE';
+    return now >= this.start_date && now <= this.end_date && this.status === 'ACTIVE';
+  }
+
+  isEventExpired(): boolean {
+    const now = new Date();
+    if (!this.code_expires_at) return false;
+    return now > this.code_expires_at;
   }
 }

@@ -2,7 +2,14 @@ import { Injectable, DOCUMENT } from '@angular/core';
 import { Inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { BehaviorSubject, Observable } from 'rxjs';
-import { PREDEFINED_THEMES, ThemeConfig, ThemeColors, getThemeById, getThemesByCategory, DEFAULT_THEME } from '../../../../../api/src/types/themes';
+import {
+  PREDEFINED_THEMES,
+  ThemeConfig,
+  ThemeColors,
+  getThemeById,
+  getThemesByCategory,
+  DEFAULT_THEME,
+} from '../../shared/themes/themes';
 
 export type { ThemeConfig, ThemeColors };
 
@@ -340,7 +347,7 @@ export class ThemeService {
 
   // Obtient toutes les catégories disponibles
   getCategories(): ThemeConfig['category'][] {
-    const categories = new Set(PREDEFINED_THEMES.map(theme => theme.category));
+    const categories = new Set(PREDEFINED_THEMES.map((theme) => theme.category));
     return Array.from(categories);
   }
 

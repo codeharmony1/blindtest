@@ -1,0 +1,525 @@
+{
+  "startTime": "2025-11-03T21:53:31.160Z",
+  "eventCode": "TBL811423",
+  "config": {
+    "tables": 10,
+    "teamsPerTable": 3,
+    "totalTeams": 30,
+    "rounds": 2,
+    "songsPerRound": 10,
+    "totalSongs": 20
+  },
+  "tables": [
+    {
+      "id": "63",
+      "name": "Table des Mariés 💍",
+      "teams": [
+        {
+          "id": "234",
+          "name": "Équipe 1"
+        },
+        {
+          "id": "235",
+          "name": "Équipe 2"
+        },
+        {
+          "id": "236",
+          "name": "Équipe 3"
+        }
+      ]
+    },
+    {
+      "id": "64",
+      "name": "Table de la Famille 👨‍👩‍👧‍👦",
+      "teams": [
+        {
+          "id": "237",
+          "name": "Équipe 4"
+        },
+        {
+          "id": "238",
+          "name": "Équipe 5"
+        },
+        {
+          "id": "239",
+          "name": "Équipe 6"
+        }
+      ]
+    },
+    {
+      "id": "65",
+      "name": "Table des Amis d'Enfance 🧸",
+      "teams": [
+        {
+          "id": "240",
+          "name": "Équipe 7"
+        },
+        {
+          "id": "241",
+          "name": "Équipe 8"
+        },
+        {
+          "id": "242",
+          "name": "Équipe 9"
+        }
+      ]
+    },
+    {
+      "id": "66",
+      "name": "Table des Collègues 💼",
+      "teams": [
+        {
+          "id": "243",
+          "name": "Équipe 10"
+        },
+        {
+          "id": "244",
+          "name": "Équipe 11"
+        },
+        {
+          "id": "245",
+          "name": "Équipe 12"
+        }
+      ]
+    },
+    {
+      "id": "67",
+      "name": "Table des Copains de Fac 🎓",
+      "teams": [
+        {
+          "id": "246",
+          "name": "Équipe 13"
+        },
+        {
+          "id": "247",
+          "name": "Équipe 14"
+        },
+        {
+          "id": "248",
+          "name": "Équipe 15"
+        }
+      ]
+    },
+    {
+      "id": "68",
+      "name": "Table des Cousins 🎪",
+      "teams": [
+        {
+          "id": "249",
+          "name": "Équipe 16"
+        },
+        {
+          "id": "250",
+          "name": "Équipe 17"
+        },
+        {
+          "id": "251",
+          "name": "Équipe 18"
+        }
+      ]
+    },
+    {
+      "id": "69",
+      "name": "Table des Voisins 🏡",
+      "teams": [
+        {
+          "id": "252",
+          "name": "Équipe 19"
+        },
+        {
+          "id": "253",
+          "name": "Équipe 20"
+        },
+        {
+          "id": "254",
+          "name": "Équipe 21"
+        }
+      ]
+    },
+    {
+      "id": "70",
+      "name": "Table des Sports 🏀",
+      "teams": [
+        {
+          "id": "255",
+          "name": "Équipe 22"
+        },
+        {
+          "id": "256",
+          "name": "Équipe 23"
+        },
+        {
+          "id": "257",
+          "name": "Équipe 24"
+        }
+      ]
+    },
+    {
+      "id": "71",
+      "name": "Table de la Musique 🎸",
+      "teams": [
+        {
+          "id": "258",
+          "name": "Équipe 25"
+        },
+        {
+          "id": "259",
+          "name": "Équipe 26"
+        },
+        {
+          "id": "260",
+          "name": "Équipe 27"
+        }
+      ]
+    },
+    {
+      "id": "72",
+      "name": "Table VIP ⭐",
+      "teams": [
+        {
+          "id": "261",
+          "name": "Équipe 28"
+        },
+        {
+          "id": "262",
+          "name": "Équipe 29"
+        },
+        {
+          "id": "263",
+          "name": "Équipe 30"
+        }
+      ]
+    }
+  ],
+  "performance": {
+    "eventCreation": 142,
+    "tablesCreation": 761,
+    "teamsCreation": 9543,
+    "roundsCreation": 2159,
+    "answersSubmission": 107575,
+    "total": 120472
+  },
+  "results": {
+    "tableScores": [
+      {
+        "tableName": "Table des Copains de Fac 🎓",
+        "totalScore": 93,
+        "teamsCount": 3,
+        "averageScore": 31,
+        "rank": 1
+      },
+      {
+        "tableName": "Table VIP ⭐",
+        "totalScore": 93,
+        "teamsCount": 3,
+        "averageScore": 31,
+        "rank": 2
+      },
+      {
+        "tableName": "Table des Mariés 💍",
+        "totalScore": 92,
+        "teamsCount": 3,
+        "averageScore": 30.666666666666668,
+        "rank": 3
+      },
+      {
+        "tableName": "Table de la Famille 👨‍👩‍👧‍👦",
+        "totalScore": 91,
+        "teamsCount": 3,
+        "averageScore": 30.333333333333332,
+        "rank": 4
+      },
+      {
+        "tableName": "Table des Cousins 🎪",
+        "totalScore": 90,
+        "teamsCount": 3,
+        "averageScore": 30,
+        "rank": 5
+      },
+      {
+        "tableName": "Table des Amis d'Enfance 🧸",
+        "totalScore": 89,
+        "teamsCount": 3,
+        "averageScore": 29.666666666666668,
+        "rank": 6
+      },
+      {
+        "tableName": "Table des Voisins 🏡",
+        "totalScore": 88,
+        "teamsCount": 3,
+        "averageScore": 29.333333333333332,
+        "rank": 7
+      },
+      {
+        "tableName": "Table des Sports 🏀",
+        "totalScore": 88,
+        "teamsCount": 3,
+        "averageScore": 29.333333333333332,
+        "rank": 8
+      },
+      {
+        "tableName": "Table de la Musique 🎸",
+        "totalScore": 88,
+        "teamsCount": 3,
+        "averageScore": 29.333333333333332,
+        "rank": 9
+      },
+      {
+        "tableName": "Table des Collègues 💼",
+        "totalScore": 85,
+        "teamsCount": 3,
+        "averageScore": 28.333333333333332,
+        "rank": 10
+      }
+    ],
+    "teamScores": [
+      {
+        "teamName": "Équipe 1",
+        "tableName": "Table des Mariés 💍",
+        "score": 35,
+        "correctAnswers": 0,
+        "totalAnswers": 20,
+        "successRate": 0
+      },
+      {
+        "teamName": "Équipe 2",
+        "tableName": "Table des Mariés 💍",
+        "score": 31,
+        "correctAnswers": 0,
+        "totalAnswers": 20,
+        "successRate": 0
+      },
+      {
+        "teamName": "Équipe 3",
+        "tableName": "Table des Mariés 💍",
+        "score": 26,
+        "correctAnswers": 0,
+        "totalAnswers": 20,
+        "successRate": 0
+      },
+      {
+        "teamName": "Équipe 4",
+        "tableName": "Table de la Famille 👨‍👩‍👧‍👦",
+        "score": 32,
+        "correctAnswers": 0,
+        "totalAnswers": 20,
+        "successRate": 0
+      },
+      {
+        "teamName": "Équipe 5",
+        "tableName": "Table de la Famille 👨‍👩‍👧‍👦",
+        "score": 30,
+        "correctAnswers": 0,
+        "totalAnswers": 20,
+        "successRate": 0
+      },
+      {
+        "teamName": "Équipe 6",
+        "tableName": "Table de la Famille 👨‍👩‍👧‍👦",
+        "score": 29,
+        "correctAnswers": 0,
+        "totalAnswers": 20,
+        "successRate": 0
+      },
+      {
+        "teamName": "Équipe 7",
+        "tableName": "Table des Amis d'Enfance 🧸",
+        "score": 30,
+        "correctAnswers": 0,
+        "totalAnswers": 20,
+        "successRate": 0
+      },
+      {
+        "teamName": "Équipe 8",
+        "tableName": "Table des Amis d'Enfance 🧸",
+        "score": 28,
+        "correctAnswers": 0,
+        "totalAnswers": 20,
+        "successRate": 0
+      },
+      {
+        "teamName": "Équipe 9",
+        "tableName": "Table des Amis d'Enfance 🧸",
+        "score": 31,
+        "correctAnswers": 0,
+        "totalAnswers": 20,
+        "successRate": 0
+      },
+      {
+        "teamName": "Équipe 10",
+        "tableName": "Table des Collègues 💼",
+        "score": 21,
+        "correctAnswers": 0,
+        "totalAnswers": 20,
+        "successRate": 0
+      },
+      {
+        "teamName": "Équipe 11",
+        "tableName": "Table des Collègues 💼",
+        "score": 34,
+        "correctAnswers": 0,
+        "totalAnswers": 20,
+        "successRate": 0
+      },
+      {
+        "teamName": "Équipe 12",
+        "tableName": "Table des Collègues 💼",
+        "score": 30,
+        "correctAnswers": 0,
+        "totalAnswers": 20,
+        "successRate": 0
+      },
+      {
+        "teamName": "Équipe 13",
+        "tableName": "Table des Copains de Fac 🎓",
+        "score": 25,
+        "correctAnswers": 0,
+        "totalAnswers": 20,
+        "successRate": 0
+      },
+      {
+        "teamName": "Équipe 14",
+        "tableName": "Table des Copains de Fac 🎓",
+        "score": 32,
+        "correctAnswers": 0,
+        "totalAnswers": 20,
+        "successRate": 0
+      },
+      {
+        "teamName": "Équipe 15",
+        "tableName": "Table des Copains de Fac 🎓",
+        "score": 36,
+        "correctAnswers": 0,
+        "totalAnswers": 20,
+        "successRate": 0
+      },
+      {
+        "teamName": "Équipe 16",
+        "tableName": "Table des Cousins 🎪",
+        "score": 26,
+        "correctAnswers": 0,
+        "totalAnswers": 20,
+        "successRate": 0
+      },
+      {
+        "teamName": "Équipe 17",
+        "tableName": "Table des Cousins 🎪",
+        "score": 32,
+        "correctAnswers": 0,
+        "totalAnswers": 20,
+        "successRate": 0
+      },
+      {
+        "teamName": "Équipe 18",
+        "tableName": "Table des Cousins 🎪",
+        "score": 32,
+        "correctAnswers": 0,
+        "totalAnswers": 20,
+        "successRate": 0
+      },
+      {
+        "teamName": "Équipe 19",
+        "tableName": "Table des Voisins 🏡",
+        "score": 31,
+        "correctAnswers": 0,
+        "totalAnswers": 20,
+        "successRate": 0
+      },
+      {
+        "teamName": "Équipe 20",
+        "tableName": "Table des Voisins 🏡",
+        "score": 24,
+        "correctAnswers": 0,
+        "totalAnswers": 20,
+        "successRate": 0
+      },
+      {
+        "teamName": "Équipe 21",
+        "tableName": "Table des Voisins 🏡",
+        "score": 33,
+        "correctAnswers": 0,
+        "totalAnswers": 20,
+        "successRate": 0
+      },
+      {
+        "teamName": "Équipe 22",
+        "tableName": "Table des Sports 🏀",
+        "score": 29,
+        "correctAnswers": 0,
+        "totalAnswers": 20,
+        "successRate": 0
+      },
+      {
+        "teamName": "Équipe 23",
+        "tableName": "Table des Sports 🏀",
+        "score": 27,
+        "correctAnswers": 0,
+        "totalAnswers": 20,
+        "successRate": 0
+      },
+      {
+        "teamName": "Équipe 24",
+        "tableName": "Table des Sports 🏀",
+        "score": 32,
+        "correctAnswers": 0,
+        "totalAnswers": 20,
+        "successRate": 0
+      },
+      {
+        "teamName": "Équipe 25",
+        "tableName": "Table de la Musique 🎸",
+        "score": 29,
+        "correctAnswers": 0,
+        "totalAnswers": 20,
+        "successRate": 0
+      },
+      {
+        "teamName": "Équipe 26",
+        "tableName": "Table de la Musique 🎸",
+        "score": 30,
+        "correctAnswers": 0,
+        "totalAnswers": 20,
+        "successRate": 0
+      },
+      {
+        "teamName": "Équipe 27",
+        "tableName": "Table de la Musique 🎸",
+        "score": 29,
+        "correctAnswers": 0,
+        "totalAnswers": 20,
+        "successRate": 0
+      },
+      {
+        "teamName": "Équipe 28",
+        "tableName": "Table VIP ⭐",
+        "score": 28,
+        "correctAnswers": 0,
+        "totalAnswers": 20,
+        "successRate": 0
+      },
+      {
+        "teamName": "Équipe 29",
+        "tableName": "Table VIP ⭐",
+        "score": 32,
+        "correctAnswers": 0,
+        "totalAnswers": 20,
+        "successRate": 0
+      },
+      {
+        "teamName": "Équipe 30",
+        "tableName": "Table VIP ⭐",
+        "score": 33,
+        "correctAnswers": 0,
+        "totalAnswers": 20,
+        "successRate": 0
+      }
+    ]
+  },
+  "validation": {
+    "scoresMatchExpected": true,
+    "allTeamsAnswered": true,
+    "allTablesHaveTeams": true,
+    "errors": []
+  },
+  "endTime": "2025-11-03T21:55:31.632Z"
+}

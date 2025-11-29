@@ -1,0 +1,33 @@
+# Configuration Traefik pour supporter les WebSockets Socket.IO
+# À ajouter au docker-compose.yml du serveur
+
+# Labels à ajouter au service blindtest-api:
+labels:
+  - "traefik.enable=true"
+
+  # Router principal pour l'API (HTTP/HTTPS)
+  - "traefik.http.routers.blindtest-api.rule=Host(`blindtest.codeharmony.fr`) && PathPrefix(`/api`)"
+  - "traefik.http.routers.blindtest-api.entrypoints=https"
+  - "traefik.http.routers.blindtest-api.tls=true"
+  - "traefik.http.routers.blindtest-api.tls.certresolver=letsencrypt"
+  - "traefik.http.routers.blindtest-api.priority=100"
+
+  # Router pour Socket.IO (WebSocket)
+  - "traefik.http.routers.blindtest-ws.rule=Host(`blindtest.codeharmony.fr`) && PathPrefix(`/socket.io`)"
+  - "traefik.http.routers.blindtest-ws.entrypoints=https"
+  - "traefik.http.routers.blindtest-ws.tls=true"
+  - "traefik.http.routers.blindtest-ws.tls.certresolver=letsencrypt"
+  - "traefik.http.routers.blindtest-ws.priority=200"
+
+  # Middleware pour WebSocket upgrade
+  - "traefik.http.middlewares.ws-headers.headers.customrequestheaders.Connection=Upgrade"
+  - "traefik.http.middlewares.ws-headers.headers.customrequestheaders.Upgrade=websocket"
+
+  # Appliquer le middleware au router WebSocket
+  - "traefik.http.routers.blindtest-ws.middlewares=ws-headers"
+
+  # Service (port 3000 pour API et WebSocket)
+  - "traefik.http.services.blindtest-api.loadbalancer.server.port=3000"
+
+  # Network
+  - "traefik.docker.network=proxy"

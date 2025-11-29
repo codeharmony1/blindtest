@@ -7,13 +7,18 @@ import { routes } from './app/app.routes';
 import { DjErrorInterceptor } from './app/core/interceptors/dj-error.interceptor';
 import { tenantAuthInterceptor } from './app/core/interceptors/tenant-auth.interceptor';
 import { superAdminAuthInterceptor } from './app/core/interceptors/super-admin-auth.interceptor';
+import { tokenRefreshInterceptor } from './app/core/interceptors/token-refresh.interceptor';
+import { djAuthInterceptor } from './app/core/interceptors/dj-auth.interceptor';
 
 bootstrapApplication(AppComponent, {
   providers: [
     provideRouter(routes),
     provideHttpClient(
-      // Super-admin interceptor en PREMIER pour traiter /api/backstage avant tenant
-      withInterceptors([superAdminAuthInterceptor, tenantAuthInterceptor]),
+      // Token refresh interceptor en PREMIER pour gérer les 401 avant tout
+      // Super-admin interceptor en SECOND pour traiter /api/backstage avant tenant
+      // DJ auth interceptor en TROISIEME pour traiter l'auth DJ par PIN
+      // Tenant interceptor en DERNIER pour injecter le token sur les routes normales
+      withInterceptors([tokenRefreshInterceptor, superAdminAuthInterceptor, djAuthInterceptor, tenantAuthInterceptor]),
     ),
     {
       provide: HTTP_INTERCEPTORS,

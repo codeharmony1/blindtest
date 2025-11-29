@@ -26,8 +26,8 @@ export class RoundSong {
 
   // Support multi-tenant
   @Index()
-  @Column({ type: "varchar", length: 36 })
-  tenant_id!: string;
+  @Column({ type: "varchar", length: 36, nullable: true })
+  tenant_id!: string | null;
 
   @ManyToOne(() => Round, (r) => r.songs, { onDelete: "CASCADE" })
   @JoinColumn({ name: "round_id" })
@@ -48,6 +48,9 @@ export class RoundSong {
 
   @Column({ type: "varchar", length: 255, nullable: true })
   artist_official!: string | null;
+
+  @Column({ type: "varchar", length: 255, nullable: true })
+  group_official!: string | null;
 
   @Column({ type: "longtext", nullable: true })
   aliases_json?: string;
@@ -76,10 +79,10 @@ export class RoundSong {
 
   // Méthodes helper multi-tenant
   isOwnedByTenant(tenantId: string): boolean {
-    return this.tenant_id === tenantId;
+    return this.tenant_id === tenantId || this.tenant_id === null;
   }
 
   canBeAccessedByTenant(tenantId: string): boolean {
-    return this.tenant_id === tenantId;
+    return this.tenant_id === tenantId || this.tenant_id === null;
   }
 }

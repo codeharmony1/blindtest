@@ -13,6 +13,7 @@ import { Event } from "./Event";
 import { Player } from "./Player";
 import { Answer } from "./Answer";
 import { Score } from "./Score";
+import { Table } from "./Table";
 
 @Entity({ name: "teams" })
 @Index("uq_team_name_per_event", ["event_id", "name"], { unique: true })
@@ -32,6 +33,13 @@ export class Team {
   @ManyToOne(() => Event, (e) => e.teams, { onDelete: "CASCADE" })
   @JoinColumn({ name: "event_id" })
   event!: Event;
+
+  @Column({ type: "bigint", unsigned: true, nullable: true })
+  table_id?: string;
+
+  @ManyToOne(() => Table, (t) => t.teams, { onDelete: "SET NULL", nullable: true })
+  @JoinColumn({ name: "table_id" })
+  table?: Table;
 
   @Column({ type: "varchar", length: 100 })
   name!: string;

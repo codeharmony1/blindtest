@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { ApiService } from '../../core/services/api.service';
+import { SessionService } from '../../core/services/session.service';
 import { ThemeService } from '../../core/services/theme.service';
 
 @Component({
@@ -211,6 +212,7 @@ export class JoinComponent {
   eventCode!: string;
   nickname = '';
   eventName = '';
+  gameMode: 'TEAM' | 'SOLO' = 'TEAM';
   notFound = false;
   loading = true;
 
@@ -218,12 +220,23 @@ export class JoinComponent {
     private route: ActivatedRoute,
     private router: Router,
     private api: ApiService,
+    private session: SessionService,
     private theme: ThemeService,
   ) {
     this.eventCode = this.route.snapshot.params['eventCode'];
+
+    // Vérifier si une session existe déjà pour cet événement
+    const existingSession = this.session.load();
+    if (existingSession && existingSession.eventCode === this.eventCode) {
+      // Rediriger directement vers la page de jeu
+      this.router.navigate(['round'], { relativeTo: this.route });
+      return;
+    }
+
     this.api.getEventPublic(this.eventCode).subscribe({
       next: (d) => {
         this.eventName = d.name;
+        this.gameMode = d.gameMode || 'TEAM';
         this.loading = false;
         // Charger et appliquer le thème de l'événement une fois confirmé
         this.theme.loadEventTheme(this.eventCode).subscribe();
@@ -237,9 +250,41 @@ export class JoinComponent {
 
   goTeam() {
     if (this.notFound) return;
-    this.router.navigate(['team'], {
-      relativeTo: this.route,
-      queryParams: { nickname: this.nickname },
+
+    // En mode SOLO, aller directement à la page de rejoindre sans passer par la sélection d'équipe
+    if (this.gameMode === 'SOLO') {
+      this.joinDirectly();
+    } else {
+      // En mode TEAM, aller à la sélection d'équipe
+      this.router.navigate(['team'], {
+        relativeTo: this.route,
+        queryParams: { nickname: this.nickname },
+      });
+    }
+  }
+
+  private joinDirectly() {
+    // En mode SOLO, rejoindre directement sans teamId
+    this.api.joinEvent(this.eventCode, null, this.nickname).subscribe({
+      next: ({ teamToken, player }) => {
+        // Sauvegarder la session
+        this.session.save({
+          eventCode: this.eventCode,
+          teamId: player.teamId,
+          playerId: player.id,
+          nickname: player.nickname,
+          teamToken,
+          isCaptain: player.isCaptain,
+        });
+        this.router.navigate(['round'], { relativeTo: this.route });
+      },
+      error: (err) => {
+        if (err.error?.code === 'PLAYER_NICK_TAKEN') {
+          alert('Ce pseudo est déjà pris. Veuillez en choisir un autre.');
+        } else {
+          alert('Erreur lors de la connexion. Veuillez réessayer.');
+        }
+      }
     });
   }
 

@@ -1,0 +1,70 @@
+<div class="autumn-theme">
+  <div class="autumn-container">
+    <!-- Header -->
+    <div class="autumn-card-plain">
+      <h1 class="autumn-title">🍂 Sélectionnez votre table</h1>
+      <p class="event-subtitle">Choisissez ou créez une table pour votre équipe</p>
+    </div>
+
+    <!-- Tables existantes -->
+    <div class="autumn-card" *ngIf="tables.length > 0">
+      <h2 class="autumn-section-title">Tables disponibles</h2>
+      <div class="tables-grid">
+        <div
+          *ngFor="let table of tables; trackBy: trackByTableId"
+          class="table-card"
+          (click)="selectTable(table.id)"
+        >
+          <div class="table-card-content">
+            <div class="table-icon">🪑</div>
+            <div class="table-details">
+              <div class="table-label">Table</div>
+              <div class="table-name">{{ table.name }}</div>
+              <div class="table-count">{{ table.teamsCount }} équipe(s)</div>
+            </div>
+            <div class="table-action">
+              <span>Rejoindre</span>
+              <span class="table-arrow">→</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Créer une nouvelle table -->
+    <div class="autumn-card">
+      <h2 class="autumn-section-title">Créer une nouvelle table</h2>
+      <form class="table-creation-form" (ngSubmit)="createTable()">
+        <div>
+          <label class="autumn-label" for="tableName">Nom de la table</label>
+          <input
+            type="text"
+            id="tableName"
+            class="autumn-input"
+            placeholder="Ex: Table 1, Table des Champions..."
+            [(ngModel)]="newTable"
+            name="tableName"
+            required
+            maxlength="100"
+            [disabled]="loading"
+          />
+        </div>
+        <button
+          type="submit"
+          class="btn-autumn"
+          [disabled]="!newTable.trim() || loading"
+        >
+          <span class="btn-icon">✨</span>
+          {{ loading ? 'Création...' : 'Créer et rejoindre la table' }}
+        </button>
+      </form>
+    </div>
+
+    <!-- Decorative footer -->
+    <div class="autumn-footer-dots">
+      <span></span>
+      <span></span>
+      <span></span>
+    </div>
+  </div>
+</div>

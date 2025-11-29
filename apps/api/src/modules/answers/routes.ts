@@ -47,11 +47,27 @@ router.post(
     const player = await playerRepo.findOne({
       where: { id: String(req.player!.playerId) }
     });
+
+    console.log(`[DEBUG] Answer submission attempt:`, {
+      playerId: req.player!.playerId,
+      teamId: team.id,
+      playerFound: !!player,
+      isCaptain: player?.is_captain,
+      teamCaptainId: team.captain_player_id
+    });
+
     if (!player || !player.is_captain || team.captain_player_id !== player.id) {
+      console.log(`[ERROR] Captain check failed - rejecting with 403`);
       return res.status(403).json({
         error: {
           code: "CAPTAIN_ONLY",
-          message: "Only the team captain can submit answers"
+          message: "Only the team captain can submit answers",
+          debug: {
+            playerId: req.player!.playerId,
+            playerFound: !!player,
+            isCaptain: player?.is_captain,
+            teamCaptainId: team.captain_player_id
+          }
         }
       });
     }
@@ -67,6 +83,7 @@ router.post(
       answer = new Answer();
       answer.round_song_id = song.id;
       answer.team_id = team.id;
+      answer.tenant_id = team.tenant_id; // Hériter le tenant_id de l'équipe
     }
     answer.text_raw = text;
     answer.text_norm = matchResult.normalizedAnswer;

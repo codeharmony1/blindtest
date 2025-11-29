@@ -1,25 +1,48 @@
-<div class="autumn-theme projector-display">
-  <div class="autumn-leaves"></div>
+<div class="projector-display">
+  <!-- Falling leaves animation -->
+  <div class="falling-leaves">
+    @for (leaf of leaves; track $index) {
+      <div class="leaf-wrapper" [style.left.%]="leaf.left" [style.animation-delay.s]="leaf.delay">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="leaf-icon">
+          <path d="M11 20A7 7 0 0 1 9.8 6.1C15.5 5 17 4.48 19 2c1 2 2 4.18 2 8 0 5.5-4.78 10-10 10Z"></path>
+          <path d="M2 21c0-3 1.85-5.36 5.08-6C9.5 14.52 12 13 13 12"></path>
+        </svg>
+      </div>
+    }
+  </div>
+
+  <!-- Hearts decorations -->
+  <div class="hearts-decoration">
+    @for (heart of hearts; track $index) {
+      <div class="heart-wrapper" [style.left.%]="heart.left" [style.top.%]="heart.top" [style.animation-delay.s]="heart.delay">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="heart-icon">
+          <path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"></path>
+        </svg>
+      </div>
+    }
+  </div>
 
   <div class="projector-container">
     <!-- Header élégant -->
     <header class="projector-header">
-      <h1 class="event-title">
-        <span class="event-icon">🍂</span>
-        Blind Test Musical
-        <span class="event-code-display">{{ eventCode }}</span>
-      </h1>
-      <div class="event-tagline">Une soirée musicale d'automne</div>
-      <button
-        class="btn-autumn btn-autumn-secondary"
-        (click)="toggleAmbient()"
-        style="margin-top: 1rem"
-      >
-        ✨ Ambiance
-      </button>
+      <div class="header-icons">
+        <svg width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="header-leaf">
+          <path d="M11 20A7 7 0 0 1 9.8 6.1C15.5 5 17 4.48 19 2c1 2 2 4.18 2 8 0 5.5-4.78 10-10 10Z"></path>
+          <path d="M2 21c0-3 1.85-5.36 5.08-6C9.5 14.52 12 13 13 12"></path>
+        </svg>
+        <h1 class="event-title">Blind Test Musical</h1>
+        <svg width="44" height="44" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="header-heart">
+          <path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"></path>
+        </svg>
+      </div>
+      <div class="event-tagline-container">
+        <div class="tagline-divider"></div>
+        <div class="event-tagline">Mariage de Tiffany et Alexandre</div>
+        <div class="tagline-divider"></div>
+      </div>
     </header>
 
-    <!-- Phase de jeu actif (round en cours) -->
+    <!-- Phase de jeu actif (chanson en cours) -->
     <div *ngIf="inRound" class="game-phase">
       <div class="timer-display-large">
         <div class="timer-circle">
@@ -45,10 +68,332 @@
 
     <!-- Phase de pause (affichage du classement) -->
     <div *ngIf="!inRound" class="pause-phase">
+      <!-- En attente de la prochaine chanson -->
+      @if (showWaitingForNextSong) {
+        <div class="waiting-next-song">
+          <div class="waiting-icon">⏳</div>
+          <h2 class="waiting-title">{{ currentRoundName || 'Round en cours' }}</h2>
+          <p class="waiting-text">En attente de la prochaine chanson...</p>
+
+          <div class="musical-animation">
+            <div class="note note-1">🎵</div>
+            <div class="note note-2">🎶</div>
+            <div class="note note-3">🎵</div>
+            <div class="note note-4">🎶</div>
+          </div>
+        </div>
+      }
+
+      <!-- QR Code - visible uniquement au début (avant le démarrage du jeu) -->
+      @if (!gameStarted && !isEventCompleted) {
+        <div class="qr-code-section-top">
+          <div class="qr-code-container">
+            <h3 class="qr-code-title">Rejoignez la partie !</h3>
+            <div class="qr-code-wrapper">
+              <qrcode
+                [qrdata]="qrCodeUrl"
+                [width]="280"
+                [errorCorrectionLevel]="'M'"
+                [elementType]="'canvas'"
+                [margin]="2"
+              ></qrcode>
+            </div>
+            <p class="qr-code-instruction">Scannez ce QR code avec votre smartphone</p>
+            <p class="qr-code-code">Code : <strong>{{ eventCode }}</strong></p>
+          </div>
+        </div>
+      }
+
+      <!-- Scores du round PAR TABLE - affiché en mode table -->
+      @if (showRoundScores && tableMode && currentTableScores.length > 0) {
+        <div class="round-scores-section">
+          <h2 class="round-scores-title">
+            <span class="round-icon">{{ isLastRound ? '🏆' : '🪑' }}</span>
+            {{ isLastRound ? 'Podium des Tables' : 'Résultats des Tables - Manche ' + currentRoundNumber }}
+          </h2>
+
+          <!-- Afficher le podium des tables si c'est le dernier round et qu'il y a au moins 3 tables -->
+          @if (isLastRound && currentTableScores.length >= 3) {
+            <div class="podium-display">
+              <div class="podium">
+                <!-- 2ème place -->
+                @if (currentTableScores[1]) {
+                  <div class="podium-position silver">
+                    <div class="position-circle">
+                      <span style="font-size: 2.5rem">🪑</span>
+                    </div>
+                    <div class="position-badge">2ème</div>
+                    <div class="position-team">{{ currentTableScores[1].tableName }}</div>
+                    <div class="position-points-wrapper">
+                      <div class="position-points">{{ currentTableScores[1].totalPoints }} pts</div>
+                      <small style="opacity: 0.7">{{ currentTableScores[1].teamsCount }} équipes</small>
+                    </div>
+                  </div>
+                }
+
+                <!-- 1ère place -->
+                @if (currentTableScores[0]) {
+                  <div class="podium-position gold">
+                    <div class="crown-icon">
+                      <svg width="56" height="56" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"></path>
+                      </svg>
+                    </div>
+                    <div class="position-circle gold-circle">
+                      <span style="font-size: 3rem">🪑</span>
+                    </div>
+                    <div class="position-badge gold-badge">1ère</div>
+                    <div class="position-team">{{ currentTableScores[0].tableName }}</div>
+                    <div class="position-points-wrapper gold-points-wrapper">
+                      <div class="position-points">{{ currentTableScores[0].totalPoints }} pts</div>
+                      <small style="opacity: 0.8">{{ currentTableScores[0].teamsCount }} équipes</small>
+                    </div>
+                  </div>
+                }
+
+                <!-- 3ème place -->
+                @if (currentTableScores[2]) {
+                  <div class="podium-position bronze">
+                    <div class="position-circle">
+                      <span style="font-size: 2.5rem">🪑</span>
+                    </div>
+                    <div class="position-badge">3ème</div>
+                    <div class="position-team">{{ currentTableScores[2].tableName }}</div>
+                    <div class="position-points-wrapper">
+                      <div class="position-points">{{ currentTableScores[2].totalPoints }} pts</div>
+                      <small style="opacity: 0.7">{{ currentTableScores[2].teamsCount }} équipes</small>
+                    </div>
+                  </div>
+                }
+              </div>
+            </div>
+          }
+
+          <!-- Tableau des scores pour rounds normaux ou si moins de 3 tables -->
+          @if (!isLastRound || currentTableScores.length < 3) {
+            <div class="round-scores-table">
+              <table class="theme-table">
+                <thead>
+                  <tr>
+                    <th>Position</th>
+                    <th>Table</th>
+                    <th>Équipes</th>
+                    <th>Points Manche</th>
+                    <th>Total</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  @for (table of currentTableScores; track table.tableId) {
+                    <tr>
+                      <td class="rank-cell">
+                        <div class="rank-display">{{ table.rank }}</div>
+                      </td>
+                      <td class="team-cell">
+                        <div class="team-display">🪑 {{ table.tableName }}</div>
+                      </td>
+                      <td class="team-cell">
+                        <div class="team-display">{{ table.teamsCount }}</div>
+                      </td>
+                      <td class="round-points-cell">
+                        <div class="round-points-display">+{{ table.roundPoints }}</div>
+                      </td>
+                      <td class="points-cell">
+                        <div class="points-display">{{ table.totalPoints }}</div>
+                      </td>
+                    </tr>
+                  }
+                </tbody>
+              </table>
+            </div>
+          }
+
+          <!-- Classement complet sous le podium si dernier round -->
+          @if (isLastRound && currentTableScores.length > 3) {
+            <div class="full-leaderboard" style="margin-top: 2rem">
+              <h3 style="text-align: center; font-size: 1.8rem; color: var(--autumn-brown); margin-bottom: 1.5rem">
+                Classement Complet des Tables
+              </h3>
+              <table class="theme-table projector-table">
+                <thead>
+                  <tr>
+                    <th>Position</th>
+                    <th>Table</th>
+                    <th>Équipes</th>
+                    <th>Points Finaux</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  @for (table of currentTableScores; track table.tableId) {
+                    <tr [class]="'rank-' + table.rank">
+                      <td class="rank-cell">
+                        <div class="rank-display">{{ table.rank }}</div>
+                      </td>
+                      <td class="team-cell">
+                        <div class="team-display">🪑 {{ table.tableName }}</div>
+                      </td>
+                      <td class="team-cell">
+                        <div class="team-display">{{ table.teamsCount }}</div>
+                      </td>
+                      <td class="points-cell">
+                        <div class="points-display">{{ table.totalPoints }}</div>
+                      </td>
+                    </tr>
+                  }
+                </tbody>
+              </table>
+            </div>
+          }
+        </div>
+      }
+
+      <!-- Scores du round PAR ÉQUIPE - affiché en mode classique -->
+      @if (showRoundScores && !tableMode && currentRoundScores.length > 0) {
+        <div class="round-scores-section">
+          <h2 class="round-scores-title">
+            <span class="round-icon">{{ isLastRound ? '🏆' : '🎯' }}</span>
+            {{ isLastRound ? 'Podium Final' : 'Résultats de la Manche ' + currentRoundNumber }}
+          </h2>
+
+          <!-- Afficher le podium si c'est le dernier round et qu'il y a au moins 3 équipes -->
+          @if (isLastRound && currentRoundScores.length >= 3) {
+            <div class="podium-display">
+              <!-- Podium pour les 3 premiers -->
+              <div class="podium">
+                <!-- 2ème place -->
+                @if (currentRoundScores[1]) {
+                  <div class="podium-position silver">
+                    <div class="position-circle">
+                      <svg width="56" height="56" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="music-icon">
+                        <path d="M9 18V5l12-2v13"></path>
+                        <circle cx="6" cy="18" r="3"></circle>
+                        <circle cx="18" cy="16" r="3"></circle>
+                      </svg>
+                    </div>
+                    <div class="position-badge">2ème</div>
+                    <div class="position-team">{{ currentRoundScores[1].name }}</div>
+                    <div class="position-points-wrapper">
+                      <div class="position-points">{{ currentRoundScores[1].totalPoints }} pts</div>
+                    </div>
+                  </div>
+                }
+
+                <!-- 1ère place (plus haute) -->
+                @if (currentRoundScores[0]) {
+                  <div class="podium-position gold">
+                    <div class="crown-icon">
+                      <svg width="56" height="56" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"></path>
+                      </svg>
+                    </div>
+                    <div class="position-circle gold-circle">
+                      <svg width="72" height="72" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="music-icon">
+                        <path d="M9 18V5l12-2v13"></path>
+                        <circle cx="6" cy="18" r="3"></circle>
+                        <circle cx="18" cy="16" r="3"></circle>
+                      </svg>
+                    </div>
+                    <div class="position-badge gold-badge">1er</div>
+                    <div class="position-team">{{ currentRoundScores[0].name }}</div>
+                    <div class="position-points-wrapper gold-points-wrapper">
+                      <div class="position-points">{{ currentRoundScores[0].totalPoints }} pts</div>
+                    </div>
+                  </div>
+                }
+
+                <!-- 3ème place -->
+                @if (currentRoundScores[2]) {
+                  <div class="podium-position bronze">
+                    <div class="position-circle">
+                      <svg width="56" height="56" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="music-icon">
+                        <path d="M9 18V5l12-2v13"></path>
+                        <circle cx="6" cy="18" r="3"></circle>
+                        <circle cx="18" cy="16" r="3"></circle>
+                      </svg>
+                    </div>
+                    <div class="position-badge">3ème</div>
+                    <div class="position-team">{{ currentRoundScores[2].name }}</div>
+                    <div class="position-points-wrapper">
+                      <div class="position-points">{{ currentRoundScores[2].totalPoints }} pts</div>
+                    </div>
+                  </div>
+                }
+              </div>
+            </div>
+          }
+
+          <!-- Afficher le tableau pour les rounds normaux ou si moins de 3 équipes -->
+          @if (!isLastRound || currentRoundScores.length < 3) {
+            <div class="round-scores-table">
+              <table class="theme-table">
+                <thead>
+                  <tr>
+                    <th>Position</th>
+                    <th>Équipe</th>
+                    <th>Points Manche</th>
+                    <th>Total</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  @for (team of currentRoundScores; track team.teamId) {
+                    <tr>
+                      <td class="rank-cell">
+                        <div class="rank-display">{{ team.rank }}</div>
+                      </td>
+                      <td class="team-cell">
+                        <div class="team-display">{{ team.name }}</div>
+                      </td>
+                      <td class="round-points-cell">
+                        <div class="round-points-display">+{{ team.roundPoints }}</div>
+                      </td>
+                      <td class="points-cell">
+                        <div class="points-display">{{ team.totalPoints }}</div>
+                      </td>
+                    </tr>
+                  }
+                </tbody>
+              </table>
+            </div>
+          }
+
+          <!-- Afficher aussi le classement complet sous le podium si c'est le dernier round -->
+          @if (isLastRound && currentRoundScores.length > 3) {
+            <div class="full-leaderboard" style="margin-top: 2rem">
+              <h3 style="text-align: center; font-size: 1.8rem; color: var(--autumn-brown); margin-bottom: 1.5rem">
+                Classement Complet
+              </h3>
+              <table class="theme-table projector-table">
+                <thead>
+                  <tr>
+                    <th>Position</th>
+                    <th>Équipe</th>
+                    <th>Points Finaux</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  @for (team of currentRoundScores; track team.teamId) {
+                    <tr [class]="'rank-' + team.rank">
+                      <td class="rank-cell">
+                        <div class="rank-display">{{ team.rank }}</div>
+                      </td>
+                      <td class="team-cell">
+                        <div class="team-display">{{ team.name }}</div>
+                      </td>
+                      <td class="points-cell">
+                        <div class="points-display">{{ team.totalPoints }}</div>
+                      </td>
+                    </tr>
+                  }
+                </tbody>
+              </table>
+            </div>
+          }
+        </div>
+      }
+
       <!-- Réponse officielle si disponible -->
       <div *ngIf="officialTitle || officialArtist" class="official-answer">
         <h2 class="official-title">
-          <span class="official-icon">✨</span>
+          <span class="official-icon">🎵</span>
           Réponse Officielle
         </h2>
         <div class="answer-display">
@@ -57,79 +402,234 @@
         </div>
       </div>
 
-      <!-- Classement -->
-      <div class="leaderboard-display">
-        <h2 class="leaderboard-title">
-          <span class="leaderboard-icon">🏆</span>
-          Classement Actuel
-        </h2>
+      <!-- Classement général -->
+      @if (isEventCompleted || (!showRoundScores && hasAnyScore())) {
+        <div class="leaderboard-display">
+          <!-- Classement simple (toujours affiché) -->
+          <!-- Afficher le titre seulement s'il y a des scores (au moins une équipe a des points) ou si l'événement est terminé -->
+          @if ((rows.length > 0 && hasAnyScore()) || isEventCompleted) {
+            <h2 class="leaderboard-title">
+              <span class="leaderboard-icon">🏆</span>
+              @if (!isEventCompleted) {
+                <span>Classement Actuel</span>
+              }
+              @if (isEventCompleted) {
+                <span class="final-title">🎊 Classement Final 🎊</span>
+              }
+            </h2>
+          }
 
-        <div *ngIf="rows.length" class="podium-display">
-          <!-- Podium pour les 3 premiers -->
-          <div class="podium" *ngIf="rows.length >= 3">
-            <!-- 2ème place -->
-            <div class="podium-position silver" *ngIf="rows[1]">
-              <div class="position-medal">🥈</div>
-              <div class="position-rank">2ème</div>
-              <div class="position-team">{{ rows[1].name }}</div>
-              <div class="position-points">{{ rows[1].totalPoints }} pts</div>
+          <!-- Statistiques finales -->
+          @if (isEventCompleted) {
+            <div class="event-stats">
+              <div class="stat-item">
+                <span class="stat-icon">🎵</span>
+                <span class="stat-value">{{ eventStats.totalSongs }}</span>
+                <span class="stat-label">chansons jouées</span>
+              </div>
+              <div class="stat-item">
+                <span class="stat-icon">🎯</span>
+                <span class="stat-value">{{ eventStats.totalRounds }}</span>
+                <span class="stat-label">manches</span>
+              </div>
+              <div class="stat-item">
+                <span class="stat-icon">👥</span>
+                <span class="stat-value">{{ eventStats.totalPlayers }}</span>
+                <span class="stat-label">joueurs</span>
+              </div>
+              <div class="stat-item">
+                <span class="stat-icon">⏱️</span>
+                <span class="stat-value">{{ formatDuration(eventStats.duration) }}</span>
+                <span class="stat-label">durée totale</span>
+              </div>
             </div>
+          }
 
-            <!-- 1ère place (plus haute) -->
-            <div class="podium-position gold" *ngIf="rows[0]">
-              <div class="position-medal">🥇</div>
-              <div class="position-rank">1ère</div>
-              <div class="position-team">{{ rows[0].name }}</div>
-              <div class="position-points">{{ rows[0].totalPoints }} pts</div>
+          @if (rows.length && hasAnyScore()) {
+            <div class="podium-display">
+              <!-- Podium pour les 3 premiers -->
+              @if (rows.length >= 3) {
+                <div class="podium">
+                  <!-- 2ème place -->
+                  @if (rows[1]) {
+                    <div class="podium-position silver">
+                      <div class="position-circle">
+                        <svg width="56" height="56" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="music-icon">
+                          <path d="M9 18V5l12-2v13"></path>
+                          <circle cx="6" cy="18" r="3"></circle>
+                          <circle cx="18" cy="16" r="3"></circle>
+                        </svg>
+                      </div>
+                      <div class="position-badge">2ème</div>
+                      <div class="position-team">{{ rows[1].name }}</div>
+                      <div class="position-points-wrapper">
+                        <div class="position-points">{{ rows[1].totalPoints }} pts</div>
+                      </div>
+                    </div>
+                  }
+
+                  <!-- 1ère place (plus haute) -->
+                  @if (rows[0]) {
+                    <div class="podium-position gold">
+                      <div class="crown-icon">
+                        <svg width="56" height="56" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                          <path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"></path>
+                        </svg>
+                      </div>
+                      <div class="position-circle gold-circle">
+                        <svg width="72" height="72" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="music-icon">
+                          <path d="M9 18V5l12-2v13"></path>
+                          <circle cx="6" cy="18" r="3"></circle>
+                          <circle cx="18" cy="16" r="3"></circle>
+                        </svg>
+                      </div>
+                      <div class="position-badge gold-badge">1er</div>
+                      <div class="position-team">{{ rows[0].name }}</div>
+                      <div class="position-points-wrapper gold-points-wrapper">
+                        <div class="position-points">{{ rows[0].totalPoints }} pts</div>
+                      </div>
+                    </div>
+                  }
+
+                  <!-- 3ème place -->
+                  @if (rows[2]) {
+                    <div class="podium-position bronze">
+                      <div class="position-circle">
+                        <svg width="56" height="56" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="music-icon">
+                          <path d="M9 18V5l12-2v13"></path>
+                          <circle cx="6" cy="18" r="3"></circle>
+                          <circle cx="18" cy="16" r="3"></circle>
+                        </svg>
+                      </div>
+                      <div class="position-badge">3ème</div>
+                      <div class="position-team">{{ rows[2].name }}</div>
+                      <div class="position-points-wrapper">
+                        <div class="position-points">{{ rows[2].totalPoints }} pts</div>
+                      </div>
+                    </div>
+                  }
+                </div>
+              }
+
+              <!-- Tableau complet pour tous les classements -->
+              <div class="full-leaderboard">
+                <table class="theme-table projector-table">
+                  <thead>
+                    <tr>
+                      <th>Position</th>
+                      <th>Équipe</th>
+                      <th>Points</th>
+                      <th>Distinction</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    @for (r of rows; track trackByTeamId($index, r)) {
+                      <tr [class]="'rank-' + r.rank">
+                        <td class="rank-cell">
+                          <div class="rank-display">{{ r.rank }}</div>
+                        </td>
+                        <td class="team-cell">
+                          <div class="team-display">{{ r.name }}</div>
+                        </td>
+                        <td class="points-cell">
+                          <div class="points-display">{{ r.totalPoints }}</div>
+                        </td>
+                        <td class="medal-cell">
+                          @if (r.rank <= 3) {
+                            <div class="medal-display">{{ getMedal(r.rank) }}</div>
+                          }
+                        </td>
+                      </tr>
+                    }
+                  </tbody>
+                </table>
+              </div>
             </div>
+          }
 
-            <!-- 3ème place -->
-            <div class="podium-position bronze" *ngIf="rows[2]">
-              <div class="position-medal">🥉</div>
-              <div class="position-rank">3ème</div>
-              <div class="position-team">{{ rows[2].name }}</div>
-              <div class="position-points">{{ rows[2].totalPoints }} pts</div>
+          @if (!rows.length) {
+            <div class="no-scores">
+              <div class="no-scores-icon">🎭</div>
+              <div class="no-scores-text">En attente du premier round...</div>
             </div>
-          </div>
+          }
 
-          <!-- Tableau complet pour tous les classements -->
-          <div class="full-leaderboard">
-            <table class="autumn-table projector-table">
+        <!-- Scores détaillés par chanson (toujours affichés si disponibles) -->
+        @if (detailedScores && detailedScores.songs.length > 0) {
+          <h2 class="leaderboard-title">
+            <span class="leaderboard-icon">📊</span>
+            <span>Scores Détaillés par Chanson</span>
+          </h2>
+
+          <div class="detailed-scores-container">
+            <table class="theme-table detailed-scores-table">
               <thead>
                 <tr>
-                  <th>Position</th>
-                  <th>Équipe</th>
-                  <th>Points</th>
-                  <th>Distinction</th>
+                  <th class="song-header">Chanson</th>
+                  @for (team of detailedScores.teams; track team.id) {
+                    <th class="team-header">{{ team.name }}</th>
+                  }
                 </tr>
               </thead>
               <tbody>
-                <tr *ngFor="let r of rows; trackBy: trackByTeamId" [class]="'rank-' + r.rank">
-                  <td class="rank-cell">
-                    <div class="rank-display">{{ r.rank }}</div>
+                @for (song of detailedScores.songs; track song.id) {
+                  <tr>
+                    <td class="song-cell">
+                      <div class="song-info">
+                        <div class="song-number">M{{ song.roundIdx }}-{{ song.songIdx }}</div>
+                        <div class="song-title">{{ song.title }}</div>
+                        @if (song.artist) {
+                          <div class="song-artist">{{ song.artist }}</div>
+                        }
+                      </div>
+                    </td>
+                    @for (team of detailedScores.teams; track team.id) {
+                      <td class="score-cell" [class.has-points]="song.teamScores[team.id] > 0">
+                        <div class="score-value">{{ song.teamScores[team.id] || 0 }}</div>
+                      </td>
+                    }
+                  </tr>
+                }
+                <!-- Ligne de total -->
+                <tr class="total-row">
+                  <td class="total-label">
+                    <strong>Total</strong>
                   </td>
-                  <td class="team-cell">
-                    <div class="team-display">{{ r.name }}</div>
-                  </td>
-                  <td class="points-cell">
-                    <div class="points-display">{{ r.totalPoints }}</div>
-                  </td>
-                  <td class="medal-cell">
-                    <div class="medal-display" *ngIf="r.rank <= 3">
-                      {{ getMedal(r.rank) }}
-                    </div>
-                  </td>
+                  @for (team of detailedScores.teams; track team.id) {
+                    <td class="total-cell">
+                      <div class="total-value">{{ team.totalPoints }}</div>
+                    </td>
+                  }
                 </tr>
               </tbody>
             </table>
           </div>
+        }
         </div>
+      }
+    </div>
 
-        <div *ngIf="!rows.length" class="no-scores">
-          <div class="no-scores-icon">🎭</div>
-          <div class="no-scores-text">En attente des premiers résultats...</div>
-        </div>
-      </div>
+    <!-- Bottom decoration -->
+    <div class="bottom-decoration">
+      <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M11 20A7 7 0 0 1 9.8 6.1C15.5 5 17 4.48 19 2c1 2 2 4.18 2 8 0 5.5-4.78 10-10 10Z"></path>
+        <path d="M2 21c0-3 1.85-5.36 5.08-6C9.5 14.52 12 13 13 12"></path>
+      </svg>
+      <svg width="28" height="28" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"></path>
+      </svg>
+      <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M9 18V5l12-2v13"></path>
+        <circle cx="6" cy="18" r="3"></circle>
+        <circle cx="18" cy="16" r="3"></circle>
+      </svg>
+      <svg width="28" height="28" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"></path>
+      </svg>
+      <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M11 20A7 7 0 0 1 9.8 6.1C15.5 5 17 4.48 19 2c1 2 2 4.18 2 8 0 5.5-4.78 10-10 10Z"></path>
+        <path d="M2 21c0-3 1.85-5.36 5.08-6C9.5 14.52 12 13 13 12"></path>
+      </svg>
     </div>
   </div>
 </div>

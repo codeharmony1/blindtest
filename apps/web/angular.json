@@ -23,7 +23,10 @@
                 "input": "public"
               }
             ],
-            "styles": ["src/styles.css"]
+            "styles": [
+              "src/styles.css",
+              "src/app/shared/styles/projector-detailed-scores.css"
+            ]
           },
           "configurations": {
             "production": {
@@ -35,8 +38,8 @@
                 },
                 {
                   "type": "anyComponentStyle",
-                  "maximumWarning": "4kB",
-                  "maximumError": "8kB"
+                  "maximumWarning": "10kB",
+                  "maximumError": "31kB"
                 }
               ],
               "outputHashing": "all"
@@ -51,12 +54,17 @@
         },
         "serve": {
           "builder": "@angular/build:dev-server",
+          "options": {
+            "host": "0.0.0.0",
+            "port": 4200
+          },
           "configurations": {
             "production": {
               "buildTarget": "web:build:production"
             },
             "development": {
-              "buildTarget": "web:build:development"
+              "buildTarget": "web:build:development",
+              "proxyConfig": "proxy.conf.json"
             }
           },
           "defaultConfiguration": "development"

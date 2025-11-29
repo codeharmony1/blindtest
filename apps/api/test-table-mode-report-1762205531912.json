@@ -1,0 +1,84 @@
+{
+  "startTime": "2025-11-03T21:32:10.601Z",
+  "eventCode": "TBL530875",
+  "config": {
+    "tables": 10,
+    "teamsPerTable": 3,
+    "totalTeams": 30,
+    "rounds": 2,
+    "songsPerRound": 10,
+    "totalSongs": 20
+  },
+  "tables": [
+    {
+      "id": "13",
+      "name": "Table des Mariés 💍",
+      "teams": []
+    },
+    {
+      "id": "14",
+      "name": "Table de la Famille 👨‍👩‍👧‍👦",
+      "teams": []
+    },
+    {
+      "id": "15",
+      "name": "Table des Amis d'Enfance 🧸",
+      "teams": []
+    },
+    {
+      "id": "16",
+      "name": "Table des Collègues 💼",
+      "teams": []
+    },
+    {
+      "id": "17",
+      "name": "Table des Copains de Fac 🎓",
+      "teams": []
+    },
+    {
+      "id": "18",
+      "name": "Table des Cousins 🎪",
+      "teams": []
+    },
+    {
+      "id": "19",
+      "name": "Table des Voisins 🏡",
+      "teams": []
+    },
+    {
+      "id": "20",
+      "name": "Table des Sports 🏀",
+      "teams": []
+    },
+    {
+      "id": "21",
+      "name": "Table de la Musique 🎸",
+      "teams": []
+    },
+    {
+      "id": "22",
+      "name": "Table VIP ⭐",
+      "teams": []
+    }
+  ],
+  "performance": {
+    "eventCreation": 123,
+    "tablesCreation": 748,
+    "teamsCreation": 0,
+    "roundsCreation": 0,
+    "answersSubmission": 0,
+    "total": 0
+  },
+  "results": {
+    "tableScores": [],
+    "teamScores": []
+  },
+  "validation": {
+    "scoresMatchExpected": false,
+    "allTeamsAnswered": false,
+    "allTablesHaveTeams": false,
+    "errors": [
+      "Fatal error: Request failed with status code 404"
+    ]
+  }
+}

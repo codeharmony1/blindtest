@@ -318,6 +318,7 @@ export class TeamSelectComponent {
   nickname!: string;
   teams: Array<{ id: string; name: string }> = [];
   newTeam = '';
+  tableMode = false;
 
   constructor(
     private route: ActivatedRoute,
@@ -328,6 +329,20 @@ export class TeamSelectComponent {
   ) {
     this.eventCode = this.route.snapshot.parent!.params['eventCode'];
     this.nickname = this.route.snapshot.queryParams['nickname'] ?? '';
+
+    // Vérifier si une session existe déjà pour cet événement
+    const existingSession = this.session.load();
+    if (existingSession && existingSession.eventCode === this.eventCode) {
+      // Rediriger directement vers la page de jeu
+      this.router.navigate(['../round'], { relativeTo: this.route });
+      return;
+    }
+
+    // Charger les informations de l'événement pour vérifier le mode table
+    this.api.getEventPublic(this.eventCode).subscribe((event) => {
+      this.tableMode = event.settings?.tableMode || false;
+    });
+
     this.refresh();
     this.theme.loadEventTheme(this.eventCode).subscribe();
   }
@@ -338,9 +353,10 @@ export class TeamSelectComponent {
 
   createTeam() {
     this.api.createTeam(this.eventCode, this.newTeam.trim()).subscribe({
-      next: (_) => {
+      next: (team) => {
         this.newTeam = '';
-        this.refresh();
+        // Auto-sélectionner l'équipe créée et rejoindre l'événement
+        this.selectTeam(team.id);
       },
     });
   }
@@ -350,16 +366,31 @@ export class TeamSelectComponent {
   }
 
   selectTeam(teamId: string) {
-    this.api.joinEvent(this.eventCode, teamId, this.nickname).subscribe(({ teamToken, player }) => {
-      this.session.save({
-        eventCode: this.eventCode,
-        teamId: player.teamId,
-        playerId: player.id,
-        nickname: player.nickname,
-        teamToken,
-        isCaptain: player.isCaptain,
-      });
-      this.router.navigate(['../round'], { relativeTo: this.route });
+    this.api.joinEvent(this.eventCode, teamId, this.nickname).subscribe({
+      next: ({ teamToken, player }) => {
+        this.session.save({
+          eventCode: this.eventCode,
+          teamId: player.teamId,
+          playerId: player.id,
+          nickname: player.nickname,
+          teamToken,
+          isCaptain: player.isCaptain,
+        });
+
+        // Si le mode table est activé, rediriger vers la sélection de table
+        if (this.tableMode) {
+          this.router.navigate(['../table'], { relativeTo: this.route });
+        } else {
+          this.router.navigate(['../round'], { relativeTo: this.route });
+        }
+      },
+      error: (err) => {
+        if (err.error?.code === 'PLAYER_NICK_TAKEN') {
+          alert('Ce pseudo est déjà pris dans cet événement. Veuillez retourner en arrière et choisir un autre pseudo.');
+        } else {
+          alert('Erreur lors de la connexion. Veuillez réessayer.');
+        }
+      }
     });
   }
 }

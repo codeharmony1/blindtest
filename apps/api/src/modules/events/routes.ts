@@ -8,6 +8,12 @@ import { Tenant } from "../../db/entities/Tenant";
 import { env } from "../../config/env";
 import { requireStaff, AuthedStaff } from "../../middlewares/auth";
 import { tenantIsolationMiddleware } from "../../middlewares/tenant-isolation";
+import { generateSecurePIN, hashPIN } from "../../services/pin.service";
+import {
+  generateUniqueEventCode,
+  calculateCodeExpiration,
+  canReactivateWithCode,
+} from "../../services/event-code.service";
 
 const router = Router();
 
@@ -96,7 +102,8 @@ router.get("/events", requireStaff, async (req: AuthedStaff, res) => {
 // POST /api/events (create event for current tenant)
 router.post("/events", requireStaff, async (req: AuthedStaff, res) => {
   try {
-    const { name, code, settings, gameMode, tableMode } = req.body ?? {};
+    const { name, code, settings, gameMode, tableMode, startDate, endDate } =
+      req.body ?? {};
     const tenantContext = (req as any).tenant;
 
     console.log("[DEBUG] POST /api/events - Request context:", {
@@ -105,7 +112,15 @@ router.post("/events", requireStaff, async (req: AuthedStaff, res) => {
       userId: tenantContext?.userId,
       hasStaff: !!req.staff,
       organizerId: req.staff?.organizerId,
-      body: { name, code, gameMode, tableMode, hasSettings: !!settings }
+      body: {
+        name,
+        code,
+        gameMode,
+        tableMode,
+        startDate,
+        endDate,
+        hasSettings: !!settings,
+      },
     });
 
     if (!name) {
@@ -113,6 +128,44 @@ router.post("/events", requireStaff, async (req: AuthedStaff, res) => {
         error: {
           code: "BAD_REQUEST",
           message: "name required",
+        },
+      });
+    }
+
+    // Valider les dates si fournies
+    let parsedStartDate: Date | undefined;
+    let parsedEndDate: Date | undefined;
+
+    if (startDate) {
+      parsedStartDate = new Date(startDate);
+      if (isNaN(parsedStartDate.getTime())) {
+        return res.status(400).json({
+          error: {
+            code: "BAD_REQUEST",
+            message: "Invalid startDate format",
+          },
+        });
+      }
+    }
+
+    if (endDate) {
+      parsedEndDate = new Date(endDate);
+      if (isNaN(parsedEndDate.getTime())) {
+        return res.status(400).json({
+          error: {
+            code: "BAD_REQUEST",
+            message: "Invalid endDate format",
+          },
+        });
+      }
+    }
+
+    // Valider que endDate > startDate si les deux sont fournis
+    if (parsedStartDate && parsedEndDate && parsedEndDate <= parsedStartDate) {
+      return res.status(400).json({
+        error: {
+          code: "BAD_REQUEST",
+          message: "endDate must be after startDate",
         },
       });
     }
@@ -140,14 +193,40 @@ router.post("/events", requireStaff, async (req: AuthedStaff, res) => {
         return res.status(404).json({ error: { code: "TENANT_NOT_FOUND" } });
       }
 
+      // Générer un code unique basé sur le lifecycle
+      const uniqueCode = code
+        ? code
+        : await generateUniqueEventCode({
+            eventRepo,
+            tenantId: tenant.id,
+            preferredCode: code,
+            startDate: parsedStartDate,
+            endDate: parsedEndDate,
+            codeLength: 8,
+          });
+
+      // Calculer la date d'expiration du code
+      const codeExpiresAt = calculateCodeExpiration(
+        parsedStartDate,
+        parsedEndDate
+      );
+
+      // Générer un PIN DJ lors de la création
+      const djPin = generateSecurePIN();
+      const djPinHash = await hashPIN(djPin);
+
       const event = new Event();
       event.name = name;
-      event.code = code ?? generateCode();
+      event.code = uniqueCode;
       event.game_mode = gameMode ?? "TEAM";
       event.table_mode = tableMode ?? false;
       event.settings_json = settings ? JSON.stringify(settings) : undefined;
+      event.dj_pin_hash = djPinHash;
       event.tenant = tenant;
       event.tenant_id = tenant.id;
+      event.start_date = parsedStartDate;
+      event.end_date = parsedEndDate;
+      event.code_expires_at = codeExpiresAt;
 
       const saved = await eventRepo.save(event);
 
@@ -183,7 +262,13 @@ router.post("/events", requireStaff, async (req: AuthedStaff, res) => {
         id: saved.id,
         code: saved.code,
         name: saved.name,
+        gameMode: saved.game_mode,
+        tableMode: saved.table_mode,
+        startDate: saved.start_date,
+        endDate: saved.end_date,
+        codeExpiresAt: saved.code_expires_at,
         createdAt: saved.created_at,
+        djPin: djPin, // ⚠️ PIN en clair retourné UNE SEULE FOIS
       });
     } else if (req.staff?.organizerId) {
       // Ancien système legacy - utiliser l'organizerId du token directement
@@ -220,13 +305,38 @@ router.post("/events", requireStaff, async (req: AuthedStaff, res) => {
         tenant = await tenantRepo.findOne({ where: { id: DEFAULT_TENANT_ID } });
       }
 
+      // Générer un code unique basé sur le lifecycle
+      const uniqueCode = code
+        ? code
+        : await generateUniqueEventCode({
+            eventRepo,
+            tenantId: DEFAULT_TENANT_ID,
+            preferredCode: code,
+            startDate: parsedStartDate,
+            endDate: parsedEndDate,
+            codeLength: 8,
+          });
+
+      const codeExpiresAt = calculateCodeExpiration(
+        parsedStartDate,
+        parsedEndDate
+      );
+
+      // Générer un PIN DJ lors de la création
+      const djPin = generateSecurePIN();
+      const djPinHash = await hashPIN(djPin);
+
       const event = new Event();
       event.organizer = organizer;
       event.name = name;
-      event.code = code ?? generateCode();
+      event.code = uniqueCode;
       event.game_mode = gameMode ?? "TEAM";
       event.table_mode = tableMode ?? false;
       event.settings_json = settings ? JSON.stringify(settings) : undefined;
+      event.dj_pin_hash = djPinHash;
+      event.start_date = parsedStartDate;
+      event.end_date = parsedEndDate;
+      event.code_expires_at = codeExpiresAt;
       // Assign tenant relation (and id) to satisfy FK constraint
       if (tenant) {
         (event as any).tenant = tenant;
@@ -238,7 +348,13 @@ router.post("/events", requireStaff, async (req: AuthedStaff, res) => {
         id: saved.id,
         code: saved.code,
         name: saved.name,
+        gameMode: saved.game_mode,
+        tableMode: saved.table_mode,
+        startDate: saved.start_date,
+        endDate: saved.end_date,
+        codeExpiresAt: saved.code_expires_at,
         createdAt: saved.created_at,
+        djPin: djPin, // ⚠️ PIN en clair retourné UNE SEULE FOIS
       });
     } else {
       return res.status(401).json({
@@ -703,6 +819,249 @@ router.post("/events/:id/duplicate", requireStaff, async (req: AuthedStaff, res)
     });
   } catch (error) {
     console.error("Error duplicating event:", error);
+    return res.status(500).json({
+      error: { code: "SERVER_ERROR", message: String(error) },
+    });
+  }
+});
+
+// POST /api/events/:id/reactivate - Réactiver un événement avec nouvelles dates
+router.post(
+  "/events/:id/reactivate",
+  requireStaff,
+  async (req: AuthedStaff, res) => {
+    try {
+      const { id } = req.params;
+      const { startDate, endDate } = req.body;
+      const tenantContext = (req as any).tenant;
+
+      if (!startDate || !endDate) {
+        return res.status(400).json({
+          error: {
+            code: "BAD_REQUEST",
+            message: "startDate and endDate are required",
+          },
+        });
+      }
+
+      const parsedStartDate = new Date(startDate);
+      const parsedEndDate = new Date(endDate);
+
+      if (
+        isNaN(parsedStartDate.getTime()) ||
+        isNaN(parsedEndDate.getTime())
+      ) {
+        return res.status(400).json({
+          error: { code: "BAD_REQUEST", message: "Invalid date format" },
+        });
+      }
+
+      if (parsedEndDate <= parsedStartDate) {
+        return res.status(400).json({
+          error: {
+            code: "BAD_REQUEST",
+            message: "endDate must be after startDate",
+          },
+        });
+      }
+
+      const eventRepo = AppDataSource.getRepository(Event);
+      const event = await eventRepo.findOne({
+        where: { id: String(id) },
+        relations: ["tenant"],
+      });
+
+      if (!event) {
+        return res
+          .status(404)
+          .json({ error: { code: "EVENT_NOT_FOUND" } });
+      }
+
+      // Vérifier l'isolation tenant
+      if (tenantContext?.tenantId) {
+        if (event.tenant_id !== tenantContext.tenantId) {
+          return res.status(403).json({
+            error: {
+              code: "FORBIDDEN",
+              message: "You can only reactivate your own events",
+            },
+          });
+        }
+      }
+
+      // Tenter de réutiliser l'ancien code
+      const reactivationCheck = await canReactivateWithCode(
+        eventRepo,
+        event,
+        parsedStartDate,
+        parsedEndDate
+      );
+
+      let finalCode = event.code;
+      let codeChanged = false;
+
+      if (!reactivationCheck.canReuse) {
+        // L'ancien code est déjà pris, générer un nouveau
+        finalCode = await generateUniqueEventCode({
+          eventRepo,
+          tenantId: event.tenant_id,
+          startDate: parsedStartDate,
+          endDate: parsedEndDate,
+          codeLength: 8,
+        });
+        codeChanged = true;
+        console.warn(
+          `⚠️ Code changé lors de la réactivation: ${event.code} → ${finalCode} (${reactivationCheck.reason})`
+        );
+      }
+
+      // Mettre à jour l'événement
+      event.code = finalCode;
+      event.start_date = parsedStartDate;
+      event.end_date = parsedEndDate;
+      event.code_expires_at = calculateCodeExpiration(
+        parsedStartDate,
+        parsedEndDate
+      );
+      event.status = "ACTIVE";
+      event.completed_at = null; // Réinitialiser la date de complétion
+
+      const saved = await eventRepo.save(event);
+
+      return res.json({
+        id: saved.id,
+        code: saved.code,
+        name: saved.name,
+        startDate: saved.start_date,
+        endDate: saved.end_date,
+        codeExpiresAt: saved.code_expires_at,
+        status: saved.status,
+        codeChanged: codeChanged,
+        previousCode: codeChanged ? event.code : undefined,
+        message: codeChanged
+          ? `Événement réactivé avec un nouveau code (${finalCode})`
+          : `Événement réactivé avec le même code (${finalCode})`,
+      });
+    } catch (error) {
+      console.error("[ERROR] Event reactivation failed:", error);
+      return res.status(500).json({
+        error: { code: "SERVER_ERROR", message: String(error) },
+      });
+    }
+  }
+);
+
+// POST /api/events/:eventId/regenerate-dj-pin - Régénérer le PIN DJ
+router.post("/events/:eventId/regenerate-dj-pin", requireStaff, async (req: AuthedStaff, res) => {
+  try {
+    const { eventId } = req.params;
+    const tenantContext = (req as any).tenant;
+
+    const eventRepo = AppDataSource.getRepository(Event);
+
+    // Récupérer l'événement avec vérification tenant
+    const event = await eventRepo.findOne({
+      where: { id: eventId }
+    });
+
+    if (!event) {
+      return res.status(404).json({
+        error: { code: "EVENT_NOT_FOUND" }
+      });
+    }
+
+    // Vérifier l'isolation tenant (multi-tenant)
+    if (tenantContext?.tenantId && event.tenant_id !== tenantContext.tenantId) {
+      return res.status(403).json({
+        error: { code: "FORBIDDEN", message: "Access denied" }
+      });
+    }
+
+    // Générer un nouveau PIN
+    const newPin = generateSecurePIN();
+    const newPinHash = await hashPIN(newPin);
+
+    // Mettre à jour l'événement
+    event.dj_pin_hash = newPinHash;
+    await eventRepo.save(event);
+
+    return res.json({
+      success: true,
+      message: "DJ PIN regenerated successfully",
+      djPin: newPin, // ⚠️ PIN en clair retourné UNE SEULE FOIS
+      eventCode: event.code,
+      eventName: event.name
+    });
+  } catch (error) {
+    console.error("[EVENTS] Regenerate DJ PIN error:", error);
+    return res.status(500).json({
+      error: { code: "SERVER_ERROR", message: String(error) }
+    });
+  }
+});
+
+// DELETE /api/events/:id - Delete an event
+router.delete("/events/:id", requireStaff, async (req: AuthedStaff, res) => {
+  try {
+    const { id } = req.params;
+    const tenantContext = (req as any).tenant;
+
+    const eventRepo = AppDataSource.getRepository(Event);
+
+    // Récupérer l'événement
+    const event = await eventRepo.findOne({
+      where: { id },
+      relations: ["organizer"],
+    });
+
+    if (!event) {
+      return res.status(404).json({
+        error: {
+          code: "EVENT_NOT_FOUND",
+          message: "Event not found",
+        },
+      });
+    }
+
+    // Vérifier que l'utilisateur a le droit de supprimer cet événement
+    if (tenantContext?.tenantId) {
+      // Nouveau système multi-tenant : vérifier que l'événement appartient au tenant
+      if (event.tenant_id !== tenantContext.tenantId) {
+        return res.status(403).json({
+          error: {
+            code: "FORBIDDEN",
+            message: "You don't have permission to delete this event",
+          },
+        });
+      }
+    } else if (req.staff?.organizerId) {
+      // Ancien système legacy : vérifier que l'événement appartient à l'organisateur
+      if (!event.organizer || event.organizer.id !== String(req.staff.organizerId)) {
+        return res.status(403).json({
+          error: {
+            code: "FORBIDDEN",
+            message: "You don't have permission to delete this event",
+          },
+        });
+      }
+    } else {
+      return res.status(401).json({
+        error: {
+          code: "UNAUTHORIZED",
+          message: "Authentication required",
+        },
+      });
+    }
+
+    // Supprimer l'événement (les entités liées seront supprimées en cascade grâce aux relations TypeORM)
+    await eventRepo.remove(event);
+
+    return res.json({
+      success: true,
+      message: "Event deleted successfully",
+    });
+  } catch (error) {
+    console.error("[EVENTS] Delete event error:", error);
     return res.status(500).json({
       error: { code: "SERVER_ERROR", message: String(error) },
     });

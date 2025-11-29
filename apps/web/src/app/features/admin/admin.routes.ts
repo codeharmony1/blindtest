@@ -16,11 +16,12 @@ export const adminRoutes: Routes = [
         loadComponent: () =>
           import('./dashboard/dashboard.component').then((m) => m.DashboardComponent),
       },
-      {
-        path: 'rounds',
-        loadComponent: () =>
-          import('./rounds/rounds-hub.component').then((m) => m.RoundsHubComponent),
-      },
+      // Rounds management has been moved to DJ interface
+      // {
+      //   path: 'rounds',
+      //   loadComponent: () =>
+      //     import('./rounds/rounds-hub.component').then((m) => m.RoundsHubComponent),
+      // },
       {
         path: 'events',
         loadComponent: () =>
@@ -41,36 +42,37 @@ export const adminRoutes: Routes = [
         loadComponent: () =>
           import('./events/event-form.component').then((m) => m.EventFormComponent),
       },
-      {
-        path: 'events/:eventId/rounds',
-        loadComponent: () =>
-          import('./rounds/rounds-list.component').then((m) => m.RoundsListComponent),
-      },
-      {
-        path: 'events/:eventId/rounds/new',
-        loadComponent: () =>
-          import('./rounds/round-form.component').then((m) => m.RoundFormComponent),
-      },
-      {
-        path: 'events/:eventId/rounds/:roundId',
-        loadComponent: () =>
-          import('./rounds/songs-manager.component').then((m) => m.SongsManagerComponent),
-      },
-      {
-        path: 'events/:eventId/rounds/:roundId/edit',
-        loadComponent: () =>
-          import('./rounds/round-form.component').then((m) => m.RoundFormComponent),
-      },
-      {
-        path: 'rounds/:id/edit',
-        loadComponent: () =>
-          import('./rounds/round-form.component').then((m) => m.RoundFormComponent),
-      },
-      {
-        path: 'rounds/:id/songs',
-        loadComponent: () =>
-          import('./rounds/songs-manager.component').then((m) => m.SongsManagerComponent),
-      },
+      // Rounds management has been moved to DJ interface
+      // {
+      //   path: 'events/:eventId/rounds',
+      //   loadComponent: () =>
+      //     import('./rounds/rounds-list.component').then((m) => m.RoundsListComponent),
+      // },
+      // {
+      //   path: 'events/:eventId/rounds/new',
+      //   loadComponent: () =>
+      //     import('./rounds/round-form.component').then((m) => m.RoundFormComponent),
+      // },
+      // {
+      //   path: 'events/:eventId/rounds/:roundId',
+      //   loadComponent: () =>
+      //     import('./rounds/songs-manager.component').then((m) => m.SongsManagerComponent),
+      // },
+      // {
+      //   path: 'events/:eventId/rounds/:roundId/edit',
+      //   loadComponent: () =>
+      //     import('./rounds/round-form.component').then((m) => m.RoundFormComponent),
+      // },
+      // {
+      //   path: 'rounds/:id/edit',
+      //   loadComponent: () =>
+      //     import('./rounds/round-form.component').then((m) => m.RoundFormComponent),
+      // },
+      // {
+      //   path: 'rounds/:id/songs',
+      //   loadComponent: () =>
+      //     import('./rounds/songs-manager.component').then((m) => m.SongsManagerComponent),
+      // },
       {
         path: 'events/:code/themes',
         loadComponent: () =>
@@ -100,6 +102,11 @@ export const adminRoutes: Routes = [
         path: 'billing/success',
         loadComponent: () =>
           import('./billing/success.component').then((m) => m.BillingSuccessComponent),
+      },
+      {
+        path: 'pricing',
+        loadComponent: () =>
+          import('./pricing-admin.component').then((m) => m.PricingAdminComponent),
       },
     ],
   },

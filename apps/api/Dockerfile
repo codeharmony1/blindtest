@@ -3,21 +3,22 @@ FROM node:20-alpine AS builder
 
 WORKDIR /app
 
-# Copy package files
+# Copy root package files for workspace
 COPY package*.json ./
 
-# Install dependencies (include dev for build stage)
-# Using npm install to avoid lockfile requirement inside subworkspace
+# Copy workspace package files
+COPY apps/api/package*.json ./apps/api/
+COPY apps/web/package*.json ./apps/web/
+
+# Install all dependencies (including dev for building)
 RUN npm install --include=dev --no-audit --no-fund
 
-# Copy source code
-COPY . .
+# Copy workspace source code
+COPY apps/api ./apps/api
+COPY apps/web ./apps/web
 
 # Build TypeScript
 RUN npm run build
-
-# Prune dev dependencies to keep only production modules for the final image
-RUN npm prune --omit=dev
 
 # Production stage
 FROM node:20-alpine
@@ -31,14 +32,22 @@ RUN apk add --no-cache dumb-init
 RUN addgroup -g 1001 -S nodejs && \
     adduser -S nodejs -u 1001
 
-# Copy dependencies from builder
-COPY --from=builder --chown=nodejs:nodejs /app/node_modules ./node_modules
+# Copy root package files for workspace
+COPY --chown=nodejs:nodejs package*.json ./
 
-# Copy built application
-COPY --from=builder --chown=nodejs:nodejs /app/dist ./dist
+# Copy workspace package files
+COPY --chown=nodejs:nodejs apps/api/package*.json ./apps/api/
 
-# Copy package.json for metadata
-COPY --chown=nodejs:nodejs package.json ./
+# Install ALL dependencies (production + dev)
+# On garde les dev dependencies pour TypeORM CLI et ts-node
+RUN npm install --no-audit --no-fund
+
+# Copy built API application
+COPY --from=builder --chown=nodejs:nodejs /app/apps/api/dist ./apps/api/dist
+
+# Copy source TypeScript files (nécessaires pour typeorm CLI et scripts)
+COPY --from=builder --chown=nodejs:nodejs /app/apps/api/src ./apps/api/src
+COPY --from=builder --chown=nodejs:nodejs /app/apps/api/tsconfig.json ./apps/api/
 
 # Create logs directory
 RUN mkdir -p /app/logs && chown nodejs:nodejs /app/logs
@@ -57,4 +66,4 @@ HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
 ENTRYPOINT ["dumb-init", "--"]
 
 # Start application
-CMD ["node", "dist/index.js"]
+CMD ["node", "apps/api/dist/index.js"]

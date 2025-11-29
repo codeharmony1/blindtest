@@ -18,16 +18,41 @@
     <header class="autumn-header">
       <h1>
         <span class="autumn-icon">🏆</span>
-        Classement des Équipes
+        Classement Final
       </h1>
-      <div class="event-subtitle">Tableau d'honneur de la soirée</div>
+      <div class="event-subtitle">Félicitations à tous les participants !</div>
     </header>
+
+    <!-- Podium des 3 premiers -->
+    <div class="podium-winners" *ngIf="rows.length >= 3">
+      <div class="winner-card winner-silver" *ngIf="rows[1]">
+        <div class="winner-position">2ème</div>
+        <div class="winner-medal">🥈</div>
+        <div class="winner-name">{{ rows[1].name }}</div>
+        <div class="winner-points">{{ rows[1].totalPoints }} pts</div>
+      </div>
+
+      <div class="winner-card winner-gold" *ngIf="rows[0]">
+        <div class="winner-crown">👑</div>
+        <div class="winner-position">1er</div>
+        <div class="winner-medal">🥇</div>
+        <div class="winner-name">{{ rows[0].name }}</div>
+        <div class="winner-points">{{ rows[0].totalPoints }} pts</div>
+      </div>
+
+      <div class="winner-card winner-bronze" *ngIf="rows[2]">
+        <div class="winner-position">3ème</div>
+        <div class="winner-medal">🥉</div>
+        <div class="winner-name">{{ rows[2].name }}</div>
+        <div class="winner-points">{{ rows[2].totalPoints }} pts</div>
+      </div>
+    </div>
 
     <!-- Tableau de classement -->
     <div class="autumn-card autumn-card-plain leaderboard-card" *ngIf="rows.length">
       <h3>
-        <span class="autumn-section-icon">👑</span>
-        Résultats en Temps Réel
+        <span class="autumn-section-icon">📊</span>
+        Classement Complet
       </h3>
 
       <div class="leaderboard-table-container">
@@ -50,7 +75,10 @@
             >
               <td class="rank-cell">
                 <div class="rank-badge" [class]="getRankClass(r.rank)">
-                  {{ r.rank }}
+                  <span *ngIf="r.rank === 1">1er</span>
+                  <span *ngIf="r.rank === 2">2ème</span>
+                  <span *ngIf="r.rank === 3">3ème</span>
+                  <span *ngIf="r.rank > 3">{{ r.rank }}ème</span>
                 </div>
               </td>
 
@@ -117,6 +145,15 @@
         </div>
       </div>
     </div>
+
+    <!-- Bouton de retour -->
+    <div class="autumn-card navigation-card">
+      <button (click)="backToRound()" class="btn-autumn btn-autumn-primary">
+        <span class="btn-icon">🎵</span>
+        Retour au Jeu
+      </button>
+    </div>
+
     <div class="autumn-footer-dots">
       <span></span>
       <span></span>

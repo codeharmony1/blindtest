@@ -9,6 +9,18 @@ interface DashboardStats {
   activeEvents: number;
   totalRounds: number;
   totalSongs: number;
+  totalTeams: number;
+}
+
+interface RecentEvent {
+  id: string;
+  code: string;
+  name: string;
+  status: 'DRAFT' | 'ACTIVE' | 'COMPLETED';
+  gameMode: 'TEAM' | 'SOLO';
+  created_at: string;
+  roundCount?: number;
+  teamCount?: number;
 }
 
 @Component({
@@ -41,11 +53,26 @@ interface DashboardStats {
               <p>Voir tous les événements</p>
             </div>
           </a>
-          <a routerLink="/dj/DEMO" class="action-card">
+          <a
+            [routerLink]="firstEventCode ? '/dj/' + firstEventCode : '/admin/events'"
+            class="action-card"
+            [class.disabled]="!firstEventCode"
+          >
             <span class="action-icon">🎧</span>
             <div class="action-content">
               <h3>Interface DJ</h3>
-              <p>Contrôler un événement</p>
+              <p>{{ getDjActionText() }}</p>
+            </div>
+          </a>
+          <a
+            [routerLink]="firstEventCode ? '/display/' + firstEventCode : '/admin/events'"
+            class="action-card"
+            [class.disabled]="!firstEventCode"
+          >
+            <span class="action-icon">🖥️</span>
+            <div class="action-content">
+              <h3>Interface Affichage</h3>
+              <p>{{ getDisplayActionText() }}</p>
             </div>
           </a>
         </div>
@@ -83,6 +110,13 @@ interface DashboardStats {
               <div class="stat-label">Chansons</div>
             </div>
           </div>
+          <div class="stat-card">
+            <div class="stat-icon">👥</div>
+            <div class="stat-content">
+              <div class="stat-number">{{ stats.totalTeams }}</div>
+              <div class="stat-label">Équipes</div>
+            </div>
+          </div>
         </div>
       </div>
 
@@ -93,33 +127,49 @@ interface DashboardStats {
           <a routerLink="/admin/events" class="section-link">Voir tous →</a>
         </div>
         <div class="recent-grid">
-          <!-- Event DEMO -->
-          <div class="event-card">
+          <!-- Liste des événements récents -->
+          <div class="event-card" *ngFor="let event of recentEvents">
             <div class="event-header">
               <div class="event-info">
-                <h3 class="event-title">Blindtest DEMO</h3>
-                <p class="event-code">Code: DEMO</p>
+                <h3 class="event-title">{{ event.name }}</h3>
+                <p class="event-code">Code: {{ event.code }}</p>
               </div>
-              <div class="event-status status-active">Actif</div>
+              <div
+                class="event-status"
+                [class.status-active]="event.status === 'ACTIVE'"
+                [class.status-draft]="event.status === 'DRAFT'"
+                [class.status-completed]="event.status === 'COMPLETED'"
+              >
+                {{ getStatusLabel(event.status) }}
+              </div>
             </div>
             <div class="event-stats">
               <div class="event-stat">
-                <span class="stat-icon">🎵</span>
-                <span>1 Round</span>
+                <span class="stat-icon">🎮</span>
+                <span>{{ event.gameMode === 'TEAM' ? 'Mode Équipe' : 'Mode Solo' }}</span>
               </div>
-              <div class="event-stat">
+              <div class="event-stat" *ngIf="event.roundCount !== undefined">
+                <span class="stat-icon">🎵</span>
+                <span>{{ event.roundCount }} Round{{ event.roundCount > 1 ? 's' : '' }}</span>
+              </div>
+              <div class="event-stat" *ngIf="event.teamCount !== undefined && event.gameMode === 'TEAM'">
                 <span class="stat-icon">👥</span>
-                <span>2 Équipes</span>
+                <span>{{ event.teamCount }} Équipe{{ event.teamCount > 1 ? 's' : '' }}</span>
               </div>
             </div>
             <div class="event-actions">
-              <a routerLink="/dj/DEMO" class="btn btn-sm btn-primary"> 🎧 Contrôler </a>
-              <a routerLink="/admin/events/DEMO" class="btn btn-sm btn-secondary"> 📝 Modifier </a>
+              <a [routerLink]="'/dj/' + event.code" class="btn btn-sm btn-primary"> 🎧 Contrôler </a>
+              <a [routerLink]="'/display/' + event.code" class="btn btn-sm btn-secondary">
+                🖥️ Affichage
+              </a>
+              <a [routerLink]="'/admin/events/' + event.id" class="btn btn-sm btn-secondary">
+                📝 Modifier
+              </a>
             </div>
           </div>
 
-          <!-- Placeholder for more events -->
-          <div class="event-card event-placeholder">
+          <!-- Placeholder si aucun événement -->
+          <div class="event-card event-placeholder" *ngIf="recentEvents.length === 0">
             <div class="placeholder-content">
               <span class="placeholder-icon">➕</span>
               <p>Créez votre premier événement pour commencer</p>
@@ -357,6 +407,26 @@ interface DashboardStats {
         color: #15803d;
       }
 
+      .status-draft {
+        background: #fef3c7;
+        color: #92400e;
+      }
+
+      .status-completed {
+        background: #e0e7ff;
+        color: #3730a3;
+      }
+
+      .action-card.disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
+      }
+
+      .action-card.disabled:hover {
+        transform: none;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+      }
+
       .event-stats {
         display: flex;
         gap: 1rem;
@@ -466,8 +536,11 @@ export class DashboardComponent implements OnInit {
     activeEvents: 0,
     totalRounds: 0,
     totalSongs: 0,
+    totalTeams: 0,
   };
 
+  recentEvents: RecentEvent[] = [];
+  firstEventCode: string | null = null;
   isLoading = true;
   error: string | null = null;
 
@@ -475,6 +548,7 @@ export class DashboardComponent implements OnInit {
 
   ngOnInit() {
     this.loadDashboardStats();
+    this.loadRecentEvents();
   }
 
   loadDashboardStats() {
@@ -488,6 +562,7 @@ export class DashboardComponent implements OnInit {
           activeEvents: data.activeEvents,
           totalRounds: data.totalRounds,
           totalSongs: data.totalSongs,
+          totalTeams: data.totalTeams || 0,
         };
         this.isLoading = false;
       },
@@ -497,5 +572,60 @@ export class DashboardComponent implements OnInit {
         this.isLoading = false;
       },
     });
+  }
+
+  loadRecentEvents() {
+    this.api.getEvents().subscribe({
+      next: (events: Array<{
+        id: string;
+        code: string;
+        name: string;
+        gameMode: 'TEAM' | 'SOLO';
+        created_at: string;
+        status: string;
+        rounds_count: number;
+        teams_count: number;
+      }>) => {
+        // Trier par date de création (plus récent en premier) et prendre les 6 premiers
+        this.recentEvents = events
+          .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
+          .slice(0, 6)
+          .map((event) => ({
+            id: event.id,
+            code: event.code,
+            name: event.name,
+            status: (event.status || 'ACTIVE') as 'DRAFT' | 'ACTIVE' | 'COMPLETED',
+            gameMode: event.gameMode,
+            created_at: event.created_at,
+            roundCount: event.rounds_count,
+            teamCount: event.teams_count,
+          }));
+
+        // Définir le premier événement pour les liens rapides
+        if (this.recentEvents.length > 0) {
+          this.firstEventCode = this.recentEvents[0].code;
+        }
+      },
+      error: (error: any) => {
+        console.error('Erreur lors du chargement des événements récents:', error);
+      },
+    });
+  }
+
+  getStatusLabel(status: 'DRAFT' | 'ACTIVE' | 'COMPLETED'): string {
+    const labels = {
+      DRAFT: 'Brouillon',
+      ACTIVE: 'Actif',
+      COMPLETED: 'Terminé',
+    };
+    return labels[status] || status;
+  }
+
+  getDjActionText(): string {
+    return this.firstEventCode ? 'Contrôler un événement' : "Créez un événement d'abord";
+  }
+
+  getDisplayActionText(): string {
+    return this.firstEventCode ? "Écran public de l'événement" : "Créez un événement d'abord";
   }
 }

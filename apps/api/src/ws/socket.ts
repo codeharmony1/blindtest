@@ -51,10 +51,12 @@ export function initSocket(server: HttpServer) {
     );
     socket.on(
       "close_song",
-      (data: { eventCode: string; roundId: string; songId: string }) => {
+      (data: { eventCode: string; roundId: string; songId: string; title?: string; artist?: string }) => {
         io.to(`event:${data.eventCode}`).emit("round_ended", {
           roundId: data.roundId,
           songId: data.songId,
+          title: data.title,
+          artist: data.artist,
         });
       },
     );
@@ -79,6 +81,109 @@ export function initSocket(server: HttpServer) {
         io.to(`event:${data.eventCode}`).emit("leaderboard_update", {
           eventCode: data.eventCode,
           teams: data.leaderboard,
+        });
+      },
+    );
+    socket.on(
+      "round_scores_ready",
+      (data: {
+        eventCode: string;
+        roundNumber: number;
+        roundScores: Array<{
+          teamId: string;
+          name: string;
+          roundPoints: number;
+          totalPoints: number;
+          rank: number;
+        }>;
+      }) => {
+        io.to(`event:${data.eventCode}`).emit("round_scores_ready", {
+          eventCode: data.eventCode,
+          roundNumber: data.roundNumber,
+          roundScores: data.roundScores,
+        });
+      },
+    );
+    socket.on(
+      "event_completed",
+      (data: {
+        eventCode: string;
+        totalRounds: number;
+        totalSongs: number;
+        totalTeams: number;
+        totalPlayers: number;
+        duration: number;
+        finalLeaderboard: any[];
+      }) => {
+        io.to(`event:${data.eventCode}`).emit("event_completed", {
+          eventCode: data.eventCode,
+          totalRounds: data.totalRounds,
+          totalSongs: data.totalSongs,
+          totalTeams: data.totalTeams,
+          totalPlayers: data.totalPlayers,
+          duration: data.duration,
+          finalLeaderboard: data.finalLeaderboard,
+        });
+      },
+    );
+
+    // Événements pour le mode table
+    socket.on(
+      "table_created",
+      (data: { eventCode: string; tableId: string; tableName: string }) => {
+        io.to(`event:${data.eventCode}`).emit("table_created", {
+          tableId: data.tableId,
+          tableName: data.tableName,
+        });
+      },
+    );
+
+    socket.on(
+      "team_joined_table",
+      (data: {
+        eventCode: string;
+        teamId: string;
+        teamName: string;
+        tableId: string;
+        tableName: string;
+      }) => {
+        io.to(`event:${data.eventCode}`).emit("team_joined_table", {
+          teamId: data.teamId,
+          teamName: data.teamName,
+          tableId: data.tableId,
+          tableName: data.tableName,
+        });
+      },
+    );
+
+    socket.on(
+      "table_leaderboard_update",
+      (data: { eventCode: string; tableLeaderboard: any[] }) => {
+        io.to(`event:${data.eventCode}`).emit("table_leaderboard_update", {
+          eventCode: data.eventCode,
+          tables: data.tableLeaderboard,
+        });
+      },
+    );
+
+    socket.on(
+      "table_scores_ready",
+      (data: {
+        eventCode: string;
+        roundNumber: number;
+        tableScores: Array<{
+          tableId: string;
+          tableName: string;
+          roundPoints: number;
+          totalPoints: number;
+          rank: number;
+          teamsCount: number;
+        }>;
+      }) => {
+        io.to(`event:${data.eventCode}`).emit("table_scores_ready", {
+          eventCode: data.eventCode,
+          roundNumber: data.roundNumber,
+          tableScores: data.tableScores,
         });
       },
     );

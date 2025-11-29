@@ -2,7 +2,7 @@ import { Component, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ApiService } from '../../core/services/api.service';
 import { SocketService } from '../../core/services/socket.service';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { ThemeService } from '../../core/services/theme.service';
 
 @Component({
@@ -115,6 +115,103 @@ import { ThemeService } from '../../core/services/theme.service';
 
       .autumn-footer-dots span:nth-child(3) {
         background: #c87250;
+      }
+
+      .podium-winners {
+        display: flex;
+        justify-content: center;
+        align-items: flex-end;
+        gap: 1.5rem;
+        margin-bottom: 2rem;
+        flex-wrap: wrap;
+      }
+
+      .winner-card {
+        background: rgba(255, 255, 255, 0.97);
+        border: 2px solid #e8dcc8;
+        border-radius: 24px;
+        padding: 2rem 1.5rem;
+        text-align: center;
+        box-shadow: 0 22px 48px rgba(74, 52, 40, 0.12);
+        transition: transform 0.3s ease, box-shadow 0.3s ease;
+        position: relative;
+        min-width: 180px;
+      }
+
+      .winner-card:hover {
+        transform: translateY(-8px);
+        box-shadow: 0 28px 56px rgba(74, 52, 40, 0.18);
+      }
+
+      .winner-gold {
+        order: 2;
+        border-width: 3px;
+        border-color: #ffd700;
+        background: linear-gradient(135deg, rgba(255, 234, 196, 0.5), rgba(255, 225, 170, 0.4));
+        padding: 2.5rem 1.8rem;
+        transform: scale(1.1);
+      }
+
+      .winner-silver {
+        order: 1;
+        border-color: #c0c0c0;
+        background: linear-gradient(135deg, rgba(232, 230, 227, 0.5), rgba(223, 221, 216, 0.4));
+      }
+
+      .winner-bronze {
+        order: 3;
+        border-color: #cd7f32;
+        background: linear-gradient(135deg, rgba(236, 209, 182, 0.5), rgba(226, 191, 152, 0.4));
+      }
+
+      .winner-crown {
+        position: absolute;
+        top: -1.5rem;
+        left: 50%;
+        transform: translateX(-50%);
+        font-size: 2.5rem;
+        animation: autumnPulse 2s infinite;
+      }
+
+      .winner-position {
+        font-size: 0.95rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        color: #8b6f47;
+        margin-bottom: 0.8rem;
+      }
+
+      .winner-medal {
+        font-size: 3.5rem;
+        margin-bottom: 1rem;
+        animation: autumnPulse 2s infinite;
+      }
+
+      .winner-gold .winner-medal {
+        font-size: 4.5rem;
+      }
+
+      .winner-name {
+        font-size: 1.4rem;
+        font-weight: 700;
+        color: #4a3828;
+        margin-bottom: 0.8rem;
+      }
+
+      .winner-gold .winner-name {
+        font-size: 1.6rem;
+      }
+
+      .winner-points {
+        font-size: 1.8rem;
+        font-weight: 700;
+        color: #d9794d;
+      }
+
+      .winner-gold .winner-points {
+        font-size: 2.2rem;
+        color: #b87333;
       }
 
       .leaderboard-card {
@@ -322,7 +419,77 @@ import { ThemeService } from '../../core/services/theme.service';
         font-size: 1.4rem;
       }
 
+      .navigation-card {
+        text-align: center;
+        background: transparent;
+        border: none;
+        box-shadow: none;
+        padding: 0;
+      }
+
+      .navigation-card::before {
+        display: none;
+      }
+
+      .btn-autumn {
+        border-radius: 16px;
+        padding: 1.1rem 2rem;
+        font-size: 1.05rem;
+        font-weight: 600;
+        text-transform: none;
+        letter-spacing: 0.4px;
+        background: linear-gradient(135deg, #d4a574 0%, #b87333 100%);
+        color: #fff9f0;
+        border: none;
+        cursor: pointer;
+        box-shadow: 0 16px 30px rgba(184, 92, 71, 0.25);
+        transition: all 0.3s ease;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.6rem;
+      }
+
+      .btn-autumn:hover {
+        box-shadow: 0 18px 34px rgba(184, 92, 71, 0.3);
+        transform: translateY(-2px);
+      }
+
+      .btn-icon {
+        font-size: 1.2rem;
+      }
+
       @media (max-width: 768px) {
+        .podium-winners {
+          gap: 1.2rem;
+          margin-bottom: 1.5rem;
+        }
+
+        .winner-card {
+          min-width: 150px;
+          padding: 1.5rem 1.2rem;
+        }
+
+        .winner-gold {
+          padding: 2rem 1.5rem;
+        }
+
+        .winner-medal {
+          font-size: 2.8rem;
+        }
+
+        .winner-gold .winner-medal {
+          font-size: 3.5rem;
+        }
+
+        .winner-name {
+          font-size: 1.2rem;
+        }
+
+        .winner-points {
+          font-size: 1.5rem;
+        }
+
         .leaderboard-table-container {
           margin-top: 1.2rem;
         }
@@ -365,6 +532,31 @@ import { ThemeService } from '../../core/services/theme.service';
       }
 
       @media (max-width: 480px) {
+        .podium-winners {
+          flex-direction: column;
+          align-items: center;
+          gap: 1rem;
+        }
+
+        .winner-card {
+          min-width: 260px;
+          width: 100%;
+          max-width: 320px;
+        }
+
+        .winner-gold {
+          order: 1;
+          transform: scale(1);
+        }
+
+        .winner-silver {
+          order: 2;
+        }
+
+        .winner-bronze {
+          order: 3;
+        }
+
         .leaderboard-table {
           font-size: 0.85rem;
         }
@@ -407,25 +599,48 @@ import { ThemeService } from '../../core/services/theme.service';
 export class LeaderboardComponent implements OnDestroy {
   eventCode!: string;
   rows: Array<{ teamId: string; name: string; totalPoints: number; rank: number }> = [];
+  private leaderboardUpdateHandler?: (data: any) => void;
 
   constructor(
     private api: ApiService,
     private socket: SocketService,
     private route: ActivatedRoute,
+    private router: Router,
     private theme: ThemeService,
   ) {
     this.eventCode = this.route.snapshot.parent!.params['eventCode'];
     // Appliquer le thème sélectionné pour l'événement
     this.theme.loadEventTheme(this.eventCode).subscribe();
+
+    // Configurer la connexion WebSocket et l'écoute des mises à jour AVANT le refresh
     this.socket.connect();
     this.socket.joinEvent(this.eventCode, 'PLAYER');
-    this.socket.on<any>('leaderboard_update', (d) => {
-      if (d?.eventCode === this.eventCode) this.rows = d.teams;
-    });
+
+    // Écouter les mises à jour du classement en temps réel
+    this.leaderboardUpdateHandler = (data: any) => {
+      console.log('[Leaderboard] Received leaderboard_update:', data);
+      if (data?.eventCode === this.eventCode && data?.teams) {
+        console.log('[Leaderboard] Updating rows with teams:', data.teams);
+        this.rows = data.teams;
+      }
+    };
+    this.socket.on<any>('leaderboard_update', this.leaderboardUpdateHandler);
+
+    // Charger le classement initial
     this.refresh();
   }
+
   refresh() {
-    this.api.getLeaderboard(this.eventCode).subscribe((list) => (this.rows = list));
+    console.log('[Leaderboard] Refreshing data for event:', this.eventCode);
+    this.api.getLeaderboard(this.eventCode).subscribe({
+      next: (list) => {
+        console.log('[Leaderboard] Received data:', list);
+        this.rows = list;
+      },
+      error: (err) => {
+        console.error('[Leaderboard] Error loading leaderboard:', err);
+      }
+    });
   }
 
   trackByTeamId(index: number, item: any): string {
@@ -462,7 +677,15 @@ export class LeaderboardComponent implements OnDestroy {
     return this.getTotalPoints() / this.rows.length;
   }
 
+  backToRound() {
+    this.router.navigate(['../round'], { relativeTo: this.route });
+  }
+
   ngOnDestroy() {
+    console.log('[Leaderboard] Component destroyed, cleaning up...');
+    if (this.leaderboardUpdateHandler) {
+      this.socket.off('leaderboard_update', this.leaderboardUpdateHandler);
+    }
     this.socket.disconnect();
   }
 }

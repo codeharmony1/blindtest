@@ -27,6 +27,7 @@ import { SuperAdminService } from '../../../core/services/super-admin.service';
             </div>
             <a routerLink="/dj/DEMO" class="btn btn-secondary"> 🎧 Interface DJ </a>
             <a routerLink="/join/DEMO" class="btn btn-secondary"> 🎮 Interface Joueur </a>
+            <a routerLink="/display/DEMO" class="btn btn-secondary"> 🖥️ Interface Affichage </a>
             <button class="btn btn-outline" (click)="logout()">
               <span>🚪</span>
               Déconnexion
@@ -63,13 +64,13 @@ import { SuperAdminService } from '../../../core/services/super-admin.service';
             <div class="nav-divider"></div>
             <div class="nav-section">
               <span class="nav-section-title">Gestion</span>
-              <a routerLink="/admin/rounds" routerLinkActive="active" class="nav-item nav-sub">
-                <span class="nav-icon">🎵</span>
-                <span class="nav-label">Rounds</span>
-              </a>
               <a routerLink="/admin/billing" routerLinkActive="active" class="nav-item nav-sub">
                 <span class="nav-icon">💳</span>
                 <span class="nav-label">Mon Abonnement</span>
+              </a>
+              <a routerLink="/admin/pricing" routerLinkActive="active" class="nav-item nav-sub">
+                <span class="nav-icon">💰</span>
+                <span class="nav-label">Tarifs & Plans</span>
               </a>
             </div>
           </nav>
@@ -100,8 +101,13 @@ import { SuperAdminService } from '../../../core/services/super-admin.service';
       }
 
       @keyframes pulse {
-        0%, 100% { opacity: 1; }
-        50% { opacity: 0.9; }
+        0%,
+        100% {
+          opacity: 1;
+        }
+        50% {
+          opacity: 0.9;
+        }
       }
 
       .impersonation-content {
@@ -375,15 +381,15 @@ export class AdminLayoutComponent implements OnInit {
   constructor(
     private authService: TenantAuthService,
     private superAdminService: SuperAdminService,
-    private router: Router
+    private router: Router,
   ) {}
 
   ngOnInit(): void {
-    this.authService.currentUser$.subscribe(user => {
+    this.authService.currentUser$.subscribe((user) => {
       this.currentUser = user;
     });
 
-    this.authService.currentTenant$.subscribe(tenant => {
+    this.authService.currentTenant$.subscribe((tenant) => {
       this.currentTenant = tenant;
     });
 
@@ -419,7 +425,7 @@ export class AdminLayoutComponent implements OnInit {
           console.error('Exit impersonation error:', err);
           // Rediriger quand même
           window.location.href = '/backstage/dashboard';
-        }
+        },
       });
     }
   }

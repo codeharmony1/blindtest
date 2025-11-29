@@ -1,0 +1,49 @@
+# Node modules
+node_modules
+**/node_modules
+
+# Build outputs
+dist
+**/dist
+build
+**/build
+
+# IDE
+.vscode
+.idea
+
+# Git
+.git
+.gitignore
+
+# Environment files
+.env
+.env.*
+!.env.example
+!.env.production.example
+
+# Logs
+*.log
+logs
+**/*.log
+
+# Testing
+coverage
+.nyc_output
+**/__tests__
+**/test
+**/tests
+*.test.ts
+*.spec.ts
+
+# Documentation
+*.md
+!README.md
+
+# Docker images
+*.tar
+
+# Temp files
+*.tmp
+.DS_Store
+Thumbs.db

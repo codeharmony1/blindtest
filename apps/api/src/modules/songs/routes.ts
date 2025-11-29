@@ -11,6 +11,7 @@ import { Tenant } from "../../db/entities/Tenant";
 import { matchingService } from "../../services/matching.service";
 import { computePoints } from "../../services/scoring.service";
 import { io } from "../../ws/socket";
+import { gradeSongInternal } from "../rounds/routes";
 
 const router = Router();
 
@@ -20,7 +21,7 @@ const router = Router();
 
 // POST /api/rounds/:roundId/songs  (prepared or freestyle)
 router.post("/rounds/:roundId/songs", async (req, res) => {
-  const { mode, idx, title, artist, aliases, duration } = req.body ?? {};
+  const { mode, idx, title, artist, group, aliases, duration } = req.body ?? {};
   if (!mode || !idx)
     return res
       .status(400)
@@ -64,10 +65,12 @@ router.post("/rounds/:roundId/songs", async (req, res) => {
   const rs = new RoundSong();
   rs.round = round;
   rs.round_id = round.id;
+  rs.tenant_id = round.tenant_id; // Hériter le tenant_id du round
   rs.idx = idx;
   rs.mode = mode === "freestyle" ? "freestyle" : "prepared";
   rs.title_official = title ?? null;
   rs.artist_official = artist ?? null;
+  rs.group_official = group ?? null;
   rs.aliases_json = aliases?.length ? JSON.stringify(aliases) : undefined;
   rs.duration_s = duration ?? null; // si null => défaut du round
   rs.status = "pending";
@@ -78,15 +81,16 @@ router.post("/rounds/:roundId/songs", async (req, res) => {
     .json({ id: saved.id, idx: saved.idx, mode: saved.mode });
 });
 
-// PATCH /api/songs/:songId  (MAJ titre/artiste/aliases, utile en freestyle)
+// PATCH /api/songs/:songId  (MAJ titre/artiste/groupe/aliases, utile en freestyle)
 router.patch("/songs/:songId", async (req, res) => {
-  const { title, artist, aliases, duration, status } = req.body ?? {};
+  const { title, artist, group, aliases, duration, status } = req.body ?? {};
   const repo = AppDataSource.getRepository(RoundSong);
   const song = await repo.findOne({ where: { id: String(req.params.songId) } });
   if (!song) return res.status(404).json({ error: { code: "SONG_NOT_FOUND" } });
 
   if (title !== undefined) song.title_official = title;
   if (artist !== undefined) song.artist_official = artist;
+  if (group !== undefined) song.group_official = group;
   if (aliases !== undefined)
     song.aliases_json = Array.isArray(aliases)
       ? JSON.stringify(aliases)
@@ -106,6 +110,7 @@ router.patch("/songs/:songId", async (req, res) => {
     id: saved.id,
     title: saved.title_official,
     artist: saved.artist_official,
+    group: saved.group_official,
     status: saved.status,
   });
 });
@@ -224,17 +229,101 @@ router.post("/songs/:songId/close", async (req, res) => {
     return res.status(404).json({ error: { code: "SONG_NOT_FOUND" } });
 
   if (ctx.song.status === "open") {
-    ctx.song.status = "closed";
-    ctx.song.ended_at = nowUtc();
-    await AppDataSource.getRepository(RoundSong).save(ctx.song);
+    console.log(`[Close] Fermeture de la chanson ${ctx.song.id}, notation automatique en cours...`);
+
+    // Fermer et noter automatiquement la chanson
+    await gradeSongInternal(ctx.song, ctx.eventCode, ctx.eventId);
 
     if (ctx.eventCode) {
-      io.to(`event:${ctx.eventCode}`).emit("round_ended", {
-        roundId: ctx.roundId,
-        songId: ctx.song.id,
-      });
+      // Vérifier si c'est la dernière chanson du round
+      if (ctx.roundId && ctx.eventId) {
+        const allSongsInRound = await AppDataSource.getRepository(RoundSong).find({
+          where: { round_id: ctx.roundId },
+        });
+
+        const allClosed = allSongsInRound.every(s => s.status === 'closed' || s.status === 'scored');
+        const isLastSong = allClosed && allSongsInRound.length > 0;
+
+        if (isLastSong) {
+          // C'est la dernière chanson, afficher directement les scores du round
+          console.log(`[Close] Dernière chanson du round ${ctx.roundId}, affichage des scores`);
+
+          const teams = await AppDataSource.getRepository(Team).find({
+            where: { event_id: ctx.eventId },
+            order: { name: "ASC" },
+          });
+          console.log(`[Close] Nombre d'équipes trouvées: ${teams.length}`);
+
+          const scores = await AppDataSource.getRepository(Score).find({
+            where: { event_id: ctx.eventId },
+          });
+
+          // Calculer les points du round
+          const roundScores: { [teamId: string]: number } = {};
+          teams.forEach(team => {
+            roundScores[team.id] = 0;
+          });
+
+          for (const song of allSongsInRound) {
+            const answers = await AppDataSource.getRepository(Answer).find({
+              where: { round_song_id: song.id },
+            });
+            answers.forEach((answer: any) => {
+              roundScores[answer.team_id] = (roundScores[answer.team_id] || 0) + (answer.points || 0);
+            });
+          }
+
+          const roundScoresArray = teams.map(team => {
+            const totalScore = scores.find(s => s.team_id === team.id);
+            return {
+              teamId: team.id,
+              name: team.name,
+              roundPoints: roundScores[team.id] || 0,
+              totalPoints: totalScore?.total_points || 0,
+            };
+          });
+
+          roundScoresArray.sort((a, b) => b.totalPoints - a.totalPoints);
+          const rankedScores = roundScoresArray.map((score, index) => ({
+            ...score,
+            rank: index + 1,
+          }));
+
+          // Déterminer le numéro du round
+          const allRounds = await AppDataSource.getRepository(Round).find({
+            where: { event_id: ctx.eventId },
+            order: { id: "ASC" },
+          });
+          const roundNumber = allRounds.findIndex(r => r.id === ctx.roundId) + 1;
+
+          console.log(`[Close] Émission round_scores_ready - Round #${roundNumber}, ${rankedScores.length} équipes`);
+
+          // Émettre l'événement des scores du round
+          io.to(`event:${ctx.eventCode}`).emit("round_scores_ready", {
+            eventCode: ctx.eventCode,
+            roundNumber,
+            roundScores: rankedScores,
+          });
+        } else {
+          // Pas la dernière chanson, émettre round_ended normalement
+          io.to(`event:${ctx.eventCode}`).emit("round_ended", {
+            roundId: ctx.roundId,
+            songId: ctx.song.id,
+            title: ctx.song.title_official,
+            artist: ctx.song.artist_official,
+          });
+        }
+      } else {
+        // Pas de roundId/eventId, émettre round_ended normalement
+        io.to(`event:${ctx.eventCode}`).emit("round_ended", {
+          roundId: ctx.roundId,
+          songId: ctx.song.id,
+          title: ctx.song.title_official,
+          artist: ctx.song.artist_official,
+        });
+      }
     }
-    return res.json({ songId: ctx.song.id, status: "closed" });
+    return res.json({ songId: ctx.song.id, status: "scored" });
   } else if (ctx.song.status === "closed" || ctx.song.status === "scored") {
     return res.json({ songId: ctx.song.id, status: ctx.song.status });
   } else {
@@ -275,6 +364,7 @@ router.get("/songs/:songId/answers", async (req, res) => {
         submittedAt: answer.submitted_at.toISOString(),
         matchTitle: answer.match_title,
         matchArtist: answer.match_artist,
+        matchGroup: answer.match_group,
         points: answer.points,
         canOverride: true // DJ peut toujours override
       };
@@ -284,6 +374,7 @@ router.get("/songs/:songId/answers", async (req, res) => {
       songId: ctx.song.id,
       songTitle: ctx.song.title_official,
       songArtist: ctx.song.artist_official,
+      songGroup: ctx.song.group_official,
       status: ctx.song.status,
       answers: results,
       totalAnswers: results.length
@@ -298,7 +389,7 @@ router.get("/songs/:songId/answers", async (req, res) => {
 // POST /api/songs/:songId/answers/:teamId/override - Override une réponse
 router.post("/songs/:songId/answers/:teamId/override", async (req, res) => {
   try {
-    const { matchTitle, matchArtist, points } = req.body ?? {};
+    const { matchTitle, matchArtist, matchGroup, points } = req.body ?? {};
 
     if (typeof matchTitle !== "boolean" || typeof matchArtist !== "boolean") {
       return res.status(400).json({
@@ -321,7 +412,8 @@ router.post("/songs/:songId/answers/:teamId/override", async (req, res) => {
     // Update avec les nouvelles valeurs
     answer.match_title = matchTitle;
     answer.match_artist = matchArtist;
-    answer.points = typeof points === "number" ? points : computePoints(matchTitle, matchArtist);
+    answer.match_group = typeof matchGroup === "boolean" ? matchGroup : false;
+    answer.points = typeof points === "number" ? points : computePoints(matchTitle, matchArtist, matchGroup);
 
     const saved = await ansRepo.save(answer);
 
@@ -329,6 +421,7 @@ router.post("/songs/:songId/answers/:teamId/override", async (req, res) => {
       teamId: saved.team_id,
       matchTitle: saved.match_title,
       matchArtist: saved.match_artist,
+      matchGroup: saved.match_group,
       points: saved.points,
       updated: true
     });
@@ -366,9 +459,11 @@ router.post("/songs/:songId/grade", async (req, res) => {
     teamId: string;
     matchTitle: boolean;
     matchArtist: boolean;
+    matchGroup: boolean;
     points: number;
     titleSimilarity?: number;
     artistSimilarity?: number;
+    groupSimilarity?: number;
   }> = [];
 
   for (const a of answers) {
@@ -376,6 +471,7 @@ router.post("/songs/:songId/grade", async (req, res) => {
 
     a.match_title = matchResult.matchTitle;
     a.match_artist = matchResult.matchArtist;
+    a.match_group = matchResult.matchGroup;
     a.points = matchResult.points;
     a.text_norm = matchResult.normalizedAnswer;
 
@@ -384,9 +480,11 @@ router.post("/songs/:songId/grade", async (req, res) => {
       teamId: a.team_id,
       matchTitle: a.match_title,
       matchArtist: a.match_artist,
+      matchGroup: a.match_group,
       points: a.points,
       titleSimilarity: matchResult.titleSimilarity,
-      artistSimilarity: matchResult.artistSimilarity
+      artistSimilarity: matchResult.artistSimilarity,
+      groupSimilarity: matchResult.groupSimilarity
     });
   }
 
@@ -410,6 +508,90 @@ router.post("/songs/:songId/grade", async (req, res) => {
       eventCode: ctx.eventCode,
       teams: leaderboard,
     });
+  }
+
+  // Vérifier si le round est maintenant terminé (toutes les chansons notées)
+  if (ctx.roundId && ctx.eventCode && ctx.eventId) {
+    const allSongsInRound = await AppDataSource.getRepository(RoundSong).find({
+      where: { round_id: ctx.roundId },
+    });
+
+    const allScored = allSongsInRound.every(s => s.status === 'scored');
+
+    if (allScored && allSongsInRound.length > 0) {
+      // Le round est terminé, émettre automatiquement les scores du round
+      console.log(`[Grade] Round ${ctx.roundId} terminé, émission des scores`);
+
+      // Récupérer les scores du round
+      const Team = (await import("../../db/entities/Team")).Team;
+      const Score = (await import("../../db/entities/Score")).Score;
+      const Round = (await import("../../db/entities/Round")).Round;
+
+      const teams = await AppDataSource.getRepository(Team).find({
+        where: { event_id: ctx.eventId! },
+        order: { name: "ASC" },
+      });
+
+      const scores = await AppDataSource.getRepository(Score).find({
+        where: { event_id: ctx.eventId! },
+      });
+
+      // Calculer les points du round
+      const roundScores: { [teamId: string]: number } = {};
+      teams.forEach(team => {
+        roundScores[team.id] = 0;
+      });
+
+      for (const song of allSongsInRound) {
+        const answers = await AppDataSource.getRepository(Answer).find({
+          where: { round_song_id: song.id },
+        });
+        answers.forEach((answer: any) => {
+          roundScores[answer.team_id] = (roundScores[answer.team_id] || 0) + (answer.points || 0);
+        });
+      }
+
+      const roundScoresArray = teams.map(team => {
+        const totalScore = scores.find(s => s.team_id === team.id);
+        return {
+          teamId: team.id,
+          name: team.name,
+          roundPoints: roundScores[team.id] || 0,
+          totalPoints: totalScore?.total_points || 0,
+        };
+      });
+
+      roundScoresArray.sort((a, b) => b.totalPoints - a.totalPoints);
+      const rankedScores = roundScoresArray.map((score, index) => ({
+        ...score,
+        rank: index + 1,
+      }));
+
+      // Déterminer le numéro du round
+      const allRounds = await AppDataSource.getRepository(Round).find({
+        where: { event_id: ctx.eventId! },
+        order: { id: "ASC" },
+      });
+      const roundNumber = allRounds.findIndex(r => r.id === ctx.roundId) + 1;
+
+      // Émettre l'événement socket
+      io.to(`event:${ctx.eventCode}`).emit("round_scores_ready", {
+        eventCode: ctx.eventCode,
+        roundNumber,
+        roundScores: rankedScores,
+      });
+    }
+  }
+
+  // Vérifier si l'événement est maintenant terminé
+  if (ctx.eventId) {
+    const { checkEventCompletion, completeEvent } = await import("../events/complete-event");
+    const isComplete = await checkEventCompletion(ctx.eventId);
+
+    if (isComplete && ctx.eventCode) {
+      // Marquer automatiquement l'événement comme complété
+      await completeEvent(ctx.eventCode);
+    }
   }
 
   return res.json({
@@ -524,15 +706,25 @@ router.post("/songs/:songId/suggest-aliases", async (req, res) => {
 });
 
 // DELETE /api/songs/:id - Supprimer une chanson
-router.delete("/:id", async (req, res) => {
+router.delete("/songs/:id", async (req, res) => {
   const { id } = req.params;
   const songRepo = AppDataSource.getRepository(RoundSong);
 
   try {
+    console.log(`[DELETE /api/songs/${id}] Recherche de la chanson...`);
+
     const song = await songRepo.findOne({
       where: { id: String(id) },
       relations: ["round", "round.event"],
     });
+
+    console.log(`[DELETE /api/songs/${id}] Résultat findOne:`, song ? `Trouvée: ${song.title_official}` : 'NON TROUVÉE');
+
+    // Test: essayer aussi sans relations
+    const songNoRelations = await songRepo.findOne({
+      where: { id: String(id) }
+    });
+    console.log(`[DELETE /api/songs/${id}] Sans relations:`, songNoRelations ? `Trouvée: ${songNoRelations.title_official}` : 'NON TROUVÉE');
 
     if (!song) {
       return res.status(404).json({

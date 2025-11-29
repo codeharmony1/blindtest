@@ -247,8 +247,68 @@ import { ThemeService } from '../../core/services/theme.service';
       }
 
       .waiting-card::before,
-      .answer-card::before {
+      .answer-card::before,
+      .answer-reveal-card::before {
         display: none;
+      }
+
+      .answer-reveal-card {
+        display: flex;
+        align-items: center;
+        gap: 1.5rem;
+        background: linear-gradient(135deg, #8b7355 0%, #a68968 100%);
+        color: #fff9f0;
+        border-radius: 24px;
+        border: 2px solid rgba(212, 165, 116, 0.4);
+        box-shadow: 0 20px 40px rgba(139, 115, 85, 0.3);
+        animation: slideInReveal 0.6s ease-out;
+      }
+
+      .reveal-icon {
+        font-size: 2.5rem;
+        background: rgba(255, 249, 240, 0.25);
+        padding: 1rem;
+        border-radius: 50%;
+        box-shadow: 0 8px 16px rgba(74, 52, 40, 0.2);
+      }
+
+      .reveal-content {
+        flex: 1;
+      }
+
+      .reveal-title {
+        margin: 0 0 0.8rem;
+        font-size: 1rem;
+        font-weight: 600;
+        opacity: 0.9;
+        text-transform: uppercase;
+        letter-spacing: 0.8px;
+      }
+
+      .reveal-song {
+        margin: 0 0 0.4rem;
+        font-size: 1.6rem;
+        font-weight: 700;
+        letter-spacing: 0.3px;
+        line-height: 1.3;
+      }
+
+      .reveal-artist {
+        margin: 0;
+        font-size: 1.2rem;
+        opacity: 0.95;
+        font-style: italic;
+      }
+
+      @keyframes slideInReveal {
+        from {
+          opacity: 0;
+          transform: translateY(-20px) scale(0.95);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0) scale(1);
+        }
       }
 
       .waiting-icon {
@@ -379,6 +439,62 @@ import { ThemeService } from '../../core/services/theme.service';
       .info-icon {
         font-size: 1.6rem;
         color: #d9794d;
+      }
+
+      .submitted-card {
+        display: flex;
+        align-items: center;
+        gap: 1.2rem;
+        background: linear-gradient(135deg, #8b7355 0%, #a68968 100%);
+        color: #fff9f0;
+        border-radius: 20px;
+        border: 2px solid rgba(212, 165, 116, 0.4);
+        box-shadow: 0 18px 36px rgba(139, 115, 85, 0.25);
+        animation: slideInConfirm 0.5s ease-out;
+      }
+
+      .submitted-card::before {
+        display: none;
+      }
+
+      .submitted-icon {
+        font-size: 2rem;
+        background: rgba(255, 249, 240, 0.25);
+        padding: 0.8rem;
+        border-radius: 50%;
+        box-shadow: 0 8px 16px rgba(74, 52, 40, 0.2);
+      }
+
+      .submitted-content {
+        flex: 1;
+      }
+
+      .submitted-title {
+        margin: 0 0 0.4rem;
+        font-size: 1rem;
+        font-weight: 600;
+        opacity: 0.9;
+        text-transform: uppercase;
+        letter-spacing: 0.8px;
+      }
+
+      .submitted-answer {
+        margin: 0;
+        font-size: 1.25rem;
+        font-weight: 700;
+        letter-spacing: 0.3px;
+        line-height: 1.4;
+      }
+
+      @keyframes slideInConfirm {
+        from {
+          opacity: 0;
+          transform: translateY(-20px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
       }
 
       .navigation-card {
@@ -561,6 +677,239 @@ import { ThemeService } from '../../core/services/theme.service';
           opacity: 1;
         }
       }
+
+      /* Styles pour le podium final */
+      .final-podium-overlay {
+        position: fixed;
+        inset: 0;
+        background: rgba(74, 52, 40, 0.95);
+        z-index: 1000;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 2rem;
+        animation: fadeIn 0.5s ease-out;
+        overflow-y: auto;
+      }
+
+      .podium-container {
+        max-width: 900px;
+        width: 100%;
+        background: rgba(255, 255, 255, 0.98);
+        border-radius: 32px;
+        padding: 3rem;
+        box-shadow: 0 30px 60px rgba(0, 0, 0, 0.4);
+        animation: slideInPodium 0.8s ease-out;
+      }
+
+      .podium-header {
+        text-align: center;
+        margin-bottom: 2.5rem;
+      }
+
+      .podium-trophy {
+        font-size: 4rem;
+        margin-bottom: 1rem;
+        animation: autumnPulse 2s infinite;
+      }
+
+      .podium-title {
+        font-size: 2.5rem;
+        font-weight: 700;
+        color: #4a3828;
+        margin: 0 0 0.5rem;
+      }
+
+      .podium-subtitle {
+        font-size: 1.2rem;
+        color: #8b6f47;
+        font-style: italic;
+      }
+
+      .podium-top3 {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 1.5rem;
+        margin: 2.5rem 0;
+      }
+
+      .podium-position {
+        text-align: center;
+        padding: 2rem 1.5rem;
+        border-radius: 24px;
+        position: relative;
+        transition: transform 0.3s ease;
+      }
+
+      .podium-position:hover {
+        transform: translateY(-8px);
+      }
+
+      .podium-position.first {
+        background: linear-gradient(135deg, rgba(255, 215, 0, 0.25), rgba(255, 234, 196, 0.25));
+        border: 3px solid #ffd700;
+        order: 2;
+      }
+
+      .podium-position.second {
+        background: linear-gradient(135deg, rgba(192, 192, 192, 0.25), rgba(232, 230, 227, 0.25));
+        border: 3px solid #c0c0c0;
+        order: 1;
+      }
+
+      .podium-position.third {
+        background: linear-gradient(135deg, rgba(205, 127, 50, 0.25), rgba(236, 209, 182, 0.25));
+        border: 3px solid #cd7f32;
+        order: 3;
+      }
+
+      .podium-medal {
+        font-size: 3.5rem;
+        margin-bottom: 0.8rem;
+      }
+
+      .podium-team-name {
+        font-size: 1.4rem;
+        font-weight: 700;
+        color: #4a3828;
+        margin: 0.5rem 0;
+      }
+
+      .podium-points {
+        font-size: 2rem;
+        font-weight: 700;
+        color: #d9794d;
+      }
+
+      .podium-stats {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+        gap: 1rem;
+        margin: 2rem 0;
+        padding: 1.5rem;
+        background: rgba(247, 239, 225, 0.5);
+        border-radius: 18px;
+      }
+
+      .podium-stat {
+        text-align: center;
+      }
+
+      .podium-stat-value {
+        font-size: 1.8rem;
+        font-weight: 700;
+        color: #d9794d;
+      }
+
+      .podium-stat-label {
+        font-size: 0.85rem;
+        color: #8b6f47;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+      }
+
+      .podium-others {
+        margin-top: 2rem;
+      }
+
+      .podium-others-title {
+        font-size: 1.3rem;
+        font-weight: 600;
+        color: #4a3828;
+        margin-bottom: 1rem;
+        text-align: center;
+      }
+
+      .podium-other-team {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 1rem 1.5rem;
+        margin-bottom: 0.5rem;
+        background: rgba(247, 239, 225, 0.4);
+        border-radius: 16px;
+        border: 1px solid #e8dcc8;
+      }
+
+      .podium-other-rank {
+        font-size: 1.2rem;
+        font-weight: 700;
+        color: #8b6f47;
+        width: 40px;
+      }
+
+      .podium-other-name {
+        flex: 1;
+        font-size: 1.1rem;
+        font-weight: 600;
+        color: #4a3828;
+      }
+
+      .podium-other-points {
+        font-size: 1.3rem;
+        font-weight: 700;
+        color: #d9794d;
+      }
+
+      .podium-actions {
+        display: flex;
+        gap: 1rem;
+        margin-top: 2rem;
+        justify-content: center;
+      }
+
+      @keyframes fadeIn {
+        from {
+          opacity: 0;
+        }
+        to {
+          opacity: 1;
+        }
+      }
+
+      @keyframes slideInPodium {
+        from {
+          opacity: 0;
+          transform: translateY(30px) scale(0.95);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0) scale(1);
+        }
+      }
+
+      @media (max-width: 768px) {
+        .podium-container {
+          padding: 2rem;
+        }
+
+        .podium-title {
+          font-size: 2rem;
+        }
+
+        .podium-top3 {
+          grid-template-columns: 1fr;
+          gap: 1rem;
+        }
+
+        .podium-position.first,
+        .podium-position.second,
+        .podium-position.third {
+          order: initial;
+        }
+
+        .podium-medal {
+          font-size: 2.5rem;
+        }
+
+        .podium-team-name {
+          font-size: 1.2rem;
+        }
+
+        .podium-points {
+          font-size: 1.6rem;
+        }
+      }
     `,
   ],
 })
@@ -568,12 +917,24 @@ export class RoundComponent implements OnDestroy {
   session: any;
   answer = '';
   sending = false;
+  submittedAnswer: string = ''; // Dernière réponse soumise
+  showSubmittedConfirmation = false; // Flag pour afficher la confirmation
 
   eventCode!: string;
   songId: string | null = null;
   endsAt: number = 0;
   remaining: number = 0;
   private timer?: any;
+  private autoSubmitted = false; // Flag pour éviter la double soumission
+
+  // Affichage de la réponse correcte de la chanson précédente
+  previousSongAnswer: { title: string | null; artist: string | null } | null = null;
+  showPreviousAnswer = false;
+
+  // Podium final
+  showFinalPodium = false;
+  finalLeaderboard: Array<{ teamId: string; name: string; totalPoints: number; rank: number }> = [];
+  eventStats: { totalRounds: number; totalSongs: number; totalTeams: number; totalPlayers: number; duration: number } | null = null;
 
   constructor(
     private sessionSvc: SessionService,
@@ -594,10 +955,37 @@ export class RoundComponent implements OnDestroy {
     this.socket.on<any>('round_started', (d) => {
       this.songId = String(d.songId);
       this.endsAt = new Date(d.endsAt).getTime();
+      this.autoSubmitted = false; // Réinitialiser pour la nouvelle manche
+      this.submittedAnswer = ''; // Réinitialiser la réponse soumise
+      this.showSubmittedConfirmation = false; // Masquer la confirmation
+      this.showPreviousAnswer = false; // Masquer la réponse précédente
       this.startCountdown();
     });
-    this.socket.on<any>('round_ended', (_d) => {
+    this.socket.on<any>('round_ended', (d) => {
       this.stopCountdown();
+      // Afficher la réponse correcte de la chanson qui vient de se terminer
+      if (d.title || d.artist) {
+        this.previousSongAnswer = {
+          title: d.title || null,
+          artist: d.artist || null
+        };
+        this.showPreviousAnswer = true;
+      }
+    });
+
+    // Écouter l'événement de fin de l'événement pour afficher le podium final
+    this.socket.on<any>('event_completed', (d) => {
+      console.log('[Round] Event completed, showing final podium:', d);
+      this.finalLeaderboard = d.finalLeaderboard || [];
+      this.eventStats = {
+        totalRounds: d.totalRounds || 0,
+        totalSongs: d.totalSongs || 0,
+        totalTeams: d.totalTeams || 0,
+        totalPlayers: d.totalPlayers || 0,
+        duration: d.duration || 0
+      };
+      this.showFinalPodium = true;
+      this.showPreviousAnswer = false; // Masquer la réponse précédente
     });
   }
 
@@ -612,14 +1000,27 @@ export class RoundComponent implements OnDestroy {
   }
   tick() {
     this.remaining = Math.max(0, this.endsAt - Date.now());
-    if (this.remaining === 0) this.stopCountdown();
+    if (this.remaining === 0) {
+      this.stopCountdown();
+      // Soumission automatique si le joueur a écrit quelque chose mais n'a pas encore envoyé
+      if (this.answer.trim() && !this.autoSubmitted && !this.sending) {
+        this.autoSubmitted = true;
+        this.send();
+      }
+    }
   }
 
   send() {
-    if (!this.session || !this.songId) return;
+    if (!this.session || !this.songId || !this.answer.trim()) return;
     this.sending = true;
-    this.api.submitAnswer(this.songId, this.answer, this.session.teamToken).subscribe({
-      next: (_) => (this.sending = false),
+    const answerToSubmit = this.answer.trim();
+    this.api.submitAnswer(this.songId, answerToSubmit, this.session.teamToken).subscribe({
+      next: (_) => {
+        this.sending = false;
+        this.submittedAnswer = answerToSubmit; // Stocker la réponse soumise
+        this.showSubmittedConfirmation = true; // Afficher la confirmation
+        this.answer = ''; // Vider le champ après envoi réussi
+      },
       error: (_) => (this.sending = false),
     });
   }
@@ -630,6 +1031,27 @@ export class RoundComponent implements OnDestroy {
   back() {
     this.router.navigate(['../../'], { relativeTo: this.route });
   }
+
+  getMedal(rank: number): string {
+    if (rank === 1) return '🥇';
+    if (rank === 2) return '🥈';
+    if (rank === 3) return '🥉';
+    return '';
+  }
+
+  getRankClass(rank: number): string {
+    if (rank === 1) return 'rank-1';
+    if (rank === 2) return 'rank-2';
+    if (rank === 3) return 'rank-3';
+    return 'rank-other';
+  }
+
+  formatDuration(seconds: number): string {
+    const minutes = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    return `${minutes}min ${secs}s`;
+  }
+
   ngOnDestroy() {
     this.stopCountdown();
     this.socket.disconnect();

@@ -29,29 +29,6 @@
       </div>
     </div>
 
-    <!-- Section Réponse Officielle -->
-    <div class="control-panel official-panel">
-      <h3 class="panel-title">
-        <span class="panel-icon">📝</span>
-        Réponse Officielle
-      </h3>
-      <div class="official-inputs">
-        <input
-          [(ngModel)]="officialTitle"
-          placeholder="Titre de la chanson"
-          class="input-field title-input"
-        />
-        <input
-          [(ngModel)]="officialArtist"
-          placeholder="Nom de l'artiste"
-          class="input-field artist-input"
-        />
-        <button (click)="saveOfficial()" [disabled]="!currentSongId" class="btn btn-save">
-          💾 Enregistrer
-        </button>
-      </div>
-    </div>
-
     <!-- Section Contrôles Principaux -->
     <div class="control-panel main-controls">
       <h3 class="panel-title">

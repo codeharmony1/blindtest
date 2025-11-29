@@ -12,39 +12,43 @@
       <div class="status-dot"></div>
       <span>{{ currentSongId ? 'EN DIRECT' : 'EN ATTENTE' }}</span>
     </div>
+    <div class="ambient-toggle" title="Voir la hiérarchie (Tables > Équipes > Joueurs)" (click)="toggleHierarchy()" [class.active]="showHierarchy">
+      <span class="icon">{{ tableMode ? '🪑' : '👥' }}</span>
+      <span class="badge" *ngIf="hierarchyData.length > 0">{{ hierarchyData.length }}</span>
+    </div>
     <div class="ambient-toggle" title="Activer/Désactiver l'ambiance" (click)="toggleAmbient()">
       <span class="icon">✨</span>
     </div>
   </div>
 
-  <!-- Guide de démarrage rapide -->
-  <div class="quick-guide">
-    <div class="guide-title">
-      <span class="icon">📋</span>
-      <strong>Guide rapide :</strong>
-    </div>
-    <div class="guide-steps">
-      <div class="step">
-        <span class="step-number">1</span>
-        <span>Sélectionnez un round</span>
-      </div>
-      <div class="step">
-        <span class="step-number">2</span>
-        <span>Cliquez sur une chanson ou "Suivant"</span>
-      </div>
-      <div class="step">
-        <span class="step-number">3</span>
-        <span>Les joueurs répondent pendant la durée définie</span>
-      </div>
-      <div class="step">
-        <span class="step-number">4</span>
-        <span>Le système ferme, note et passe automatiquement</span>
-      </div>
-    </div>
-  </div>
-
   <!-- Interface de contrôle moderne -->
   <div class="deck-controls">
+    <!-- Guide de démarrage rapide -->
+    <div class="quick-guide full-width">
+      <div class="guide-title">
+        <span class="icon">📋</span>
+        <strong>Guide rapide :</strong>
+      </div>
+      <div class="guide-steps">
+        <div class="step">
+          <span class="step-number">1</span>
+          <span>Sélectionnez un round</span>
+        </div>
+        <div class="step">
+          <span class="step-number">2</span>
+          <span>Cliquez sur une chanson ou "Suivant"</span>
+        </div>
+        <div class="step">
+          <span class="step-number">3</span>
+          <span>Les joueurs répondent pendant la durée définie</span>
+        </div>
+        <div class="step">
+          <span class="step-number">4</span>
+          <span>Le système ferme, note et passe automatiquement</span>
+        </div>
+      </div>
+    </div>
+
     <!-- 1️⃣ Section Sélection Round -->
     <div class="control-section full-width">
       <div class="section-header">
@@ -67,26 +71,30 @@
         ✅ {{ songs.length }} chanson(s) disponibles
       </div>
 
-      <!-- Bouton pour créer un nouveau round -->
-      <button (click)="toggleCreateRound()" class="action-btn create-round-toggle" [class.active]="showCreateRound">
-        <span class="icon">{{ showCreateRound ? '➖' : '➕' }}</span>
-        <span>{{ showCreateRound ? 'Annuler' : 'Nouveau Round' }}</span>
-      </button>
+      <!-- Boutons de gestion des rounds -->
+      <div class="round-actions" style="display: flex; gap: 0.75rem; margin-top: 1rem;">
+        <button (click)="toggleCreateRound()" class="action-btn create-round-toggle" [class.active]="showCreateRound" style="flex: 1;">
+          <span class="icon">{{ showCreateRound ? '➖' : '➕' }}</span>
+          <span>{{ showCreateRound ? 'Annuler' : 'Nouveau Round' }}</span>
+        </button>
+
+        <button
+          [disabled]="!roundId"
+          [style.opacity]="roundId ? '1' : '0.5'"
+          (click)="deleteCurrentRound()"
+          class="action-btn delete-round-btn"
+          title="Supprimer ce round (sélectionnez un round d'abord)"
+        >
+          <span class="icon">🗑️</span>
+          <span>Supprimer</span>
+        </button>
+      </div>
 
       <!-- Formulaire de création de round -->
       <div class="create-round-form" *ngIf="showCreateRound">
         <div class="input-stack">
           <input [(ngModel)]="newRoundName" placeholder="Nom du round *" class="modern-input" />
-          <div class="input-row">
-            <div class="input-with-label">
-              <label>Durée par défaut (secondes)</label>
-              <input type="number" [(ngModel)]="newRoundDuration" min="5" max="60" class="modern-input number-input" />
-            </div>
-            <div class="input-with-label">
-              <label>Nombre de chansons</label>
-              <input type="number" [(ngModel)]="newRoundTotalSongs" min="1" max="100" class="modern-input number-input" />
-            </div>
-          </div>
+          <p class="form-note">💡 La durée d'écoute est ajustable via les contrôles de lecture</p>
           <button (click)="createRound()" class="action-btn create-btn">
             <span class="icon">✨</span>
             <span>Créer le Round</span>
@@ -156,6 +164,7 @@ Let It Be,Paul McCartney,The Beatles,</pre>
         <div class="input-stack">
           <input [(ngModel)]="newSongTitle" placeholder="Titre de la chanson *" class="modern-input" />
           <input [(ngModel)]="newSongArtist" placeholder="Artiste (optionnel)" class="modern-input" />
+          <input [(ngModel)]="newSongGroup" placeholder="Groupe (optionnel)" class="modern-input" />
           <button (click)="createSong()" class="action-btn create-btn">
             <span class="icon">✨</span>
             <span>Créer</span>
@@ -184,19 +193,20 @@ Let It Be,Paul McCartney,The Beatles,</pre>
           <div class="song-countdown" *ngIf="getCountdown(song)" [class]="getCountdownClass(song)">
             {{ getCountdown(song) }}
           </div>
-          <!-- Sélecteur de statut -->
+          <!-- Sélecteur de statut (sans "Noté" car automatique) -->
           <div class="song-status-selector" (click)="$event.stopPropagation()">
             <select
-              [value]="song.status"
+              [value]="song.status === 'scored' ? 'closed' : song.status"
               (change)="changeStatus(song.id, $any($event.target).value)"
               class="status-select"
               [class]="song.status"
+              [disabled]="song.status === 'scored'"
             >
               <option value="pending">⏸️ En attente</option>
               <option value="open">▶️ En cours</option>
               <option value="closed">⏹️ Fermée</option>
-              <option value="scored">✅ Notée</option>
             </select>
+            <span *ngIf="song.status === 'scored'" class="status-badge scored-auto" title="Notation automatique terminée">✅ Noté</span>
           </div>
           <!-- Bouton de suppression -->
           <button
@@ -238,60 +248,187 @@ Let It Be,Paul McCartney,The Beatles,</pre>
         <small>⚡ Automatique : fermeture → notation → ouverture</small>
       </button>
 
-      <details class="manual-controls">
-        <summary>Contrôles manuels (avancé)</summary>
-        <div class="control-buttons">
-          <button (click)="open()" [disabled]="!currentSongId" class="action-btn play-btn">
-            <span class="icon">▶️</span>
-            <span>Ouvrir</span>
-          </button>
-          <button (click)="close()" [disabled]="!currentSongId" class="action-btn stop-btn">
-            <span class="icon">⏹️</span>
-            <span>Fermer</span>
-          </button>
-          <button (click)="grade()" [disabled]="!currentSongId" class="action-btn grade-btn">
-            <span class="icon">✅</span>
-            <span>Noter</span>
-          </button>
-        </div>
-      </details>
+      <button (click)="completeEvent()" class="action-btn complete-event-btn">
+        <span class="icon">🎉</span>
+        <span>Terminer l'Événement</span>
+        <small>Termine tous les rounds et affiche le podium final</small>
+      </button>
+
+      <p class="auto-display-note">
+        💡 Les réponses s'affichent automatiquement sur les écrans à la fin du timer de chaque chanson
+      </p>
     </div>
 
-    <!-- 4️⃣ Section Réponse Officielle -->
-    <div class="control-section">
-      <div class="section-header">
-        <div class="section-icon">📝</div>
-        <h3>Réponse Officielle (optionnel)</h3>
-      </div>
-      <div class="input-stack">
-        <input [(ngModel)]="officialTitle" placeholder="Titre officiel" class="modern-input" />
-        <input [(ngModel)]="officialArtist" placeholder="Artiste officiel" class="modern-input" />
-        <button (click)="saveOfficial()" [disabled]="!currentSongId" class="action-btn save-btn">
-          <span class="icon">💾</span>
-          <span>Sauvegarder</span>
-        </button>
-      </div>
-    </div>
+    <!-- Section Statut supprimée - informations passives inutiles pour le DJ -->
+  </div>
 
-    <!-- 5️⃣ Section Statut -->
-    <div class="control-section full-width status-section">
-      <div class="section-header">
-        <div class="section-icon">📊</div>
-        <h3>Statut</h3>
+  <!-- Modal Hiérarchie Unifié : Tables > Équipes > Joueurs -->
+  <div class="modal-overlay" *ngIf="showHierarchy" (click)="showHierarchy = false">
+    <div class="modal-panel hierarchy-modal" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h2>
+          <span class="icon">{{ tableMode ? '🪑' : '👥' }}</span>
+          <span *ngIf="tableMode">Tables &gt; Équipes &gt; Joueurs</span>
+          <span *ngIf="!tableMode">Équipes &gt; Joueurs</span>
+        </h2>
+        <button class="close-btn" (click)="showHierarchy = false">✕</button>
       </div>
-      <div class="status-grid">
-        <div class="status-card">
-          <label>Chanson Actuelle</label>
-          <div class="status-value" [class.active]="currentSongId" [class.inactive]="!currentSongId">
-            {{ currentSongId || 'Aucune chanson' }}
+
+      <div class="modal-body">
+        <div class="hierarchy-actions">
+          <button (click)="loadHierarchy()" class="icon-btn refresh-btn">
+            <span class="icon">🔄</span>
+            <span>Actualiser</span>
+          </button>
+          <div class="summary-text">{{ getHierarchySummary() }}</div>
+        </div>
+
+        <div *ngIf="hierarchyData.length === 0" class="empty-state">
+          <span class="icon">🚫</span>
+          <p *ngIf="tableMode">Aucune table créée pour le moment</p>
+          <p *ngIf="!tableMode">Aucun participant pour le moment</p>
+          <small *ngIf="tableMode">Les joueurs peuvent créer des tables lors de l'inscription</small>
+        </div>
+
+        <!-- Mode Tables : Tables > Équipes > Joueurs -->
+        <div *ngIf="hierarchyData.length > 0 && tableMode" class="hierarchy-list">
+          <div *ngFor="let table of hierarchyData" class="hierarchy-level-1">
+            <div class="level-header table-header">
+              <span class="icon">🪑</span>
+              <span class="level-name" [title]="table.name">{{ table.name }}</span>
+              <span class="level-count">({{ table.teamsCount }} équipe(s))</span>
+            </div>
+
+            <!-- Équipes de la table -->
+            <div class="hierarchy-level-2" *ngIf="table.teams && table.teams.length > 0">
+              <div *ngFor="let team of table.teams" class="team-item">
+                <div class="level-header team-header">
+                  <span class="icon">🏆</span>
+                  <span class="level-name" [title]="team.name">{{ team.name }}</span>
+                  <span class="level-count">({{ team.playersCount }} joueur(s))</span>
+                </div>
+
+                <!-- Joueurs de l'équipe (à implémenter si nécessaire) -->
+                <div class="hierarchy-level-3" *ngIf="team.players && team.players.length > 0">
+                  <div *ngFor="let player of team.players" class="player-item">
+                    <div class="player-info">
+                      <span class="icon">👤</span>
+                      <span class="player-name">{{ player.nickname }}</span>
+                      <span class="captain-badge" *ngIf="player.isCaptain">👑</span>
+                    </div>
+                    <button
+                      class="delete-player-btn"
+                      (click)="deletePlayer(player.id, player.nickname)"
+                      title="Supprimer ce joueur">
+                      🗑️
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="empty-state-small" *ngIf="!table.teams || table.teams.length === 0">
+              <span>Aucune équipe assignée à cette table</span>
+            </div>
           </div>
         </div>
-        <div class="status-card">
-          <label>Connexion</label>
-          <div class="status-value connected">
-            <span class="icon">🟢</span>
-            <span>Connecté</span>
+
+        <!-- Mode sans Tables : Équipes > Joueurs -->
+        <div *ngIf="hierarchyData.length > 0 && !tableMode" class="hierarchy-list">
+          <div *ngFor="let container of hierarchyData" class="hierarchy-level-1">
+            <!-- Équipes -->
+            <div class="hierarchy-level-2" *ngIf="container.teams && container.teams.length > 0">
+              <div *ngFor="let team of container.teams" class="team-item">
+                <div class="level-header team-header">
+                  <span class="icon">🏆</span>
+                  <span class="level-name" [title]="team.name">{{ team.name }}</span>
+                  <span class="level-count">({{ team.playersCount }} joueur(s))</span>
+                </div>
+
+                <!-- Joueurs de l'équipe -->
+                <div class="hierarchy-level-3" *ngIf="team.players && team.players.length > 0">
+                  <div *ngFor="let player of team.players" class="player-item">
+                    <div class="player-info">
+                      <span class="icon">👤</span>
+                      <span class="player-name">{{ player.nickname }}</span>
+                      <span class="captain-badge" *ngIf="player.isCaptain">👑</span>
+                    </div>
+                    <button
+                      class="delete-player-btn"
+                      (click)="deletePlayer(player.id, player.nickname)"
+                      title="Supprimer ce joueur">
+                      🗑️
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal Limite DEMO -->
+  <div class="modal-overlay" *ngIf="showLimitModal" (click)="showLimitModal = false">
+    <div class="modal-panel limit-modal" (click)="$event.stopPropagation()">
+      <div class="modal-header limit-header">
+        <div class="limit-icon">🎵</div>
+        <h2>Limite du Plan DEMO Atteinte</h2>
+        <button class="close-btn" (click)="showLimitModal = false">✕</button>
+      </div>
+
+      <div class="modal-body limit-body">
+        <div class="limit-info">
+          <div class="limit-stat">
+            <span class="stat-label">Chansons actuelles</span>
+            <span class="stat-value">{{ limitModalData?.current || 0 }}</span>
+          </div>
+          <div class="limit-divider">/</div>
+          <div class="limit-stat">
+            <span class="stat-label">Limite DEMO</span>
+            <span class="stat-value limit-max">{{ limitModalData?.limit || 0 }}</span>
+          </div>
+        </div>
+
+        <div class="limit-message">
+          <p>{{ limitModalData?.message }}</p>
+        </div>
+
+        <div class="plans-section">
+          <h3>🚀 Passez à un plan supérieur</h3>
+
+          <div class="plans-grid">
+            <div class="plan-card">
+              <div class="plan-badge">Par Événement</div>
+              <div class="plan-name">PER_EVENT</div>
+              <div class="plan-features">
+                <div class="feature">✅ 1 événement actif</div>
+                <div class="feature highlight">✅ Chansons illimitées</div>
+                <div class="feature">✅ Joueurs illimités</div>
+              </div>
+            </div>
+
+            <div class="plan-card recommended">
+              <div class="plan-badge premium">Recommandé</div>
+              <div class="plan-name">MONTHLY</div>
+              <div class="plan-features">
+                <div class="feature highlight">✅ Événements illimités</div>
+                <div class="feature highlight">✅ Chansons illimitées</div>
+                <div class="feature">✅ Joueurs illimités</div>
+                <div class="feature">✅ Utilisateurs illimités</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="limit-actions">
+          <button class="btn-secondary" (click)="showLimitModal = false">
+            Fermer
+          </button>
+          <a href="/admin/billing" class="btn-primary">
+            Voir les Plans et Tarifs
+          </a>
         </div>
       </div>
     </div>

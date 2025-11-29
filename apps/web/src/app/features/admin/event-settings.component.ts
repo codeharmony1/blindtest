@@ -6,7 +6,6 @@ import { ApiService } from '../../core/services/api.service';
 
 interface EventSettings {
   defaultSongDuration?: number;
-  defaultSongsPerRound?: number;
   leaderboardLiveGlobal?: boolean;
   leaderboardOnProjectorDuringTimer?: boolean;
   minTeamSize?: number;
@@ -50,41 +49,6 @@ interface EventSettings {
       </div>
 
       <form *ngIf="settings && !loading" (ngSubmit)="saveSettings()" class="settings-form">
-        <!-- Paramètres de jeu -->
-        <div class="settings-section">
-          <div class="section-header">
-            <h3>🎵 Paramètres de Jeu</h3>
-          </div>
-          <div class="form-grid">
-            <div class="form-group">
-              <label for="defaultSongDuration">Durée par chanson (secondes) :</label>
-              <input
-                type="number"
-                id="defaultSongDuration"
-                [(ngModel)]="settings.defaultSongDuration"
-                name="defaultSongDuration"
-                min="5"
-                max="120"
-                class="form-control"
-              />
-              <small class="help-text">Entre 5 et 120 secondes</small>
-            </div>
-            <div class="form-group">
-              <label for="defaultSongsPerRound">Chansons par round :</label>
-              <input
-                type="number"
-                id="defaultSongsPerRound"
-                [(ngModel)]="settings.defaultSongsPerRound"
-                name="defaultSongsPerRound"
-                min="1"
-                max="100"
-                class="form-control"
-              />
-              <small class="help-text">Entre 1 et 100 chansons</small>
-            </div>
-          </div>
-        </div>
-
         <!-- Affichage -->
         <div class="settings-section">
           <div class="section-header">

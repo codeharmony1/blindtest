@@ -114,6 +114,181 @@ interface ApiTheme {
             </div>
           </div>
 
+          <!-- Dates Section -->
+          <div class="form-section">
+            <h2 class="section-title">📅 Dates de l'événement</h2>
+            <p class="section-description">
+              Définissez la période de votre événement. Le code sera automatiquement libéré
+              24 heures après la fin et pourra être réutilisé. Durée maximale : 7 jours.
+            </p>
+
+            <div class="form-grid">
+              <div class="form-group">
+                <label for="startDate" class="form-label">
+                  Date de début <span class="required">*</span>
+                </label>
+                <input
+                  id="startDate"
+                  type="datetime-local"
+                  formControlName="startDate"
+                  class="form-input"
+                />
+                <small class="form-help">
+                  Date et heure de début de l'événement
+                </small>
+                <div
+                  *ngIf="eventForm.get('startDate')?.errors?.['required'] && eventForm.get('startDate')?.touched"
+                  class="form-error"
+                >
+                  La date de début est obligatoire
+                </div>
+                <div
+                  *ngIf="eventForm.get('startDate')?.errors?.['beforeToday']"
+                  class="form-error"
+                >
+                  La date de début ne peut pas être antérieure à aujourd'hui
+                </div>
+              </div>
+
+              <div class="form-group">
+                <label for="endDate" class="form-label">
+                  Date de fin <span class="required">*</span>
+                </label>
+                <input
+                  id="endDate"
+                  type="datetime-local"
+                  formControlName="endDate"
+                  class="form-input"
+                />
+                <small class="form-help">
+                  Date et heure de fin de l'événement (max 7 jours après le début)
+                </small>
+                <div
+                  *ngIf="eventForm.get('endDate')?.errors?.['required'] && eventForm.get('endDate')?.touched"
+                  class="form-error"
+                >
+                  La date de fin est obligatoire
+                </div>
+                <div
+                  *ngIf="eventForm.get('endDate')?.errors?.['beforeStart']"
+                  class="form-error"
+                >
+                  La date de fin doit être après la date de début
+                </div>
+                <div
+                  *ngIf="eventForm.get('endDate')?.errors?.['tooLong']"
+                  class="form-error"
+                >
+                  L'événement ne peut pas durer plus de 7 jours
+                </div>
+              </div>
+            </div>
+
+            <!-- Affichage de l'expiration du code -->
+            <div
+              *ngIf="eventForm.get('endDate')?.value"
+              class="code-expiry-info"
+            >
+              <div class="info-box">
+                <span class="info-icon">ℹ️</span>
+                <div class="info-content">
+                  <strong>Code réutilisable après :</strong>
+                  {{ getCodeExpiryDate() | date: 'dd/MM/yyyy à HH:mm' }}
+                  <br />
+                  <small>
+                    (24 heures après la fin pour permettre aux participants de consulter les résultats)
+                  </small>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Game Mode Selection -->
+          <div class="form-section">
+            <h2 class="section-title">🎮 Mode de jeu</h2>
+
+            <div class="game-mode-selection">
+              <p class="section-description">
+                Choisissez comment les participants vont jouer :
+              </p>
+
+              <div class="game-mode-options">
+                <!-- Mode TEAM -->
+                <label class="game-mode-card" [class.selected]="eventForm.get('gameMode')?.value === 'TEAM'">
+                  <input
+                    type="radio"
+                    formControlName="gameMode"
+                    value="TEAM"
+                    class="game-mode-radio"
+                  />
+                  <div class="game-mode-content">
+                    <div class="game-mode-header">
+                      <span class="game-mode-icon">👥</span>
+                      <h4 class="game-mode-title">Mode Équipe</h4>
+                    </div>
+                    <p class="game-mode-description">
+                      Un capitaine par table crée l'équipe et donne le nom de sa table.
+                      Les autres joueurs lui communiquent leurs réponses oralement.
+                      <strong>Un seul appareil par table.</strong>
+                    </p>
+                    <div class="game-mode-badge">Recommandé pour les événements physiques</div>
+                  </div>
+                </label>
+
+                <!-- Mode SOLO -->
+                <label class="game-mode-card" [class.selected]="eventForm.get('gameMode')?.value === 'SOLO'">
+                  <input
+                    type="radio"
+                    formControlName="gameMode"
+                    value="SOLO"
+                    class="game-mode-radio"
+                  />
+                  <div class="game-mode-content">
+                    <div class="game-mode-header">
+                      <span class="game-mode-icon">🎯</span>
+                      <h4 class="game-mode-title">Mode Solo</h4>
+                    </div>
+                    <p class="game-mode-description">
+                      Chaque joueur crée son propre pseudo et joue individuellement sur son appareil.
+                      Les pseudos doivent être uniques.
+                      <strong>Chaque joueur sur son smartphone.</strong>
+                    </p>
+                    <div class="game-mode-badge">Idéal pour les jeux à distance</div>
+                  </div>
+                </label>
+              </div>
+
+              <!-- Table Mode Option (only for TEAM mode) -->
+              <div class="table-mode-option" *ngIf="eventForm.get('gameMode')?.value === 'TEAM'" style="margin-top: 2rem;">
+                <label class="checkbox-label checkbox-card">
+                  <input
+                    type="checkbox"
+                    formControlName="tableMode"
+                    class="checkbox-input"
+                  />
+                  <span class="checkbox-custom"></span>
+                  <div class="checkbox-content">
+                    <div class="checkbox-header">
+                      <span class="checkbox-icon">🪑</span>
+                      <h4 class="checkbox-title">Activer le mode "Faites gagner votre table"</h4>
+                    </div>
+                    <p class="checkbox-description">
+                      Les équipes sont regroupées par <strong>tables</strong>. Les points des équipes d'une même table sont cumulés.
+                      Le podium final affiche les <strong>tables gagnantes</strong> (et non les équipes).
+                      Idéal pour les mariages, événements d'entreprise, etc.
+                    </p>
+                    <ul class="checkbox-features">
+                      <li>✅ Chaque joueur crée ou rejoint une équipe</li>
+                      <li>✅ Chaque équipe choisit ou crée une table</li>
+                      <li>✅ Les points sont cumulés par table</li>
+                      <li>✅ Le classement final affiche les tables</li>
+                    </ul>
+                  </div>
+                </label>
+              </div>
+            </div>
+          </div>
+
           <!-- Theme Selection -->
           <div class="form-section">
             <h2 class="section-title">🎨 Thème visuel</h2>
@@ -211,41 +386,10 @@ interface ApiTheme {
 
           <!-- Settings -->
           <div class="form-section">
-            <h2 class="section-title">Paramètres par défaut</h2>
-
-            <div class="form-grid">
-              <div class="form-group">
-                <label for="defaultSongDuration" class="form-label">
-                  Durée par défaut des chansons (secondes)
-                </label>
-                <input
-                  id="defaultSongDuration"
-                  type="number"
-                  formControlName="defaultSongDuration"
-                  class="form-input"
-                  min="5"
-                  max="60"
-                />
-              </div>
-
-              <div class="form-group">
-                <label for="defaultSongsPerRound" class="form-label">
-                  Nombre de chansons par round
-                </label>
-                <input
-                  id="defaultSongsPerRound"
-                  type="number"
-                  formControlName="defaultSongsPerRound"
-                  class="form-input"
-                  min="1"
-                  max="50"
-                />
-              </div>
-            </div>
+            <h2 class="section-title">Paramètres d'affichage</h2>
 
             <!-- Advanced Settings -->
             <div class="advanced-settings">
-              <h3 class="subsection-title">Paramètres avancés</h3>
 
               <div class="checkbox-group">
                 <label class="checkbox-label">
@@ -317,12 +461,8 @@ interface ApiTheme {
               </div>
               <div class="preview-settings">
                 <div class="preview-setting">
-                  <span class="setting-icon">⏱️</span>
-                  <span>{{ songsDurationPreview }}s par chanson</span>
-                </div>
-                <div class="preview-setting">
-                  <span class="setting-icon">🎵</span>
-                  <span>{{ songsPerRoundPreview }} chansons/round</span>
+                  <span class="setting-icon">🎮</span>
+                  <span>Mode {{ eventForm.get('gameMode')?.value === 'TEAM' ? 'Équipe' : 'Solo' }}</span>
                 </div>
                 <div class="preview-setting">
                   <span class="setting-icon">🎨</span>
@@ -344,7 +484,7 @@ interface ApiTheme {
                 <div class="player-content">
                   <div class="player-timer">
                     <div class="timer-circle">
-                      <div class="timer-value">{{ songsDurationPreview }}s</div>
+                      <div class="timer-value">15s</div>
                     </div>
                   </div>
                   <div class="player-answer">
@@ -358,13 +498,53 @@ interface ApiTheme {
                   </div>
                 </div>
                 <div class="player-footer">
-                  <div class="chip">🎵 {{ songsPerRoundPreview }} chansons/round</div>
                   <div class="chip">🎨 {{ getSelectedThemeName() }}</div>
                 </div>
               </div>
             </div>
           </div>
         </aside>
+      </div>
+    </div>
+
+    <!-- Modal PIN DJ -->
+    <div class="pin-modal-overlay" *ngIf="showPinModal" (click)="closePinModal()">
+      <div class="pin-modal" (click)="$event.stopPropagation()">
+        <div class="pin-modal-header">
+          <h2>🎉 Événement créé avec succès !</h2>
+        </div>
+
+        <div class="pin-modal-body">
+          <p class="pin-instruction">
+            ⚠️ <strong>Important :</strong> Notez ce code PIN DJ maintenant.<br>
+            Il ne sera plus affiché par la suite.
+          </p>
+
+          <div class="pin-display">
+            <label>Code PIN DJ (6 chiffres)</label>
+            <div class="pin-value">{{ generatedDjPin }}</div>
+          </div>
+
+          <div class="pin-actions">
+            <button type="button" class="btn btn-secondary" (click)="copyPinToClipboard()">
+              📋 Copier le PIN
+            </button>
+          </div>
+
+          <div class="pin-info">
+            <p>
+              Le DJ pourra se connecter sur <code>/dj-login</code> avec :<br>
+              • Code événement : <strong>{{ eventForm.value.code }}</strong><br>
+              • Code PIN : <strong>{{ generatedDjPin }}</strong>
+            </p>
+          </div>
+        </div>
+
+        <div class="pin-modal-footer">
+          <button type="button" class="btn btn-primary" (click)="closePinModal()">
+            ✅ J'ai noté le code PIN
+          </button>
+        </div>
       </div>
     </div>
   `,
@@ -595,6 +775,84 @@ interface ApiTheme {
         color: #64748b;
       }
 
+      /* Checkbox Card (for table mode) */
+      .table-mode-option {
+        margin-top: 2rem;
+      }
+
+      .checkbox-card {
+        display: flex;
+        align-items: flex-start;
+        gap: 1rem;
+        border: 2px solid #e5e7eb;
+        border-radius: 12px;
+        padding: 1.5rem;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        background: white;
+      }
+
+      .checkbox-card:hover {
+        border-color: #cbd5e1;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+      }
+
+      .checkbox-card .checkbox-custom {
+        width: 24px;
+        height: 24px;
+        border: 2px solid #d1d5db;
+        border-radius: 6px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: all 0.2s ease;
+        flex-shrink: 0;
+        margin-top: 0.25rem;
+      }
+
+      .checkbox-card .checkbox-input:checked + .checkbox-custom {
+        background: #3b82f6;
+        border-color: #3b82f6;
+      }
+
+      .checkbox-card .checkbox-input:checked + .checkbox-custom::after {
+        content: '✓';
+        color: white;
+        font-size: 1rem;
+        font-weight: bold;
+      }
+
+      .checkbox-card .checkbox-content {
+        flex: 1;
+      }
+
+      .checkbox-header {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        margin-bottom: 0.75rem;
+      }
+
+      .checkbox-icon {
+        font-size: 1.5rem;
+        line-height: 1;
+      }
+
+      .checkbox-features {
+        list-style: none;
+        padding: 0;
+        margin: 0.75rem 0 0 0;
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
+      }
+
+      .checkbox-features li {
+        font-size: 0.75rem;
+        color: #475569;
+        padding-left: 0.25rem;
+      }
+
       /* Form Actions */
       .form-actions {
         display: flex;
@@ -823,6 +1081,98 @@ interface ApiTheme {
         font-size: 1rem;
       }
 
+      /* Game Mode Selection */
+      .game-mode-selection {
+        margin-top: 1rem;
+      }
+
+      .game-mode-options {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+        gap: 1.5rem;
+      }
+
+      .game-mode-card {
+        border: 2px solid #e5e7eb;
+        border-radius: 12px;
+        padding: 1.5rem;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        background: white;
+        display: block;
+        position: relative;
+      }
+
+      .game-mode-card:hover {
+        border-color: #cbd5e1;
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+      }
+
+      .game-mode-card.selected {
+        border-color: #3b82f6;
+        background: #eff6ff;
+        box-shadow: 0 0 0 1px #3b82f6;
+      }
+
+      .game-mode-radio {
+        position: absolute;
+        opacity: 0;
+        pointer-events: none;
+      }
+
+      .game-mode-content {
+        display: flex;
+        flex-direction: column;
+        gap: 1rem;
+      }
+
+      .game-mode-header {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+      }
+
+      .game-mode-icon {
+        font-size: 2rem;
+        line-height: 1;
+      }
+
+      .game-mode-title {
+        font-size: 1.125rem;
+        font-weight: 700;
+        color: #1e293b;
+        margin: 0;
+      }
+
+      .game-mode-description {
+        font-size: 0.875rem;
+        color: #64748b;
+        line-height: 1.6;
+        margin: 0;
+      }
+
+      .game-mode-description strong {
+        color: #334155;
+        font-weight: 600;
+      }
+
+      .game-mode-badge {
+        display: inline-block;
+        padding: 0.25rem 0.75rem;
+        background: #f1f5f9;
+        color: #475569;
+        border-radius: 12px;
+        font-size: 0.75rem;
+        font-weight: 600;
+        margin-top: 0.5rem;
+      }
+
+      .game-mode-card.selected .game-mode-badge {
+        background: #dbeafe;
+        color: #1e40af;
+      }
+
       /* Theme Selection */
       .section-description {
         color: #64748b;
@@ -1002,6 +1352,161 @@ interface ApiTheme {
           margin-bottom: 0.5rem;
         }
       }
+
+      /* Modal PIN DJ */
+      .pin-modal-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(0, 0, 0, 0.7);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 9999;
+        animation: fadeIn 0.2s ease;
+      }
+
+      .pin-modal {
+        background: white;
+        border-radius: 16px;
+        max-width: 500px;
+        width: 90%;
+        box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+        animation: slideUp 0.3s ease;
+      }
+
+      .pin-modal-header {
+        padding: 24px;
+        border-bottom: 2px solid #e2e8f0;
+        text-align: center;
+      }
+
+      .pin-modal-header h2 {
+        margin: 0;
+        color: #1a202c;
+        font-size: 1.5rem;
+      }
+
+      .pin-modal-body {
+        padding: 24px;
+      }
+
+      .pin-instruction {
+        background: #fff5f5;
+        border: 2px solid #feb2b2;
+        color: #c53030;
+        padding: 12px;
+        border-radius: 8px;
+        margin-bottom: 20px;
+        text-align: center;
+      }
+
+      .pin-display {
+        text-align: center;
+        margin-bottom: 20px;
+      }
+
+      .pin-display label {
+        display: block;
+        font-weight: 600;
+        color: #4a5568;
+        margin-bottom: 8px;
+      }
+
+      .pin-value {
+        font-size: 2.5rem;
+        font-weight: 700;
+        color: #667eea;
+        letter-spacing: 0.3em;
+        padding: 20px;
+        background: linear-gradient(135deg, #f7fafc 0%, #edf2f7 100%);
+        border: 3px dashed #667eea;
+        border-radius: 12px;
+        user-select: all;
+      }
+
+      .pin-actions {
+        text-align: center;
+        margin-bottom: 20px;
+      }
+
+      .pin-info {
+        background: #f7fafc;
+        border: 1px solid #e2e8f0;
+        border-radius: 8px;
+        padding: 16px;
+        font-size: 0.9rem;
+        color: #4a5568;
+      }
+
+      .pin-info code {
+        background: #edf2f7;
+        padding: 2px 6px;
+        border-radius: 4px;
+        font-family: 'Courier New', monospace;
+      }
+
+      .pin-info strong {
+        color: #2d3748;
+      }
+
+      .pin-modal-footer {
+        padding: 16px 24px;
+        border-top: 1px solid #e2e8f0;
+        text-align: center;
+      }
+
+      @keyframes fadeIn {
+        from { opacity: 0; }
+        to { opacity: 1; }
+      }
+
+      @keyframes slideUp {
+        from {
+          opacity: 0;
+          transform: translateY(20px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+
+      /* Styles pour la section dates lifecycle */
+      .code-expiry-info {
+        margin-top: 1.5rem;
+      }
+
+      .info-box {
+        display: flex;
+        align-items: flex-start;
+        gap: 0.75rem;
+        padding: 1rem;
+        background: #eff6ff;
+        border: 1px solid #bfdbfe;
+        border-radius: 8px;
+      }
+
+      .info-icon {
+        font-size: 1.25rem;
+        flex-shrink: 0;
+      }
+
+      .info-content {
+        font-size: 0.875rem;
+        color: #1e40af;
+        line-height: 1.5;
+      }
+
+      .info-content strong {
+        font-weight: 600;
+      }
+
+      .info-content small {
+        color: #3b82f6;
+      }
     `,
   ],
 })
@@ -1014,6 +1519,10 @@ export class EventFormComponent implements OnInit {
   // Pagination
   currentPage = 1;
   readonly pageSize = 10;
+
+  // Gestion PIN DJ
+  generatedDjPin: string | null = null;
+  showPinModal = false;
 
   constructor(
     private fb: FormBuilder,
@@ -1039,6 +1548,15 @@ export class EventFormComponent implements OnInit {
       this.generateCode();
     }
 
+    // Ajouter validation des dates
+    this.eventForm.get('endDate')?.valueChanges.subscribe(() => {
+      this.validateDates();
+    });
+
+    this.eventForm.get('startDate')?.valueChanges.subscribe(() => {
+      this.validateDates();
+    });
+
     // Debug du formulaire
     console.log('📝 Formulaire initial:', this.eventForm.value);
   }
@@ -1047,18 +1565,21 @@ export class EventFormComponent implements OnInit {
     return this.fb.group({
       name: ['', [Validators.required, Validators.minLength(3)]],
       code: ['', [Validators.required, Validators.pattern(/^[A-Z0-9]{3,8}$/)]],
+      gameMode: ['TEAM', [Validators.required]],
+      tableMode: [false],
       themeId: ['wedding-autumn', [Validators.required]],
-      defaultSongDuration: [15, [Validators.min(5), Validators.max(60)]],
-      defaultSongsPerRound: [10, [Validators.min(1), Validators.max(50)]],
       leaderboardLiveGlobal: [true],
       leaderboardOnProjectorDuringTimer: [false],
+      // Champs pour le lifecycle - maintenant obligatoires
+      startDate: ['', [Validators.required]],
+      endDate: ['', [Validators.required]],
     });
   }
 
   generateCode() {
     const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
     let code = '';
-    for (let i = 0; i < 6; i++) {
+    for (let i = 0; i < 8; i++) { // Changé de 6 à 8 caractères
       code += chars.charAt(Math.floor(Math.random() * chars.length));
     }
     this.eventForm.patchValue({ code });
@@ -1082,16 +1603,20 @@ export class EventFormComponent implements OnInit {
               this.eventForm.patchValue({
                 name: ev.name,
                 code: ev.code,
+                gameMode: ev.gameMode || 'TEAM',
+                tableMode: s.tableMode || false,
                 themeId: s.themeId || 'wedding-autumn',
-                defaultSongDuration: s.defaultSongDuration ?? 15,
-                defaultSongsPerRound: s.defaultSongsPerRound ?? 10,
                 leaderboardLiveGlobal: s.leaderboardLiveGlobal ?? true,
                 leaderboardOnProjectorDuringTimer: s.leaderboardOnProjectorDuringTimer ?? false,
               });
             },
             error: () => {
               // Fallback si l'appel settings échoue
-              this.eventForm.patchValue({ name: ev.name, code: ev.code });
+              this.eventForm.patchValue({
+                name: ev.name,
+                code: ev.code,
+                gameMode: ev.gameMode || 'TEAM'
+              });
             },
           });
       },
@@ -1113,8 +1638,6 @@ export class EventFormComponent implements OnInit {
           name: formData.name,
           settings: {
             themeId: formData.themeId,
-            defaultSongDuration: formData.defaultSongDuration,
-            defaultSongsPerRound: formData.defaultSongsPerRound,
             leaderboardLiveGlobal: formData.leaderboardLiveGlobal,
             leaderboardOnProjectorDuringTimer: formData.leaderboardOnProjectorDuringTimer,
           },
@@ -1137,21 +1660,41 @@ export class EventFormComponent implements OnInit {
         const eventRequest = {
           name: formData.name,
           code: formData.code,
+          gameMode: formData.gameMode,
+          tableMode: formData.tableMode,
+          // Nouveaux champs lifecycle
+          startDate: formData.startDate || undefined,
+          endDate: formData.endDate || undefined,
           settings: {
+            tableMode: formData.tableMode,
             themeId: formData.themeId,
-            defaultSongDuration: formData.defaultSongDuration,
-            defaultSongsPerRound: formData.defaultSongsPerRound,
             leaderboardLiveGlobal: formData.leaderboardLiveGlobal,
             leaderboardOnProjectorDuringTimer: formData.leaderboardOnProjectorDuringTimer,
           },
         };
 
         this.eventService.createEvent(eventRequest).subscribe({
-          next: (response) => {
+          next: (response: any) => {
             console.log('✅ Événement créé:', response);
             this.isSubmitting = false;
-            alert(`Événement "${response.name}" créé avec succès !`);
-            this.router.navigate(['/admin/events']);
+
+            // Afficher info sur le code si dates fournies
+            if (response.codeExpiresAt) {
+              const expiryDate = new Date(response.codeExpiresAt);
+              console.log(
+                `ℹ️ Code ${response.code} sera libéré le ${expiryDate.toLocaleDateString()}`
+              );
+            }
+
+            // Capturer le PIN généré
+            if (response.djPin) {
+              this.generatedDjPin = response.djPin;
+              this.showPinModal = true;
+            } else {
+              // Ancien comportement si pas de PIN
+              alert(`Événement "${response.name}" créé avec succès !`);
+              this.router.navigate(['/admin/events']);
+            }
           },
           error: (error) => {
             console.error('❌ Erreur lors de la création:', error);
@@ -1269,16 +1812,6 @@ export class EventFormComponent implements OnInit {
     return typeof v === 'string' && v.trim().length > 0 ? v.toUpperCase() : 'CODE';
   }
 
-  get songsDurationPreview(): number {
-    const v = this.eventForm.get('defaultSongDuration')?.value;
-    return typeof v === 'number' && v > 0 ? v : 15;
-  }
-
-  get songsPerRoundPreview(): number {
-    const v = this.eventForm.get('defaultSongsPerRound')?.value;
-    return typeof v === 'number' && v > 0 ? v : 10;
-  }
-
   // --- Live preview helpers ---
   private getSelectedThemeDef() {
     const selectedThemeId = this.eventForm.get('themeId')?.value;
@@ -1360,5 +1893,98 @@ export class EventFormComponent implements OnInit {
       '--p-border': border,
       '--p-gradient': gradient,
     } as any;
+  }
+
+  // Méthodes de gestion du PIN DJ
+  copyPinToClipboard(): void {
+    if (this.generatedDjPin) {
+      navigator.clipboard.writeText(this.generatedDjPin).then(() => {
+        alert('✅ Code PIN copié dans le presse-papiers !');
+      }).catch(() => {
+        alert('❌ Impossible de copier. Notez le code manuellement.');
+      });
+    }
+  }
+
+  closePinModal(): void {
+    this.showPinModal = false;
+    this.router.navigate(['/admin/events']);
+  }
+
+  // Méthodes pour la gestion des dates lifecycle
+  private validateDates() {
+    const startDate = this.eventForm.get('startDate')?.value;
+    const endDate = this.eventForm.get('endDate')?.value;
+    const now = new Date();
+    now.setSeconds(0, 0); // Réinitialiser les secondes et millisecondes pour comparaison précise
+
+    // Validation de la date de début
+    if (startDate) {
+      const start = new Date(startDate);
+      const startErrors: any = {};
+      const currentStartErrors = this.eventForm.get('startDate')?.errors;
+      const requiredStartError = currentStartErrors?.['required'];
+
+      // Vérifier que la date de début n'est pas dans le passé
+      if (start < now) {
+        startErrors.beforeToday = true;
+      }
+
+      // Appliquer les erreurs à startDate
+      if (Object.keys(startErrors).length > 0) {
+        if (requiredStartError) {
+          startErrors.required = requiredStartError;
+        }
+        this.eventForm.get('startDate')?.setErrors(startErrors);
+      } else {
+        this.eventForm.get('startDate')?.setErrors(requiredStartError ? { required: true } : null);
+      }
+    }
+
+    // Validation de la date de fin
+    if (startDate && endDate) {
+      const start = new Date(startDate);
+      const end = new Date(endDate);
+
+      // Calculer la durée en heures
+      const durationInHours = (end.getTime() - start.getTime()) / (1000 * 60 * 60);
+
+      const errors: any = {};
+
+      // Vérifier que la date de fin est après la date de début
+      if (end <= start) {
+        errors.beforeStart = true;
+      }
+
+      // Vérifier que la durée ne dépasse pas 7 jours (168 heures)
+      if (durationInHours > 168) {
+        errors.tooLong = true;
+      }
+
+      // Appliquer les erreurs ou null si aucune erreur
+      const currentErrors = this.eventForm.get('endDate')?.errors;
+      const requiredError = currentErrors?.['required'];
+
+      if (Object.keys(errors).length > 0) {
+        if (requiredError) {
+          errors.required = requiredError;
+        }
+        this.eventForm.get('endDate')?.setErrors(errors);
+      } else {
+        // Garder uniquement l'erreur 'required' si elle existe
+        this.eventForm.get('endDate')?.setErrors(requiredError ? { required: true } : null);
+      }
+    }
+  }
+
+  getCodeExpiryDate(): Date | null {
+    const endDate = this.eventForm.get('endDate')?.value;
+    if (!endDate) return null;
+
+    const end = new Date(endDate);
+    const expiry = new Date(end);
+    expiry.setDate(expiry.getDate() + 1); // 24 heures buffer pour consultation des résultats
+
+    return expiry;
   }
 }

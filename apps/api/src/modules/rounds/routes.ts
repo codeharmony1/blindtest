@@ -34,7 +34,7 @@ async function buildLeaderboard(eventId: string) {
     .map((x, i) => ({ ...x, rank: i + 1 }));
 }
 
-async function gradeSongInternal(
+export async function gradeSongInternal(
   song: RoundSong,
   eventCode: string | null,
   eventId: string | null,
@@ -96,6 +96,7 @@ router.post("/events/:code/rounds", async (req, res) => {
   const r = new Round();
   r.event = ev;
   r.event_id = ev.id;
+  r.tenant_id = ev.tenant_id; // Hériter le tenant_id de l'événement
   r.name = name ?? null;
   r.default_duration_s = defaultDuration ?? 15;
   r.total_songs = totalSongs ?? 20;

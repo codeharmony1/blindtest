@@ -1,0 +1,103 @@
+[0.00s] 📋 🔧 Configuration de l'environnement de test...
+[0.63s] ✅ Tenant créé : loadtest-1761998569510
+[0.82s] ✅ Événement créé : LOADNM42M6
+[0.88s] ✅ Round créé : ID=25
+[1.23s] ✅ 5 chansons ajoutées
+[1.23s] 📋 🏗️  Création de 50 équipes en parallèle...
+[1.35s] ✅ 50/50 équipes créées avec succès en 0.12s
+[1.35s] 📋 ⏳ Warm-up : 2s...
+[3.37s] 📋 
+🎮 Simulation du jeu avec 50 équipes connectées...
+
+[3.45s] ✅ Première chanson lancée en 86ms
+[3.96s] 📋 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+[3.96s] 📋 🎵 Question 1/5
+[3.96s] 📋 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+[28.89s] ✅ Réponses : 50/50 acceptées
+[28.89s] 📋 ⏳ Attente de l'expiration du timer (30s)...
+[60.90s] 📋 Fermeture de la chanson 1...
+[61.56s] 📋 Passage à la question suivante...
+[61.72s] ✅ Prochaine chanson prête (ID: 97)
+[62.23s] 📋 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+[62.23s] 📋 🎵 Question 2/5
+[62.23s] 📋 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+[87.29s] ✅ Réponses : 50/50 acceptées
+[87.29s] 📋 ⏳ Attente de l'expiration du timer (30s)...
+[119.30s] 📋 Fermeture de la chanson 2...
+[120.16s] 📋 Passage à la question suivante...
+[120.40s] ✅ Prochaine chanson prête (ID: 98)
+[120.91s] 📋 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+[120.91s] 📋 🎵 Question 3/5
+[120.91s] 📋 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+[145.44s] ✅ Réponses : 50/50 acceptées
+[145.44s] 📋 ⏳ Attente de l'expiration du timer (30s)...
+[177.44s] 📋 Fermeture de la chanson 3...
+[178.30s] 📋 Passage à la question suivante...
+[178.42s] ✅ Prochaine chanson prête (ID: 99)
+[178.94s] 📋 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+[178.94s] 📋 🎵 Question 4/5
+[178.94s] 📋 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+[203.98s] ✅ Réponses : 50/50 acceptées
+[203.98s] 📋 ⏳ Attente de l'expiration du timer (30s)...
+[235.98s] 📋 Fermeture de la chanson 4...
+[236.83s] 📋 Passage à la question suivante...
+[236.98s] ✅ Prochaine chanson prête (ID: 100)
+[237.49s] 📋 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+[237.49s] 📋 🎵 Question 5/5
+[237.49s] 📋 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+[262.56s] ✅ Réponses : 50/50 acceptées
+[262.56s] 📋 ⏳ Attente de l'expiration du timer (30s)...
+[294.57s] 📋 Fermeture de la chanson 5...
+[295.45s] ✅ 
+🎮 Fin de la simulation
+
+[295.46s] 📋 
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+[295.46s] 📋 📊 RAPPORT DE TEST DE CHARGE
+[295.46s] 📋 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+[295.46s] 📋 ⚙️  Configuration :
+[295.46s] 📋    - Équipes : 50
+[295.46s] 📋    - Questions : 5
+[295.46s] 📋    - Timer : 30s
+[295.46s] 📋    - Durée totale : 295.45s
+[295.46s] 📋 
+🏗️  Création des équipes :
+[295.46s] 📋    - Total : 50
+[295.46s] ✅    - Succès : 50 (100.0%)
+[295.46s] ✅    - Échecs : 0
+[295.46s] 📋 
+📡 WebSockets :
+[295.46s] ✅    - Connexions réussies : 50/50 (100.0%)
+[295.46s] ✅    - Temps de connexion moyen : 89.60ms
+[295.46s] 📋 
+📝 Réponses :
+[295.46s] 📋    - Total soumis : 250
+[295.46s] ✅    - Acceptées : 250 (100.0%)
+[295.46s] ✅    - Rejetées : 0
+[295.46s] 📋 
+⚡ Performance API :
+[295.46s] ✅    - Temps de réponse moyen : 135.01ms
+[295.46s] 📋    - Min : 60.00ms
+[295.46s] ✅    - Max : 206.00ms
+[295.46s] ⚠️ 
+🐌 Top 5 équipes les plus lentes :
+[295.46s] ⚠️    1. Team32 : 169.50ms (max: 200ms)
+[295.46s] ⚠️    2. Team39 : 164.50ms (max: 188ms)
+[295.46s] ⚠️    3. Team31 : 157.00ms (max: 204ms)
+[295.46s] ⚠️    4. Team1 : 154.50ms (max: 187ms)
+[295.46s] ⚠️    5. Team35 : 154.50ms (max: 200ms)
+[295.46s] 📋 
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+[295.46s] ✅ 🎯 SCORE GLOBAL : 100.0%
+[295.46s] ✅ ✅ Excellent ! Le système est prêt pour la production.
+[295.46s] 📋 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+[295.46s] ✅ 📄 Rapport sauvegardé : load-test-report.json
+[295.46s] 📋 🧹 Nettoyage...
+[295.46s] ✅ Nettoyage terminé

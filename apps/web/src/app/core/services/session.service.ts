@@ -7,6 +7,8 @@ export interface PlayerSession {
   nickname: string;
   teamToken: string;
   isCaptain: boolean;
+  tableId?: string;
+  tableName?: string;
 }
 
 @Injectable({ providedIn: 'root' })

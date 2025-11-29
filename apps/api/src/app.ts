@@ -15,8 +15,10 @@ import songRoutes from "./modules/songs/routes";
 import answerRoutes from "./modules/answers/routes";
 import scoreRoutes from "./modules/scores/routes";
 import authRoutes from "./modules/auth/routes";
+import passwordResetRoutes from "./modules/auth/password-reset.routes";
 import csvRoutes from "./modules/csv/routes";
 import settingsRoutes from "./modules/settings/routes";
+import tableRoutes from "./modules/tables/routes";
 // Nouvelles routes multi-tenant
 import tenantRoutes from "./modules/tenants/routes";
 import paymentRoutes from "./modules/payments/routes";
@@ -122,19 +124,30 @@ app.get("/api/health", (_req, res) => {
   });
 });
 
-// Auth routes with specific rate limiting
-app.use("/api", authRateLimit, authRoutes);
+// ==================== ARCHITECTURE DES ROUTES ====================
+//
+// PRINCIPE : Éviter les middlewares globaux (router.use sans path) dans les routers
+// car ils interfèrent avec les autres routers montés sur le même path.
+//
+// SOLUTION : Chaque route applique son propre middleware d'authentification.
+// Les routers sont montés dans un ordre qui évite les conflits.
+// ==================================================================================
 
-// Super-admin routes (URL non-évidente)
+// Auth routes (rate limiting appliqué dans le router)
+app.use("/api", authRoutes);
+app.use("/api", passwordResetRoutes);
+
+// Super-admin routes (path spécifique pour isolation complète)
 app.use("/api/backstage", superAdminRoutes);
 
-// Routes multi-tenant (publiques et protégées)
+// Routes multi-tenant (tenants et paiements)
 app.use("/api", tenantRoutes);
 app.use("/api", paymentRoutes);
 
-// API routes legacy (avec isolation tenant automatique si nécessaire)
+// API routes legacy (authentification via requireStaff/requirePlayer)
 app.use("/api", eventRoutes);
 app.use("/api", teamRoutes);
+app.use("/api", tableRoutes);
 app.use("/api", playerRoutes);
 app.use("/api", roundRoutes);
 app.use("/api", songRoutes);

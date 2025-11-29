@@ -52,6 +52,9 @@ export class Answer {
   @Column({ type: "tinyint", width: 1, default: 0 })
   match_artist!: boolean;
 
+  @Column({ type: "tinyint", width: 1, default: 0 })
+  match_group!: boolean;
+
   @Column({ type: "smallint", unsigned: true, default: 0 })
   points!: number;
 

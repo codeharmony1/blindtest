@@ -84,19 +84,36 @@ import { QrCodeModalComponent } from '../../../shared/components/qr-code-modal.c
 
           <div class="event-actions">
             <button
+              *ngIf="isEventCompleted(event)"
+              (click)="viewScores(event)"
+              class="btn btn-sm btn-success">
+              📊 Voir les scores
+            </button>
+            <button
               (click)="showQRCode(event)"
               class="btn btn-sm btn-accent">
               📱 QR Code
             </button>
             <a
-              [routerLink]="['/dj', event.code]"
+              [href]="'/dj/' + event.code"
+              target="_blank"
+              rel="noopener noreferrer"
               class="btn btn-sm btn-primary">
-              🎧 Contrôler
+              🎧 Interface DJ
             </a>
             <a
-              [routerLink]="['/admin/events', event.id, 'rounds']"
-              class="btn btn-sm btn-secondary">
-              🎵 Rounds
+              [href]="'/display/' + event.code"
+              target="_blank"
+              rel="noopener noreferrer"
+              class="btn btn-sm btn-display">
+              📺 Affichage
+            </a>
+            <a
+              [href]="'/join/' + event.code"
+              target="_blank"
+              rel="noopener noreferrer"
+              class="btn btn-sm btn-player">
+              🎮 Joueur
             </a>
             <a
               [routerLink]="['/admin/events', event.id, 'edit']"
@@ -107,6 +124,18 @@ import { QrCodeModalComponent } from '../../../shared/components/qr-code-modal.c
               (click)="duplicateEvent(event)"
               class="btn btn-sm btn-ghost">
               📋 Dupliquer
+            </button>
+            <button
+              (click)="regenerateDjPin(event, $event)"
+              class="btn btn-sm btn-ghost"
+              title="Régénérer le code PIN DJ">
+              🔄 PIN DJ
+            </button>
+            <button
+              (click)="confirmDelete(event)"
+              class="btn btn-sm btn-danger"
+              title="Supprimer l'événement">
+              🗑️ Supprimer
             </button>
           </div>
         </div>
@@ -135,6 +164,49 @@ import { QrCodeModalComponent } from '../../../shared/components/qr-code-modal.c
         [eventCode]="selectedEvent?.code || ''"
         [eventName]="selectedEvent?.name || ''">
       </bt-qr-code-modal>
+
+      <!-- Delete Confirmation Modal -->
+      <div class="modal-overlay" *ngIf="showDeleteModal" (click)="cancelDelete()">
+        <div class="modal-content delete-modal" (click)="$event.stopPropagation()">
+          <div class="modal-header">
+            <h2 class="modal-title">🗑️ Confirmer la suppression</h2>
+          </div>
+          <div class="modal-body">
+            <div class="warning-message">
+              <span class="warning-icon">⚠️</span>
+              <div class="warning-text">
+                <p class="warning-title">Attention : Cette action est irréversible !</p>
+                <p>
+                  Vous êtes sur le point de supprimer l'événement
+                  <strong>{{ eventToDelete?.name }}</strong> ({{ eventToDelete?.code }}).
+                </p>
+                <p>
+                  Toutes les données associées seront définitivement supprimées :
+                </p>
+                <ul class="deletion-list">
+                  <li>Tous les rounds et chansons</li>
+                  <li>Toutes les équipes et joueurs</li>
+                  <li>Toutes les réponses et scores</li>
+                </ul>
+              </div>
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button
+              (click)="cancelDelete()"
+              class="btn btn-secondary"
+              [disabled]="isDeleting">
+              ❌ Annuler
+            </button>
+            <button
+              (click)="deleteEvent()"
+              class="btn btn-danger"
+              [disabled]="isDeleting">
+              {{ isDeleting ? '⏳ Suppression...' : '🗑️ Supprimer définitivement' }}
+            </button>
+          </div>
+        </div>
+      </div>
     </div>
   `,
   styles: [`
@@ -227,6 +299,59 @@ import { QrCodeModalComponent } from '../../../shared/components/qr-code-modal.c
       background: linear-gradient(135deg, #059669, #047857);
       transform: translateY(-1px);
       box-shadow: 0 4px 8px rgba(16, 185, 129, 0.3);
+    }
+
+    .btn-display {
+      background: linear-gradient(135deg, #8b5cf6, #7c3aed);
+      color: white;
+      border: none;
+    }
+
+    .btn-display:hover {
+      background: linear-gradient(135deg, #7c3aed, #6d28d9);
+      transform: translateY(-1px);
+      box-shadow: 0 4px 8px rgba(139, 92, 246, 0.3);
+    }
+
+    .btn-player {
+      background: linear-gradient(135deg, #f59e0b, #d97706);
+      color: white;
+      border: none;
+    }
+
+    .btn-player:hover {
+      background: linear-gradient(135deg, #d97706, #b45309);
+      transform: translateY(-1px);
+      box-shadow: 0 4px 8px rgba(245, 158, 11, 0.3);
+    }
+
+    .btn-success {
+      background: linear-gradient(135deg, #22c55e, #16a34a);
+      color: white;
+      border: none;
+    }
+
+    .btn-success:hover {
+      background: linear-gradient(135deg, #16a34a, #15803d);
+      transform: translateY(-1px);
+      box-shadow: 0 4px 8px rgba(34, 197, 94, 0.3);
+    }
+
+    .btn-danger {
+      background: linear-gradient(135deg, #ef4444, #dc2626);
+      color: white;
+      border: none;
+    }
+
+    .btn-danger:hover:not(:disabled) {
+      background: linear-gradient(135deg, #dc2626, #b91c1c);
+      transform: translateY(-1px);
+      box-shadow: 0 4px 8px rgba(239, 68, 68, 0.3);
+    }
+
+    .btn-danger:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
     }
 
     /* Filters */
@@ -430,6 +555,115 @@ import { QrCodeModalComponent } from '../../../shared/components/qr-code-modal.c
       font-size: 1rem;
     }
 
+    /* Delete Modal */
+    .modal-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.5);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 1000;
+      backdrop-filter: blur(4px);
+    }
+
+    .modal-content {
+      background: white;
+      border-radius: 16px;
+      box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+      max-width: 500px;
+      width: 90%;
+      animation: modalFadeIn 0.3s ease-out;
+    }
+
+    @keyframes modalFadeIn {
+      from {
+        opacity: 0;
+        transform: scale(0.95) translateY(-20px);
+      }
+      to {
+        opacity: 1;
+        transform: scale(1) translateY(0);
+      }
+    }
+
+    .delete-modal .modal-header {
+      padding: 1.5rem;
+      border-bottom: 1px solid #e2e8f0;
+    }
+
+    .delete-modal .modal-title {
+      margin: 0;
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: #dc2626;
+    }
+
+    .delete-modal .modal-body {
+      padding: 1.5rem;
+    }
+
+    .warning-message {
+      display: flex;
+      gap: 1rem;
+      background: linear-gradient(135deg, #fef2f2, #fee2e2);
+      padding: 1rem;
+      border-radius: 8px;
+      border-left: 4px solid #ef4444;
+    }
+
+    .warning-icon {
+      font-size: 2rem;
+      flex-shrink: 0;
+    }
+
+    .warning-text {
+      flex: 1;
+    }
+
+    .warning-title {
+      font-weight: 700;
+      color: #991b1b;
+      margin: 0 0 0.5rem 0;
+    }
+
+    .warning-text p {
+      margin: 0 0 0.75rem 0;
+      color: #374151;
+      line-height: 1.5;
+    }
+
+    .warning-text strong {
+      color: #dc2626;
+      font-weight: 600;
+    }
+
+    .deletion-list {
+      margin: 0.5rem 0 0 1rem;
+      padding: 0;
+      color: #64748b;
+    }
+
+    .deletion-list li {
+      margin: 0.25rem 0;
+    }
+
+    .delete-modal .modal-footer {
+      padding: 1rem 1.5rem;
+      border-top: 1px solid #e2e8f0;
+      display: flex;
+      gap: 0.75rem;
+      justify-content: flex-end;
+    }
+
+    .delete-modal .modal-footer .btn {
+      min-width: 150px;
+      justify-content: center;
+    }
+
     /* Responsive */
     @media (max-width: 768px) {
       .header-content {
@@ -467,6 +701,9 @@ export class EventsListComponent implements OnInit {
 
   events: Event[] = [];
   selectedEvent: Event | null = null;
+  eventToDelete: Event | null = null;
+  showDeleteModal = false;
+  isDeleting = false;
 
   constructor(private eventService: EventService) {}
 
@@ -532,9 +769,37 @@ export class EventsListComponent implements OnInit {
   }
 
   duplicateEvent(event: Event) {
-    // TODO: Implémenter la duplication d'événement
-    console.log('Dupliquer événement:', event);
-    alert(`Fonctionnalité à venir: dupliquer "${event.name}"`);
+    const newName = prompt(
+      'Entrez le nom du nouvel événement:',
+      `${event.name} (Copie)`
+    );
+
+    // User cancelled the prompt
+    if (newName === null) {
+      return;
+    }
+
+    // Use default name if empty
+    const eventName = newName.trim() || `${event.name} (Copie)`;
+
+    this.eventService.duplicateEvent(event.id, eventName).subscribe({
+      next: (response) => {
+        console.log('✅ Événement dupliqué avec succès:', response);
+        alert(
+          `Événement "${response.name}" créé avec succès!\n\n` +
+          `Code: ${response.code}\n` +
+          `Rounds dupliqués: ${response.roundsCount}\n\n` +
+          `L'événement a été créé en mode BROUILLON.`
+        );
+      },
+      error: (error) => {
+        console.error('❌ Erreur lors de la duplication:', error);
+        alert(
+          `Erreur lors de la duplication de l'événement.\n\n` +
+          `${error.error?.error?.message || error.message || 'Erreur inconnue'}`
+        );
+      }
+    });
   }
 
   showQRCode(event: Event) {
@@ -542,5 +807,100 @@ export class EventsListComponent implements OnInit {
     setTimeout(() => {
       this.qrModal.open();
     }, 0);
+  }
+
+  regenerateDjPin(event: Event, clickEvent: MouseEvent): void {
+    clickEvent.stopPropagation();
+
+    const confirmed = confirm(
+      `⚠️ Régénérer le code PIN DJ pour "${event.name}" ?\n\n` +
+      'Attention :\n' +
+      '• L\'ancien PIN ne fonctionnera plus\n' +
+      '• Le DJ devra utiliser le nouveau PIN pour se connecter\n\n' +
+      'Continuer ?'
+    );
+
+    if (!confirmed) return;
+
+    this.eventService.regenerateDjPin(event.id).subscribe({
+      next: (response) => {
+        const newPin = response.djPin;
+
+        // Afficher le nouveau PIN (modal ou alert)
+        const message =
+          `✅ Nouveau code PIN généré avec succès !\n\n` +
+          `📋 Code PIN DJ : ${newPin}\n\n` +
+          `⚠️ Notez-le maintenant, il ne sera plus affiché.`;
+
+        // Copier automatiquement dans le presse-papiers
+        navigator.clipboard.writeText(newPin).then(() => {
+          alert(message + '\n\n✅ Code PIN copié dans le presse-papiers !');
+        }).catch(() => {
+          alert(message);
+        });
+      },
+      error: (error) => {
+        console.error('[Events List] Regenerate PIN error:', error);
+        alert('❌ Erreur lors de la régénération du PIN.');
+      }
+    });
+  }
+
+  /**
+   * Vérifie si un événement est terminé (status = completed)
+   */
+  isEventCompleted(event: Event): boolean {
+    return event.status === 'completed';
+  }
+
+  /**
+   * Ouvre la page de visualisation des scores pour l'événement
+   */
+  viewScores(event: Event): void {
+    // Ouvrir dans un nouvel onglet la page du leaderboard
+    window.open(`/player/${event.code}/leaderboard`, '_blank');
+  }
+
+  /**
+   * Affiche la popup de confirmation de suppression
+   */
+  confirmDelete(event: Event): void {
+    this.eventToDelete = event;
+    this.showDeleteModal = true;
+  }
+
+  /**
+   * Annule la suppression et ferme la popup
+   */
+  cancelDelete(): void {
+    this.eventToDelete = null;
+    this.showDeleteModal = false;
+    this.isDeleting = false;
+  }
+
+  /**
+   * Supprime l'événement après confirmation
+   */
+  deleteEvent(): void {
+    if (!this.eventToDelete) return;
+
+    this.isDeleting = true;
+    const eventId = this.eventToDelete.id;
+    const eventName = this.eventToDelete.name;
+
+    this.eventService.deleteEvent(eventId).subscribe({
+      next: () => {
+        console.log(`✅ Événement "${eventName}" supprimé avec succès`);
+        // Recharger la liste des événements
+        this.loadEvents();
+        // Fermer la popup
+        this.cancelDelete();
+      },
+      error: (error) => {
+        console.error('[Events List] Delete error:', error);
+        this.isDeleting = false;
+        alert(`❌ Erreur lors de la suppression de l'événement "${eventName}"`);
+      }
+    });
   }
 }

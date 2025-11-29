@@ -15,8 +15,20 @@ export const routes: Routes = [
     loadComponent: () => import('./features/pricing/pricing.component').then((c) => c.PricingComponent),
   },
   {
+    path: 'pricing/success',
+    loadComponent: () => import('./features/pricing/success.component').then((c) => c.PaymentSuccessComponent),
+  },
+  {
+    path: 'pricing/cancel',
+    loadComponent: () => import('./features/pricing/cancel.component').then((c) => c.PaymentCancelComponent),
+  },
+  {
     path: 'auth',
     loadChildren: () => import('./features/auth/auth.routes').then((m) => m.authRoutes),
+  },
+  {
+    path: 'dj-login',
+    loadComponent: () => import('./features/dj/dj-login.component').then((c) => c.DJLoginComponent),
   },
   {
     path: 'admin',

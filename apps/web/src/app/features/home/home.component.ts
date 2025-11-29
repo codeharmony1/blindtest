@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { ThemeService } from '../../core/services/theme.service';
+import { DJAuthService } from '../../core/services/dj-auth.service';
 
 @Component({
   selector: 'app-home',
@@ -44,14 +45,38 @@ import { ThemeService } from '../../core/services/theme.service';
           </div>
         </article>
 
-        <article class="card is-clickable" (click)="goToLogin('DJ')">
+        <article class="card is-clickable" (click)="goToDJ()">
           <div class="card-head">
             <div class="icon">🎧</div>
             <h3>DJ / Animateur</h3>
           </div>
           <p class="desc">Lancez les rounds et pilotez la soirée</p>
           <div class="actions" (click)="$event.stopPropagation()">
-            <button class="btn btn-outline" (click)="goToLogin('DJ')">Se connecter</button>
+            <div class="input-group">
+              <span class="prefix">#</span>
+              <input
+                type="text"
+                [(ngModel)]="djEventCode"
+                placeholder="Code événement"
+                (keyup.enter)="djPinInput.focus()"
+                maxlength="16"
+              />
+            </div>
+            <div class="input-group">
+              <span class="prefix">🔒</span>
+              <input
+                #djPinInput
+                type="password"
+                inputmode="numeric"
+                [(ngModel)]="djPinCode"
+                placeholder="PIN (6 chiffres)"
+                (keyup.enter)="goToDJ()"
+                maxlength="6"
+              />
+            </div>
+            <button class="btn btn-primary" [disabled]="!djEventCode || !djPinCode" (click)="goToDJ()">
+              Accéder
+            </button>
           </div>
         </article>
 
@@ -251,12 +276,13 @@ import { ThemeService } from '../../core/services/theme.service';
         flex-wrap: wrap;
       }
       .actions .btn {
-        flex: 1;
-        min-width: 0;
+        flex: 1 1 auto;
+        min-width: 110px;
       }
       .input-group {
         position: relative;
         flex: 1 1 180px;
+        min-width: 180px;
       }
       .input-group .prefix {
         position: absolute;
@@ -288,14 +314,18 @@ import { ThemeService } from '../../core/services/theme.service';
       }
 
       .btn {
-        padding: 10px 16px;
+        padding: 10px 18px;
         border-radius: 999px;
         font-weight: 700;
+        font-size: 0.9rem;
         letter-spacing: 0.2px;
         border: 1px solid transparent;
         background: transparent;
         color: #e5e7eb;
         cursor: pointer;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
         transition:
           transform 0.15s ease,
           box-shadow 0.2s ease,
@@ -382,10 +412,14 @@ import { ThemeService } from '../../core/services/theme.service';
 export class HomeComponent implements OnInit {
   eventCode = '';
   displayEventCode = '';
+  djEventCode = '';
+  djPinCode = '';
+  djLoginError = '';
 
   constructor(
     private router: Router,
     private themeService: ThemeService,
+    private djAuthService: DJAuthService,
   ) {}
 
   ngOnInit() {
@@ -399,13 +433,45 @@ export class HomeComponent implements OnInit {
     }
   }
 
-  goToLogin(role?: string) {
-    if (role === 'DJ') {
-      // Rediriger vers la page de connexion avec le paramètre de retour pour DJ
-      this.router.navigate(['/auth/login'], { queryParams: { role: 'DJ' } });
-    } else {
-      this.router.navigate(['/auth/login']);
+  goToLogin() {
+    this.router.navigate(['/auth/login']);
+  }
+
+  goToDJ() {
+    if (!this.djEventCode.trim() || !this.djPinCode.trim()) {
+      return;
     }
+
+    // Valider le format du PIN (6 chiffres)
+    if (!/^\d{6}$/.test(this.djPinCode)) {
+      alert('❌ Le PIN doit contenir exactement 6 chiffres');
+      return;
+    }
+
+    this.djLoginError = '';
+
+    this.djAuthService.login({
+      eventCode: this.djEventCode.trim().toUpperCase(),
+      pin: this.djPinCode.trim()
+    }).subscribe({
+      next: (response) => {
+        // Redirection vers l'interface DJ
+        this.router.navigate(['/dj', response.event.code]);
+      },
+      error: (error) => {
+        // Gérer les erreurs
+        if (error.status === 404) {
+          alert('❌ Événement introuvable. Vérifiez le code.');
+        } else if (error.status === 401) {
+          alert('❌ Code PIN incorrect. Réessayez.');
+        } else if (error.status === 403) {
+          alert('⚠️ Le code PIN DJ n\'est pas configuré pour cet événement.');
+        } else {
+          alert('❌ Erreur de connexion. Vérifiez vos informations.');
+        }
+        console.error('[DJ Login] Error:', error);
+      }
+    });
   }
 
   goToAdmin() {

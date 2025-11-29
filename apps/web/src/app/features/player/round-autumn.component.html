@@ -49,11 +49,12 @@
       <!-- Timer et statut -->
       <div class="autumn-card timer-card" *ngIf="songId">
         <div class="timer-display">
-          <div class="timer-icon">⏱️</div>
+          <div class="timer-icon">{{ remaining === 0 ? '⏰' : '⏱️' }}</div>
           <div class="timer-content">
-            <div class="timer-label">Temps restant</div>
-            <div class="timer-value" [class.timer-urgent]="remaining < 10000">
-              {{ remaining / 1000 | number: '1.0-1' }}s
+            <div class="timer-label">{{ remaining === 0 ? 'Statut' : 'Temps restant' }}</div>
+            <div class="timer-value" [class.timer-urgent]="remaining > 0 && remaining < 10000">
+              <span *ngIf="remaining > 0">{{ remaining / 1000 | number: '1.0-1' }}s</span>
+              <span *ngIf="remaining === 0">Temps écoulé !</span>
             </div>
           </div>
         </div>
@@ -62,17 +63,40 @@
           <div
             class="progress-fill"
             [style.width.%]="(remaining / 30000) * 100"
-            [class.progress-urgent]="remaining < 10000"
+            [class.progress-urgent]="remaining > 0 && remaining < 10000"
           ></div>
         </div>
       </div>
 
+      <!-- Affichage de la réponse de la chanson précédente -->
+      <div *ngIf="!songId && showPreviousAnswer && previousSongAnswer" class="autumn-card answer-reveal-card">
+        <span class="reveal-icon">🎵</span>
+        <div class="reveal-content">
+          <p class="reveal-title">Réponse de la chanson précédente :</p>
+          <p class="reveal-song" *ngIf="previousSongAnswer.title">
+            <strong>{{ previousSongAnswer.title }}</strong>
+          </p>
+          <p class="reveal-artist" *ngIf="previousSongAnswer.artist">
+            par {{ previousSongAnswer.artist }}
+          </p>
+        </div>
+      </div>
+
       <!-- Message d'attente si pas de chanson -->
-      <div *ngIf="!songId" class="autumn-card waiting-card">
+      <div *ngIf="!songId && !showPreviousAnswer" class="autumn-card waiting-card">
         <span class="waiting-icon">✨</span>
         <div class="waiting-texts">
           <p class="waiting-title">En attente du prochain morceau…</p>
           <p class="waiting-subtitle">Le DJ prépare la prochaine piste à deviner.</p>
+        </div>
+      </div>
+
+      <!-- Confirmation de réponse soumise -->
+      <div class="autumn-card submitted-card" *ngIf="showSubmittedConfirmation && submittedAnswer">
+        <span class="submitted-icon">✅</span>
+        <div class="submitted-content">
+          <p class="submitted-title">Votre réponse enregistrée :</p>
+          <p class="submitted-answer">{{ submittedAnswer }}</p>
         </div>
       </div>
 
@@ -131,5 +155,88 @@
         </button>
       </div>
     </ng-container>
+
+    <!-- Podium final en overlay -->
+    <div *ngIf="showFinalPodium" class="final-podium-overlay">
+      <div class="podium-container">
+        <div class="podium-header">
+          <div class="podium-trophy">🏆</div>
+          <h1 class="podium-title">Félicitations !</h1>
+          <p class="podium-subtitle">L'événement est terminé</p>
+        </div>
+
+        <!-- Top 3 -->
+        <div class="podium-top3" *ngIf="finalLeaderboard.length >= 3">
+          <div class="podium-position second" *ngIf="finalLeaderboard[1]">
+            <div class="podium-medal">🥈</div>
+            <div class="podium-team-name">{{ finalLeaderboard[1].name }}</div>
+            <div class="podium-points">{{ finalLeaderboard[1].totalPoints }} pts</div>
+          </div>
+
+          <div class="podium-position first" *ngIf="finalLeaderboard[0]">
+            <div class="podium-medal">🥇</div>
+            <div class="podium-team-name">{{ finalLeaderboard[0].name }}</div>
+            <div class="podium-points">{{ finalLeaderboard[0].totalPoints }} pts</div>
+          </div>
+
+          <div class="podium-position third" *ngIf="finalLeaderboard[2]">
+            <div class="podium-medal">🥉</div>
+            <div class="podium-team-name">{{ finalLeaderboard[2].name }}</div>
+            <div class="podium-points">{{ finalLeaderboard[2].totalPoints }} pts</div>
+          </div>
+        </div>
+
+        <!-- Si moins de 3 équipes -->
+        <div class="podium-top3" *ngIf="finalLeaderboard.length < 3 && finalLeaderboard.length > 0">
+          <div class="podium-position first" *ngFor="let team of finalLeaderboard">
+            <div class="podium-medal">{{ getMedal(team.rank) }}</div>
+            <div class="podium-team-name">{{ team.name }}</div>
+            <div class="podium-points">{{ team.totalPoints }} pts</div>
+          </div>
+        </div>
+
+        <!-- Statistiques de l'événement -->
+        <div class="podium-stats" *ngIf="eventStats">
+          <div class="podium-stat">
+            <div class="podium-stat-value">{{ eventStats.totalRounds }}</div>
+            <div class="podium-stat-label">Rounds</div>
+          </div>
+          <div class="podium-stat">
+            <div class="podium-stat-value">{{ eventStats.totalSongs }}</div>
+            <div class="podium-stat-label">Chansons</div>
+          </div>
+          <div class="podium-stat">
+            <div class="podium-stat-value">{{ eventStats.totalTeams }}</div>
+            <div class="podium-stat-label">Équipes</div>
+          </div>
+          <div class="podium-stat">
+            <div class="podium-stat-value">{{ eventStats.totalPlayers }}</div>
+            <div class="podium-stat-label">Joueurs</div>
+          </div>
+        </div>
+
+        <!-- Autres équipes (au-delà du top 3) -->
+        <div class="podium-others" *ngIf="finalLeaderboard.length > 3">
+          <h3 class="podium-others-title">Autres participants</h3>
+          <div class="podium-other-team" *ngFor="let team of finalLeaderboard.slice(3)">
+            <div class="podium-other-rank">{{ team.rank }}</div>
+            <div class="podium-other-name">{{ team.name }}</div>
+            <div class="podium-other-points">{{ team.totalPoints }} pts</div>
+          </div>
+        </div>
+
+        <!-- Actions -->
+        <div class="podium-actions">
+          <button (click)="goLeaderboard()" class="btn-autumn btn-autumn-primary">
+            <span class="btn-icon">📊</span>
+            Voir le classement détaillé
+          </button>
+          <button (click)="back()" class="btn-autumn btn-autumn-secondary">
+            <span class="btn-icon">🏠</span>
+            Retour à l'accueil
+          </button>
+        </div>
+      </div>
+    </div>
   </div>
 </div>

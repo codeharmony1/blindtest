@@ -45,6 +45,7 @@ router.post("/events/:code/teams", async (req, res) => {
   const team = new Team();
   team.event = ev;
   team.event_id = ev.id;
+  team.tenant_id = ev.tenant_id; // Hériter le tenant_id de l'événement
   team.name = name;
   team.manual_participants_count = 0;
   const saved = await teamRepo.save(team);

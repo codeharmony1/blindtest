@@ -14,10 +14,12 @@
     "migrate:existing-tables": "ts-node src/db/migrate-existing-tables.ts",
     "finalize:migration": "ts-node src/db/finalize-migration.ts",
     "seed:demo": "ts-node src/db/seed-demo.ts",
+    "init:db": "ts-node src/scripts/init-database.ts",
     "create:super-admin": "ts-node src/scripts/create-super-admin.ts",
     "create:super-admin:test": "ts-node src/scripts/create-super-admin-test.ts",
     "validate:system": "ts-node src/tests/system-validation.ts",
-    "check:health": "curl http://localhost:3001/api/health || echo 'Server not running'"
+    "check:health": "curl http://localhost:3001/api/health || echo 'Server not running'",
+    "test:endpoints": "ts-node test-critical-endpoints.ts"
   },
   "dependencies": {
     "axios": "^1.12.2",
@@ -32,6 +34,7 @@
     "jsonwebtoken": "^9.0.2",
     "multer": "^1.4.5-lts.1",
     "mysql2": "^3.10.0",
+    "nodemailer": "^7.0.9",
     "socket.io": "^4.7.5",
     "stripe": "^18.5.0",
     "typeorm": "^0.3.20",
@@ -46,8 +49,11 @@
     "@types/jsonwebtoken": "^9.0.6",
     "@types/multer": "^1.4.11",
     "@types/node": "^20.12.12",
+    "@types/nodemailer": "^7.0.2",
     "@types/uuid": "^10.0.0",
+    "@types/ws": "^8.18.1",
     "nodemon": "^3.1.4",
+    "socket.io-client": "^4.8.1",
     "ts-node": "^10.9.2",
     "typeorm-ts-node-commonjs": "^0.3.20",
     "typescript": "^5.5.4"

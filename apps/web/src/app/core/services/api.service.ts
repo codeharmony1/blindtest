@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
-import { environment } from '../../../environments/environment.development';
+import { environment } from '../../../environments/environment';
 import { Observable, map } from 'rxjs';
 
 @Injectable({ providedIn: 'root' })
@@ -11,7 +11,7 @@ export class ApiService {
 
   // Events
   getEventPublic(code: string) {
-    return this.http.get<{ code: string; name: string; settings: any }>(
+    return this.http.get<{ code: string; name: string; gameMode?: 'TEAM' | 'SOLO'; settings: any }>(
       `${this.base}/events/${code}/public`,
     );
   }
@@ -28,6 +28,17 @@ export class ApiService {
       defaultDuration: number;
       totalSongs: number;
     }>(`${this.base}/events/${code}/rounds`, payload);
+  }
+  deleteRound(roundId: string) {
+    return this.http.delete<{ success: boolean; message: string }>(
+      `${this.base}/rounds/${roundId}`
+    );
+  }
+  completeEvent(code: string) {
+    return this.http.post<{ success: boolean; message: string }>(
+      `${this.base}/events/${code}/complete`,
+      {}
+    );
   }
   getRoundSongs(roundId: string) {
     return this.http
@@ -60,11 +71,104 @@ export class ApiService {
       name,
     });
   }
-  joinEvent(code: string, teamId: string, nickname: string) {
+
+  // Tables
+  getTables(code: string) {
+    return this.http.get<
+      Array<{
+        id: string;
+        name: string;
+        teamsCount: number;
+        createdAt: string;
+      }>
+    >(`${this.base}/events/${code}/tables`);
+  }
+  createTable(code: string, name: string) {
+    return this.http.post<{ id: string; name: string; createdAt: string }>(
+      `${this.base}/events/${code}/tables`,
+      { name }
+    );
+  }
+  joinTable(teamId: string, tableId: string) {
+    return this.http.post<{
+      teamId: string;
+      teamName: string;
+      tableId: string;
+      tableName: string;
+    }>(`${this.base}/teams/${teamId}/join-table`, { tableId });
+  }
+  getTableTeams(tableId: string) {
+    return this.http.get<{
+      tableId: string;
+      tableName: string;
+      teams: Array<{
+        id: string;
+        name: string;
+        playersCount: number;
+        manualParticipantsCount: number;
+      }>;
+    }>(`${this.base}/tables/${tableId}/teams`);
+  }
+  getTableLeaderboard(code: string) {
+    return this.http.get<
+      Array<{
+        tableId: string;
+        tableName: string;
+        totalPoints: number;
+        teamsCount: number;
+        rank: number;
+        teams?: Array<{
+          id: string;
+          name: string;
+          points: number;
+        }>;
+      }>
+    >(`${this.base}/events/${code}/table-leaderboard`);
+  }
+  getRoundTableScores(code: string, roundId: string) {
+    return this.http.get<{
+      roundNumber: number;
+      roundId: string;
+      tableScores: Array<{
+        tableId: string;
+        tableName: string;
+        roundPoints: number;
+        totalPoints: number;
+        rank: number;
+        teamsCount: number;
+      }>;
+    }>(`${this.base}/events/${code}/rounds/${roundId}/table-scores`);
+  }
+
+  joinEvent(code: string, teamId: string | null, nickname: string) {
+    const body: any = { nickname };
+    if (teamId) {
+      body.teamId = teamId;
+    }
     return this.http.post<{
       teamToken: string;
       player: { id: string; nickname: string; teamId: string; isCaptain: boolean };
-    }>(`${this.base}/events/${code}/join`, { teamId, nickname });
+    }>(`${this.base}/events/${code}/join`, body);
+  }
+
+  // Players management
+  getPlayers(code: string) {
+    return this.http.get<
+      Array<{
+        id: string;
+        nickname: string;
+        teamId: string;
+        teamName: string;
+        isCaptain: boolean;
+        createdAt: string;
+      }>
+    >(`${this.base}/events/${code}/players`);
+  }
+
+  deletePlayer(playerId: string) {
+    return this.http.delete<{ success: boolean; message: string }>(
+      `${this.base}/players/${playerId}`
+    );
   }
 
   // Answers (HTTP fallback)
@@ -89,6 +193,7 @@ export class ApiService {
       idx: number;
       title?: string;
       artist?: string;
+      group?: string;
       aliases?: string[];
       duration?: number;
     },
@@ -100,7 +205,7 @@ export class ApiService {
   }
   patchSong(
     songId: string,
-    payload: { title?: string; artist?: string; aliases?: string[]; duration?: number; status?: string },
+    payload: { title?: string; artist?: string; group?: string; aliases?: string[]; duration?: number; status?: string },
   ) {
     return this.http.patch(`${this.base}/songs/${songId}`, payload);
   }
@@ -111,7 +216,7 @@ export class ApiService {
     return this.http.post(`${this.base}/songs/${songId}/open`, duration ? { duration } : {});
   }
   closeSong(songId: string) {
-    return this.http.post(`${this.base}/songs/${songId}/close`, {});
+    return this.http.post<{ songId: string; status: string }>(`${this.base}/songs/${songId}/close`, {});
   }
   gradeSong(songId: string, payload?: { title?: string; artist?: string }) {
     return this.http.post(`${this.base}/songs/${songId}/grade`, payload ?? {});
@@ -122,6 +227,38 @@ export class ApiService {
     return this.http.get<
       Array<{ teamId: string; name: string; totalPoints: number; rank: number }>
     >(`${this.base}/events/${code}/leaderboard`);
+  }
+
+  // Round scores
+  getRoundScores(code: string, roundId: string) {
+    return this.http.get<{
+      roundNumber: number;
+      roundId: string;
+      roundScores: Array<{
+        teamId: string;
+        name: string;
+        roundPoints: number;
+        totalPoints: number;
+        rank: number;
+      }>;
+    }>(`${this.base}/events/${code}/rounds/${roundId}/scores`);
+  }
+
+  // Detailed scores by song
+  getDetailedScores(code: string) {
+    return this.http.get<{
+      teams: Array<{ id: string; name: string; totalPoints: number }>;
+      songs: Array<{
+        id: string;
+        roundIdx: number;
+        songIdx: number;
+        title: string;
+        artist: string;
+        teamScores: { [teamId: string]: number };
+      }>;
+      totalSongs: number;
+      totalTeams: number;
+    }>(`${this.base}/events/${code}/detailed-scores`);
   }
 
   // Teams management
@@ -199,6 +336,163 @@ export class ApiService {
     }>(`${this.base}/auth/register`, { email, password, displayName });
   }
 
+  // Password Reset
+  forgotPassword(email: string) {
+    return this.http.post<{
+      success: boolean;
+      message: string;
+    }>(`${this.base}/auth/forgot-password`, { email });
+  }
+
+  verifyResetToken(token: string) {
+    return this.http.get<{
+      valid: boolean;
+      email?: string;
+      expiresAt?: string;
+    }>(`${this.base}/auth/verify-reset-token/${token}`);
+  }
+
+  resetPassword(token: string, newPassword: string) {
+    return this.http.post<{
+      success: boolean;
+      message: string;
+    }>(`${this.base}/auth/reset-password`, { token, newPassword });
+  }
+
+  // Refresh Token
+  refreshToken(refreshToken: string) {
+    return this.http.post<{
+      accessToken: string;
+      refreshToken: string;
+      expiresIn: number;
+    }>(`${this.base}/auth/refresh`, { refreshToken });
+  }
+
+  // Stripe Payments
+  getPricing() {
+    return this.http.get<{
+      subscriptions: {
+        [key: string]: {
+          name: string;
+          price: number;
+          currency: string;
+          interval: string;
+          features: string[];
+        };
+      };
+      temporarySessions: {
+        [key: string]: {
+          name: string;
+          price: number;
+          currency: string;
+          duration: string;
+          features: string[];
+        };
+      };
+    }>(`${this.base}/payments/pricing`);
+  }
+
+  createSubscriptionCheckout(plan: string, successUrl: string, cancelUrl: string) {
+    return this.http.post<{
+      checkoutUrl: string;
+      sessionId: string;
+    }>(`${this.base}/payments/checkout/subscription`, { plan, successUrl, cancelUrl });
+  }
+
+  createSessionCheckout(sessionType: string, sessionName: string, successUrl: string, cancelUrl: string) {
+    return this.http.post<{
+      checkoutUrl: string;
+      sessionId: string;
+      tenantSessionId: string;
+    }>(`${this.base}/payments/checkout/session`, { sessionType, sessionName, successUrl, cancelUrl });
+  }
+
+  getCheckoutSession(sessionId: string) {
+    return this.http.get<{
+      id: string;
+      status: string;
+      paymentStatus: string;
+      amountTotal: number;
+      currency: string;
+      customerEmail: string;
+      customerName: string;
+      metadata: any;
+      lineItems: Array<{
+        description: string;
+        amount: number;
+        currency: string;
+      }>;
+      createdAt: string;
+    }>(`${this.base}/payments/checkout/${sessionId}`);
+  }
+
+  createCustomerPortal(returnUrl: string) {
+    return this.http.post<{
+      portalUrl: string;
+    }>(`${this.base}/payments/portal`, { returnUrl });
+  }
+
+  getPaymentHistory() {
+    return this.http.get<{
+      payments: Array<{
+        id: string;
+        type: string;
+        status: string;
+        amount: number;
+        currency: string;
+        description: string;
+        createdAt: string;
+        paidAt: string | null;
+      }>;
+    }>(`${this.base}/payments/history`);
+  }
+
+  getPaymentStatus() {
+    return this.http.get<{
+      subscription: {
+        plan: string;
+        status: string;
+        expiresAt: string | null;
+        isActive: boolean;
+      };
+      limits: {
+        maxEvents: number;
+        maxPlayersPerEvent: number;
+        maxUsers: number;
+      };
+      usage: any;
+      hasActiveSession: boolean;
+      canCreateEvent: boolean;
+    }>(`${this.base}/payments/status`);
+  }
+
+  getActiveSessions() {
+    return this.http.get<{
+      sessions: Array<{
+        id: string;
+        name: string;
+        description: string;
+        durationDays: number;
+        startsAt: string;
+        expiresAt: string;
+        isActive: boolean;
+        daysRemaining: number;
+        usage: any;
+        limits: {
+          maxEvents: number;
+          maxPlayersPerEvent: number;
+          maxTotalPlayers: number;
+        };
+      }>;
+    }>(`${this.base}/payments/sessions`);
+  }
+
+  cancelSubscription() {
+    return this.http.post<{
+      message: string;
+    }>(`${this.base}/payments/subscription/cancel`, {});
+  }
+
   // CSV Import/Export
   importPlaylistCSV(roundId: string, formData: FormData) {
     return this.http.post<{
@@ -263,5 +557,23 @@ export class ApiService {
       totalSongs: number;
       totalTeams: number;
     }>(`${this.base}/dashboard/stats`);
+  }
+
+  // Events Management
+  getEvents() {
+    return this.http
+      .get<{
+        events: Array<{
+          id: string;
+          code: string;
+          name: string;
+          gameMode: 'TEAM' | 'SOLO';
+          created_at: string;
+          status: string;
+          rounds_count: number;
+          teams_count: number;
+        }>;
+      }>(`${this.base}/events`)
+      .pipe(map((response) => response.events));
   }
 }

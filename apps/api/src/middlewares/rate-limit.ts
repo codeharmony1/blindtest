@@ -61,11 +61,12 @@ class RateLimiter {
 }
 
 // Rate limiters pour différents cas d'usage
-// En développement, on assouplit les limites
+// En production, limites très élevées pour supporter des centaines de joueurs simultanés
+// Toutes les requêtes passent par le même proxy (Traefik), donc partagent la même IP
 const isDevelopment = process.env.NODE_ENV === 'development';
-const generalLimiter = new RateLimiter(60000, isDevelopment ? 1000 : 100); // 1000 req/min en dev
-const answerLimiter = new RateLimiter(1000, isDevelopment ? 10 : 1); // 10 réponses/sec en dev
-const authLimiter = new RateLimiter(300000, isDevelopment ? 50 : 5); // 50 tentatives auth/5min en dev
+const generalLimiter = new RateLimiter(60000, isDevelopment ? 1000 : 10000); // 10000 req/min en production pour beaucoup de joueurs
+const answerLimiter = new RateLimiter(1000, isDevelopment ? 200 : 200); // 200 réponses/sec par équipe
+const authLimiter = new RateLimiter(60000, isDevelopment ? 1000 : 100); // 100 tentatives auth/min (au lieu de 20/5min)
 
 export function createRateLimit(limiter: RateLimiter, keyFn: (req: Request) => string) {
   return (req: Request, res: Response, next: NextFunction) => {

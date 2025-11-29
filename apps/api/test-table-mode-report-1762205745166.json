@@ -1,0 +1,214 @@
+{
+  "startTime": "2025-11-03T21:35:31.723Z",
+  "eventCode": "TBL731989",
+  "config": {
+    "tables": 10,
+    "teamsPerTable": 3,
+    "totalTeams": 30,
+    "rounds": 2,
+    "songsPerRound": 10,
+    "totalSongs": 20
+  },
+  "tables": [
+    {
+      "id": "33",
+      "name": "Table des Mariés 💍",
+      "teams": [
+        {
+          "id": "144",
+          "name": "Équipe 1"
+        },
+        {
+          "id": "145",
+          "name": "Équipe 2"
+        },
+        {
+          "id": "146",
+          "name": "Équipe 3"
+        }
+      ]
+    },
+    {
+      "id": "34",
+      "name": "Table de la Famille 👨‍👩‍👧‍👦",
+      "teams": [
+        {
+          "id": "147",
+          "name": "Équipe 4"
+        },
+        {
+          "id": "148",
+          "name": "Équipe 5"
+        },
+        {
+          "id": "149",
+          "name": "Équipe 6"
+        }
+      ]
+    },
+    {
+      "id": "35",
+      "name": "Table des Amis d'Enfance 🧸",
+      "teams": [
+        {
+          "id": "150",
+          "name": "Équipe 7"
+        },
+        {
+          "id": "151",
+          "name": "Équipe 8"
+        },
+        {
+          "id": "152",
+          "name": "Équipe 9"
+        }
+      ]
+    },
+    {
+      "id": "36",
+      "name": "Table des Collègues 💼",
+      "teams": [
+        {
+          "id": "153",
+          "name": "Équipe 10"
+        },
+        {
+          "id": "154",
+          "name": "Équipe 11"
+        },
+        {
+          "id": "155",
+          "name": "Équipe 12"
+        }
+      ]
+    },
+    {
+      "id": "37",
+      "name": "Table des Copains de Fac 🎓",
+      "teams": [
+        {
+          "id": "156",
+          "name": "Équipe 13"
+        },
+        {
+          "id": "157",
+          "name": "Équipe 14"
+        },
+        {
+          "id": "158",
+          "name": "Équipe 15"
+        }
+      ]
+    },
+    {
+      "id": "38",
+      "name": "Table des Cousins 🎪",
+      "teams": [
+        {
+          "id": "159",
+          "name": "Équipe 16"
+        },
+        {
+          "id": "160",
+          "name": "Équipe 17"
+        },
+        {
+          "id": "161",
+          "name": "Équipe 18"
+        }
+      ]
+    },
+    {
+      "id": "39",
+      "name": "Table des Voisins 🏡",
+      "teams": [
+        {
+          "id": "162",
+          "name": "Équipe 19"
+        },
+        {
+          "id": "163",
+          "name": "Équipe 20"
+        },
+        {
+          "id": "164",
+          "name": "Équipe 21"
+        }
+      ]
+    },
+    {
+      "id": "40",
+      "name": "Table des Sports 🏀",
+      "teams": [
+        {
+          "id": "165",
+          "name": "Équipe 22"
+        },
+        {
+          "id": "166",
+          "name": "Équipe 23"
+        },
+        {
+          "id": "167",
+          "name": "Équipe 24"
+        }
+      ]
+    },
+    {
+      "id": "41",
+      "name": "Table de la Musique 🎸",
+      "teams": [
+        {
+          "id": "168",
+          "name": "Équipe 25"
+        },
+        {
+          "id": "169",
+          "name": "Équipe 26"
+        },
+        {
+          "id": "170",
+          "name": "Équipe 27"
+        }
+      ]
+    },
+    {
+      "id": "42",
+      "name": "Table VIP ⭐",
+      "teams": [
+        {
+          "id": "171",
+          "name": "Équipe 28"
+        },
+        {
+          "id": "172",
+          "name": "Équipe 29"
+        },
+        {
+          "id": "173",
+          "name": "Équipe 30"
+        }
+      ]
+    }
+  ],
+  "performance": {
+    "eventCreation": 223,
+    "tablesCreation": 649,
+    "teamsCreation": 10191,
+    "roundsCreation": 2053,
+    "answersSubmission": 0,
+    "total": 0
+  },
+  "results": {
+    "tableScores": [],
+    "teamScores": []
+  },
+  "validation": {
+    "scoresMatchExpected": false,
+    "allTeamsAnswered": false,
+    "allTablesHaveTeams": false,
+    "errors": [
+      "Fatal error: Request failed with status code 404"
+    ]
+  }
+}

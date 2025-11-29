@@ -23,8 +23,6 @@ export class LiveControlComponent {
   duration = 15;
 
   currentSongId: string | null = null;
-  officialTitle = '';
-  officialArtist = '';
 
   // Création de chanson
   songs: Array<{
@@ -38,13 +36,52 @@ export class LiveControlComponent {
   }> = [];
   newSongTitle = '';
   newSongArtist = '';
+  newSongGroup = '';
   showCreateSong = false;
 
   // Création de round
   showCreateRound = false;
   newRoundName = '';
-  newRoundDuration = 15;
-  newRoundTotalSongs = 20;
+
+  // Gestion des participants et tables (panneau unifié)
+  showHierarchy = false; // Panneau unifié Tables > Teams > Players
+  tableMode = false;
+
+  // Structure hiérarchique unifiée
+  hierarchyData: Array<{
+    id: string;
+    name: string;
+    teamsCount: number;
+    teams?: Array<{
+      id: string;
+      name: string;
+      playersCount: number;
+      players?: Array<{
+        id: string;
+        nickname: string;
+        isCaptain: boolean;
+        createdAt: string;
+      }>;
+    }>;
+  }> = [];
+
+  // Données brutes pour mode sans tables
+  players: Array<{
+    id: string;
+    nickname: string;
+    teamId: string;
+    teamName: string;
+    isCaptain: boolean;
+    createdAt: string;
+  }> = [];
+
+  // Gestion limite DEMO
+  showLimitModal = false;
+  limitModalData: {
+    message: string;
+    limit: number;
+    current: number;
+  } | null = null;
 
   // Intervalle pour le compte à rebours
   private countdownInterval: any;
@@ -58,12 +95,29 @@ export class LiveControlComponent {
     this.eventCode = this.route.snapshot.params['eventCode'];
     // Appliquer le thème de l'événement sur l'interface DJ
     this.theme.loadEventTheme(this.eventCode).subscribe();
+
+    // Vérifier si le mode table est activé
+    this.api.getEventPublic(this.eventCode).subscribe((event) => {
+      this.tableMode = event.settings?.tableMode || false;
+      if (this.tableMode) {
+        this.loadHierarchy();
+      }
+    });
+
     this.loadRounds();
     this.socket.connect();
     this.socket.joinEvent(this.eventCode, 'DJ');
     this.socket.on<any>('round_started', (d) => {
       this.currentSongId = String(d.songId);
       this.loadSongs(); // Recharger pour avoir les timestamps
+    });
+
+    // Écouter les événements de table
+    this.socket.on<any>('table_created', () => {
+      if (this.tableMode) this.loadHierarchy();
+    });
+    this.socket.on<any>('team_joined_table', () => {
+      if (this.tableMode) this.loadHierarchy();
     });
 
     // Démarrer le compte à rebours
@@ -115,6 +169,7 @@ export class LiveControlComponent {
   }
 
   onRoundChange() {
+    console.log('[DJ] Round sélectionné, roundId:', this.roundId);
     this.loadSongs();
   }
 
@@ -123,6 +178,7 @@ export class LiveControlComponent {
     if (this.showCreateSong) {
       this.newSongTitle = '';
       this.newSongArtist = '';
+      this.newSongGroup = '';
     }
   }
 
@@ -144,25 +200,33 @@ export class LiveControlComponent {
         idx: nextIdx,
         title: this.newSongTitle.trim(),
         artist: this.newSongArtist.trim() || undefined,
+        group: this.newSongGroup.trim() || undefined,
         duration: this.duration,
       })
       .subscribe({
         next: (response) => {
           console.log('[DJ] Chanson créée:', response);
-          alert(`✅ Chanson "${this.newSongTitle}" créée !`);
           this.newSongTitle = '';
           this.newSongArtist = '';
+          this.newSongGroup = '';
           this.showCreateSong = false;
           this.loadSongs(); // Recharger la liste
         },
         error: (err) => {
-          console.error('[DJ] Erreur création chanson:', err);
-          if (err.status === 403 && err.error?.code === 'SONG_LIMIT_REACHED') {
-            alert(
-              `❌ ${err.error.message}\n\nLimite : ${err.error.limit} chansons\nActuel : ${err.error.current}`,
-            );
+          // L'erreur peut être dans err.error.error (structure Angular HttpErrorResponse)
+          const errorData = err.error?.error || err.error;
+
+          if (err.status === 403 && errorData?.code === 'SONG_LIMIT_REACHED') {
+            // Afficher le modal de limite atteinte
+            this.limitModalData = {
+              message: errorData.message,
+              limit: errorData.limit,
+              current: errorData.current
+            };
+            this.showLimitModal = true;
           } else {
-            alert(`❌ Erreur: ${err.error?.message || err.message || 'Erreur inconnue'}`);
+            console.error('[DJ] Erreur création chanson:', err);
+            alert(`❌ Erreur: ${errorData?.message || err.message || 'Erreur inconnue'}`);
           }
         },
       });
@@ -191,7 +255,7 @@ export class LiveControlComponent {
           console.log(`✅ Chanson suivante activée: ${response.nextSongId}`);
           this.currentSongId = response.nextSongId;
           this.loadSongs(); // Recharger pour mettre à jour les statuts
-          alert(`✅ Chanson lancée !`);
+          // Pas de notification - l'interface visuelle se met à jour automatiquement
         } else {
           console.warn('⚠️ Aucune chanson suivante disponible');
           alert('⚠️ Toutes les chansons ont été jouées.\n\nLe round est terminé !');
@@ -230,7 +294,8 @@ export class LiveControlComponent {
     if (!this.currentSongId) return;
     this.api.closeSong(this.currentSongId).subscribe({
       next: () => {
-        console.log('Chanson fermée');
+        console.log('Chanson fermée - La notation est automatique');
+        this.loadSongs(); // Recharger pour voir le statut automatiquement changé en "scored"
       },
       error: (err) => {
         if (err.status === 409) {
@@ -243,44 +308,8 @@ export class LiveControlComponent {
       },
     });
   }
-  grade() {
-    if (!this.currentSongId) return;
-    this.api.gradeSong(this.currentSongId, this.buildOfficialPayload()).subscribe({
-      next: () => {
-        console.log('Chanson notée');
-      },
-      error: (err) => {
-        if (err.status === 409) {
-          console.warn('[DJ] Notation: Chanson déjà notée');
-        } else if (err.status === 404) {
-          console.warn('[DJ] Notation: Chanson non trouvée');
-        } else {
-          console.warn('[DJ] Notation: Erreur', err.status || 'inconnue');
-        }
-      },
-    });
-  }
-  saveOfficial() {
-    if (!this.currentSongId) return;
-    this.api.patchSong(this.currentSongId, this.buildOfficialPayload()).subscribe({
-      next: () => {
-        console.log('Sauvegarde officielle effectuée');
-      },
-      error: (err) => {
-        if (err.status === 404) {
-          console.warn('[DJ] Sauvegarde: Chanson non trouvée');
-        } else {
-          console.warn('[DJ] Sauvegarde: Erreur', err.status || 'inconnue');
-        }
-      },
-    });
-  }
-  private buildOfficialPayload() {
-    const p: any = {};
-    if (this.officialTitle.trim()) p.title = this.officialTitle.trim();
-    if (this.officialArtist.trim()) p.artist = this.officialArtist.trim();
-    return p;
-  }
+
+  // Méthode grade() supprimée - la notation est automatique côté serveur
 
   launchSong(songId: string) {
     console.log('[DJ] Lancement direct de la chanson:', songId);
@@ -339,7 +368,7 @@ export class LiveControlComponent {
       case 'closed':
         return '⏹️ Fermée';
       case 'scored':
-        return '✅ Notée';
+        return '✅ Noté (auto)'; // Affichage pour info mais pas modifiable
       default:
         return status;
     }
@@ -366,7 +395,7 @@ export class LiveControlComponent {
   closeSongDirect(songId: string) {
     this.api.closeSong(songId).subscribe({
       next: () => {
-        console.log('[DJ] Chanson fermée:', songId);
+        console.log('[DJ] Chanson fermée (notation automatique):', songId);
         this.loadSongs();
       },
       error: (err) => {
@@ -378,18 +407,62 @@ export class LiveControlComponent {
     });
   }
 
-  gradeSongDirect(songId: string) {
-    this.api.gradeSong(songId, {}).subscribe({
-      next: () => {
-        console.log('[DJ] Chanson notée:', songId);
-        this.loadSongs();
-      },
-      error: (err) => {
-        console.error('[DJ] Erreur notation:', err);
-        if (err.status === 409) {
-          this.loadSongs();
+  // Méthode gradeSongDirect() supprimée - la notation est automatique côté serveur
+
+  showRoundScores() {
+    if (!this.roundId) {
+      alert('Veuillez sélectionner un round');
+      return;
+    }
+
+    this.api.getRoundScores(this.eventCode, this.roundId).subscribe({
+      next: (data) => {
+        console.log('[DJ] Affichage des scores du round:', data);
+
+        // Déterminer si c'est le dernier round en comparant l'ID du round actuel avec celui du dernier round de la liste
+        const lastRound = this.rounds[this.rounds.length - 1];
+        const isLastRound = lastRound && this.roundId === lastRound.id;
+
+        console.log('[DJ] === DÉTECTION DERNIER ROUND ===');
+        console.log('[DJ] roundId actuel:', this.roundId);
+        console.log('[DJ] dernier round ID:', lastRound?.id);
+        console.log('[DJ] nombre total de rounds:', this.rounds.length);
+        console.log('[DJ] isLastRound:', isLastRound);
+
+        // Émettre l'événement socket pour afficher les scores sur le rétroprojecteur
+        this.socket.emit('round_scores_ready', {
+          eventCode: this.eventCode,
+          roundNumber: data.roundNumber,
+          roundScores: data.roundScores,
+          isLastRound: isLastRound,
+        });
+
+        if (isLastRound) {
+          alert(`🏆 Podium final de la manche ${data.roundNumber} affiché sur le rétroprojecteur !`);
+        } else {
+          alert(`✅ Scores de la manche ${data.roundNumber} affichés sur le rétroprojecteur`);
         }
       },
+      error: (err) => {
+        console.error('[DJ] Erreur récupération scores:', err);
+        alert(`❌ Erreur: ${err.error?.error?.code || err.message || 'Erreur inconnue'}`);
+      },
+    });
+  }
+
+  completeEvent() {
+    const confirmed = confirm('⚠️ Voulez-vous vraiment marquer cet événement comme terminé ? Cela affichera le podium final aux joueurs.');
+    if (!confirmed) return;
+
+    this.api.completeEvent(this.eventCode).subscribe({
+      next: (response) => {
+        console.log('[DJ] Événement marqué comme terminé:', response);
+        alert('🏆 L\'événement a été marqué comme terminé ! Le podium final s\'affiche maintenant aux joueurs.');
+      },
+      error: (err) => {
+        console.error('[DJ] Erreur complétion événement:', err);
+        alert(`❌ Erreur: ${err.error?.error?.message || err.message || 'Erreur inconnue'}`);
+      }
     });
   }
 
@@ -466,8 +539,6 @@ export class LiveControlComponent {
     this.showCreateRound = !this.showCreateRound;
     if (this.showCreateRound) {
       this.newRoundName = '';
-      this.newRoundDuration = 15;
-      this.newRoundTotalSongs = 20;
     }
   }
 
@@ -479,22 +550,62 @@ export class LiveControlComponent {
 
     this.api.createRound(this.eventCode, {
       name: this.newRoundName.trim(),
-      defaultDuration: this.newRoundDuration,
-      totalSongs: this.newRoundTotalSongs
+      defaultDuration: 15, // Valeur par défaut fixe (non modifiable par l'UI)
+      totalSongs: 20 // Valeur par défaut, non modifiable par l'utilisateur
     }).subscribe({
       next: (response) => {
         console.log('[DJ] Round créé:', response);
-        alert(`✅ Round "${this.newRoundName}" créé !`);
+        // Pas de notification - comportement silencieux
         this.newRoundName = '';
-        this.newRoundDuration = 15;
-        this.newRoundTotalSongs = 20;
         this.showCreateRound = false;
         this.loadRounds(); // Recharger la liste des rounds
         this.roundId = response.id; // Sélectionner automatiquement le nouveau round
+        this.loadSongs(); // Charger la liste (vide) des chansons du nouveau round
       },
       error: (err) => {
         console.error('[DJ] Erreur création round:', err);
         alert(`❌ Erreur: ${err.error?.message || err.message || 'Erreur inconnue'}`);
+      }
+    });
+  }
+
+  deleteCurrentRound() {
+    if (!this.roundId) {
+      alert('⚠️ Veuillez sélectionner un round à supprimer');
+      return;
+    }
+
+    const round = this.rounds.find(r => r.id === this.roundId);
+    const roundName = round?.name || `Round ${this.roundId}`;
+
+    const confirmed = confirm(
+      `🗑️ Supprimer le round "${roundName}" ?\n\n` +
+      'Cette action supprimera également toutes les chansons de ce round.\n' +
+      'Cette action est irréversible.\n\n' +
+      'Continuer ?'
+    );
+
+    if (!confirmed) {
+      return;
+    }
+
+    console.log('[DJ] Suppression du round:', this.roundId);
+
+    this.api.deleteRound(this.roundId).subscribe({
+      next: () => {
+        console.log('[DJ] Round supprimé:', roundName);
+        alert(`✅ Round "${roundName}" supprimé avec succès`);
+
+        // Réinitialiser la sélection
+        this.roundId = '';
+        this.songs = [];
+
+        this.loadRounds(); // Recharger la liste des rounds
+      },
+      error: (err) => {
+        console.error('[DJ] Erreur suppression round:', err);
+        const errorMessage = err.error?.message || err.message || 'Erreur inconnue';
+        alert(`❌ Erreur de suppression :\n\n${errorMessage}`);
       }
     });
   }
@@ -565,18 +676,28 @@ export class LiveControlComponent {
         input.value = ''; // Reset input
       },
       error: (err) => {
-        console.error('[DJ] Erreur import CSV:', err);
-        let errorMessage = 'Erreur inconnue';
+        // L'erreur peut être dans err.error.error (structure Angular HttpErrorResponse)
+        const errorData = err.error?.error || err.error;
 
-        if (err.status === 403 && err.error?.code === 'SONG_LIMIT_REACHED') {
-          errorMessage = err.error.message;
-        } else if (err.error?.message) {
-          errorMessage = err.error.message;
-        } else if (err.message) {
-          errorMessage = err.message;
+        if (err.status === 403 && errorData?.code === 'SONG_LIMIT_REACHED') {
+          // Afficher le modal de limite atteinte
+          this.limitModalData = {
+            message: errorData.message,
+            limit: errorData.limit,
+            current: errorData.current
+          };
+          this.showLimitModal = true;
+        } else {
+          console.error('[DJ] Erreur import CSV:', err);
+          let errorMessage = 'Erreur inconnue';
+          if (errorData?.message) {
+            errorMessage = errorData.message;
+          } else if (err.message) {
+            errorMessage = err.message;
+          }
+          alert(`❌ Erreur d'import :\n\n${errorMessage}`);
         }
 
-        alert(`❌ Erreur d'import :\n\n${errorMessage}`);
         input.value = ''; // Reset input
       }
     });
@@ -610,5 +731,150 @@ export class LiveControlComponent {
         alert(`❌ Erreur de suppression :\n\n${errorMessage}`);
       }
     });
+  }
+
+  // Gestion du panneau hiérarchique unifié
+  toggleHierarchy() {
+    this.showHierarchy = !this.showHierarchy;
+    if (this.showHierarchy) {
+      this.loadHierarchy();
+    }
+  }
+
+  loadHierarchy() {
+    if (this.tableMode) {
+      // Mode tables : charger la hiérarchie Tables > Teams > Players
+      this.api.getTables(this.eventCode).subscribe({
+        next: (tables) => {
+          this.hierarchyData = tables;
+          console.log('[DJ] Tables chargées:', tables.length);
+
+          // Charger les équipes et joueurs pour chaque table
+          tables.forEach(table => {
+            this.api.getTableTeams(table.id).subscribe({
+              next: (data) => {
+                const tableIndex = this.hierarchyData.findIndex(t => t.id === table.id);
+                if (tableIndex !== -1) {
+                  this.hierarchyData[tableIndex].teams = data.teams.map(team => ({
+                    ...team,
+                    players: [] // Sera chargé à la demande
+                  }));
+                }
+              },
+              error: (err) => {
+                console.error('[DJ] Erreur chargement équipes table:', err);
+              }
+            });
+          });
+        },
+        error: (err) => {
+          console.error('[DJ] Erreur chargement tables:', err);
+          alert(`❌ Erreur: ${err.error?.message || err.message || 'Erreur inconnue'}`);
+        }
+      });
+    } else {
+      // Mode sans tables : charger directement les joueurs groupés par équipe
+      this.loadPlayers();
+    }
+  }
+
+  loadPlayers() {
+    this.api.getPlayers(this.eventCode).subscribe({
+      next: (players) => {
+        this.players = players;
+        console.log('[DJ] Participants chargés:', players.length);
+
+        // Construire la hiérarchie Teams > Players (sans tables)
+        const teamMap = new Map<string, any>();
+
+        players.forEach(player => {
+          const teamId = player.teamId;
+          const teamName = player.teamName || `Équipe ${teamId}`;
+
+          if (!teamMap.has(teamId)) {
+            teamMap.set(teamId, {
+              id: teamId,
+              name: teamName,
+              playersCount: 0,
+              players: []
+            });
+          }
+
+          const team = teamMap.get(teamId);
+          team.players.push({
+            id: player.id,
+            nickname: player.nickname,
+            isCaptain: player.isCaptain,
+            createdAt: player.createdAt
+          });
+          team.playersCount++;
+        });
+
+        // Convertir en structure hiérarchique
+        this.hierarchyData = [{
+          id: 'all-teams',
+          name: 'Toutes les équipes',
+          teamsCount: teamMap.size,
+          teams: Array.from(teamMap.values())
+        }];
+      },
+      error: (err) => {
+        console.error('[DJ] Erreur chargement participants:', err);
+        alert(`❌ Erreur: ${err.error?.message || err.message || 'Erreur inconnue'}`);
+      }
+    });
+  }
+
+  deletePlayer(playerId: string, nickname: string) {
+    const confirmed = confirm(
+      `🗑️ Supprimer le joueur "${nickname}" ?\n\n` +
+      'Cette action est irréversible.\n' +
+      'Le joueur devra se reconnecter pour rejoindre à nouveau.\n\n' +
+      'Continuer ?'
+    );
+
+    if (!confirmed) {
+      return;
+    }
+
+    console.log('[DJ] Suppression du joueur:', playerId);
+
+    this.api.deletePlayer(playerId).subscribe({
+      next: () => {
+        console.log('[DJ] Joueur supprimé:', nickname);
+        alert(`✅ Joueur "${nickname}" supprimé avec succès`);
+        this.loadPlayers(); // Recharger la liste
+      },
+      error: (err) => {
+        console.error('[DJ] Erreur suppression joueur:', err);
+        const errorMessage = err.error?.message || err.message || 'Erreur inconnue';
+        alert(`❌ Erreur de suppression :\n\n${errorMessage}`);
+      }
+    });
+  }
+
+  getPlayersByTeam() {
+    const byTeam = new Map<string, typeof this.players>();
+    this.players.forEach(player => {
+      const teamName = player.teamName || `Équipe ${player.teamId}`;
+      if (!byTeam.has(teamName)) {
+        byTeam.set(teamName, []);
+      }
+      byTeam.get(teamName)!.push(player);
+    });
+    return byTeam;
+  }
+
+  getHierarchySummary(): string {
+    if (this.hierarchyData.length === 0) return 'Aucune donnée';
+
+    if (this.tableMode) {
+      const totalTeams = this.hierarchyData.reduce((sum: number, t: any) => sum + t.teamsCount, 0);
+      return `${this.hierarchyData.length} table(s) • ${totalTeams} équipe(s)`;
+    } else {
+      const totalPlayers = this.players.length;
+      const totalTeams = this.hierarchyData[0]?.teams?.length || 0;
+      return `${totalTeams} équipe(s) • ${totalPlayers} joueur(s)`;
+    }
   }
 }

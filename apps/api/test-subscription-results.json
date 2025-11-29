@@ -1,0 +1,240 @@
+{
+  "timestamp": "2025-10-12T18:22:01.259Z",
+  "summary": {
+    "total": 14,
+    "passed": 13,
+    "failed": 0,
+    "skipped": 1
+  },
+  "results": [
+    {
+      "test": "Enregistrement tenant",
+      "status": "PASS",
+      "message": "Tenant créé avec succès (ID: 9d6830de-d992-48d8-8e46-2c47645e3edf)",
+      "data": {
+        "tenant": {
+          "id": "9d6830de-d992-48d8-8e46-2c47645e3edf",
+          "name": "Test Company 1760293320281",
+          "slug": "test-company-1760293320281",
+          "plan": "DEMO",
+          "expiresAt": null
+        },
+        "user": {
+          "id": "7873f448-bedf-400c-854b-0ce1536eb7d2",
+          "email": "owner1760293320281@test.com",
+          "role": "OWNER",
+          "displayName": "Test Owner"
+        }
+      }
+    },
+    {
+      "test": "Vérification slug existant",
+      "status": "PASS",
+      "message": "Slug détecté comme non disponible"
+    },
+    {
+      "test": "Vérification slug disponible",
+      "status": "PASS",
+      "message": "Slug détecté comme disponible"
+    },
+    {
+      "test": "Connexion tenant",
+      "status": "PASS",
+      "message": "Connexion réussie avec token JWT"
+    },
+    {
+      "test": "Informations tenant",
+      "status": "PASS",
+      "message": "Plan: DEMO, Status: ACTIVE",
+      "data": {
+        "tenant": {
+          "id": "9d6830de-d992-48d8-8e46-2c47645e3edf",
+          "name": "Test Company 1760293320281",
+          "slug": "test-company-1760293320281",
+          "plan": "DEMO",
+          "status": "ACTIVE",
+          "expiresAt": null,
+          "limits": {
+            "maxEvents": 999,
+            "maxPlayersPerEvent": 999,
+            "maxUsers": 5
+          }
+        },
+        "usage": {
+          "eventsCount": 0,
+          "usersCount": 1,
+          "activeSessionsCount": 0,
+          "totalPlayersCount": 0
+        }
+      }
+    },
+    {
+      "test": "Récupération tarifs",
+      "status": "PASS",
+      "message": "3 plans disponibles: DEMO, PER_EVENT, MONTHLY",
+      "data": {
+        "subscriptions": {
+          "DEMO": {
+            "name": "Plan DÉMO",
+            "price": 0,
+            "currency": "EUR",
+            "interval": "perpetual",
+            "features": [
+              "Événements illimités",
+              "Joueurs illimités",
+              "⚠️ Limité à 5 chansons par événement",
+              "Gratuit à vie"
+            ]
+          },
+          "PER_EVENT": {
+            "name": "Paiement par Événement",
+            "price": 19,
+            "currency": "EUR",
+            "interval": "one_time",
+            "features": [
+              "1 événement à la fois",
+              "Chansons illimitées",
+              "Joueurs illimités",
+              "Support par email"
+            ]
+          },
+          "MONTHLY": {
+            "name": "Plan Mensuel",
+            "price": 49,
+            "currency": "EUR",
+            "interval": "month",
+            "features": [
+              "Événements illimités",
+              "Chansons illimitées",
+              "Joueurs illimités",
+              "Support prioritaire"
+            ]
+          }
+        },
+        "temporarySessions": {
+          "2days": {
+            "name": "2 jours",
+            "price": 19,
+            "currency": "EUR",
+            "duration": "2 jours",
+            "features": [
+              "Événements illimités pendant 2 jours",
+              "100 joueurs maximum par événement",
+              "Support par email"
+            ]
+          },
+          "1week": {
+            "name": "1 semaine",
+            "price": 49,
+            "currency": "EUR",
+            "duration": "7 jours",
+            "features": [
+              "Événements illimités pendant 1 semaine",
+              "200 joueurs maximum par événement",
+              "Support par email"
+            ]
+          },
+          "1month": {
+            "name": "1 mois",
+            "price": 99,
+            "currency": "EUR",
+            "duration": "30 jours",
+            "features": [
+              "Événements illimités pendant 1 mois",
+              "500 joueurs maximum par événement",
+              "Support prioritaire"
+            ]
+          }
+        }
+      }
+    },
+    {
+      "test": "Statut de paiement",
+      "status": "PASS",
+      "message": "Plan: DEMO, Limites: 999 events",
+      "data": {
+        "subscription": {
+          "plan": "DEMO",
+          "status": "ACTIVE",
+          "expiresAt": null,
+          "isActive": true
+        },
+        "limits": {
+          "maxEvents": 999,
+          "maxPlayersPerEvent": 999,
+          "maxUsers": 5
+        },
+        "usage": {
+          "eventsCount": 0,
+          "usersCount": 1,
+          "activeSessionsCount": 0,
+          "totalPlayersCount": 0
+        },
+        "hasActiveSession": false,
+        "canCreateEvent": true
+      }
+    },
+    {
+      "test": "Création checkout",
+      "status": "SKIP",
+      "message": "Test nécessite une configuration Stripe valide"
+    },
+    {
+      "test": "Historique paiements",
+      "status": "PASS",
+      "message": "0 paiements trouvés",
+      "data": {
+        "payments": []
+      }
+    },
+    {
+      "test": "Sessions actives",
+      "status": "PASS",
+      "message": "0 sessions trouvées",
+      "data": {
+        "sessions": []
+      }
+    },
+    {
+      "test": "Liste utilisateurs",
+      "status": "PASS",
+      "message": "1 utilisateurs trouvés"
+    },
+    {
+      "test": "Création utilisateur",
+      "status": "PASS",
+      "message": "Utilisateur créé: user1760293321064@test.com"
+    },
+    {
+      "test": "Mise à jour tenant",
+      "status": "PASS",
+      "message": "Tenant mis à jour avec succès"
+    },
+    {
+      "test": "Limites DEMO",
+      "status": "PASS",
+      "message": "Événements: 999, Joueurs: 999",
+      "data": {
+        "maxEvents": 999,
+        "maxPlayersPerEvent": 999,
+        "maxUsers": 5
+      }
+    }
+  ],
+  "tenantData": {
+    "tenant": {
+      "id": "9d6830de-d992-48d8-8e46-2c47645e3edf",
+      "name": "Test Company 1760293320281",
+      "slug": "test-company-1760293320281",
+      "plan": "DEMO",
+      "expiresAt": null
+    },
+    "user": {
+      "id": "7873f448-bedf-400c-854b-0ce1536eb7d2",
+      "email": "owner1760293320281@test.com",
+      "role": "OWNER",
+      "displayName": "Test Owner"
+    },
+    "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiI3ODczZjQ0OC1iZWRmLTQwMGMtODU0Yi0wY2UxNTM2ZWI3ZDIiLCJ0ZW5hbnRJZCI6IjlkNjgzMGRlLWQ5OTItNDhkOC04ZTQ2LTJjNDc2NDVlM2VkZiIsInJvbGUiOiJPV05FUiIsImVtYWlsIjoib3duZXIxNzYwMjkzMzIwMjgxQHRlc3QuY29tIiwiZXhwIjoxNzYwMzIyMTIwLCJpYXQiOjE3NjAyOTMzMjB9.MSaKDLrLg3c3s-e0WZJ9BMjqBB0hMUnLhiNFge-syoQ"
+  }
+}

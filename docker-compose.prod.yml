@@ -1,0 +1,186 @@
+# Docker Compose configuration for Blind Test Musical
+# À intégrer dans votre docker-compose.yml principal sur le serveur
+
+version: '3.8'
+
+services:
+  # ============================================
+  # BLIND TEST MUSICAL - API
+  # ============================================
+  blindtest-api:
+    build:
+      context: ./apps/api
+      dockerfile: Dockerfile
+    image: blindtest-api:latest
+    container_name: blindtest-api
+    restart: always
+    environment:
+      # Environment
+      NODE_ENV: production
+
+      # API Configuration
+      API_PORT: 3000
+      API_HOST: 0.0.0.0
+
+      # Database (utilise MariaDB existant)
+      DB_HOST: mariadb
+      DB_PORT: 3306
+      DB_USER: ${BLINDTEST_DB_USER}
+      DB_PASS: ${BLINDTEST_DB_PASSWORD}
+      DB_NAME: blindtest
+
+      # Security
+      JWT_SECRET: ${BLINDTEST_JWT_SECRET}
+      JWT_ACCESS_EXPIRES_IN: 15m
+      JWT_REFRESH_EXPIRES_IN: 7d
+
+      # CORS
+      CORS_ORIGIN: https://blindtest.codeharmony.fr,https://api.blindtest.codeharmony.fr
+
+      # Stripe
+      STRIPE_SECRET_KEY: ${BLINDTEST_STRIPE_SECRET_KEY}
+      STRIPE_PUBLISHABLE_KEY: ${BLINDTEST_STRIPE_PUBLISHABLE_KEY}
+      STRIPE_WEBHOOK_SECRET: ${BLINDTEST_STRIPE_WEBHOOK_SECRET}
+
+      # Multi-tenant
+      APP_BASE_URL: https://blindtest.codeharmony.fr
+      SUPER_ADMIN_EMAIL: ${BLINDTEST_SUPER_ADMIN_EMAIL}
+      SUPER_ADMIN_PASSWORD: ${BLINDTEST_SUPER_ADMIN_PASSWORD}
+
+      # Email (SMTP Hostinger)
+      SMTP_HOST: smtp.hostinger.com
+      SMTP_PORT: 465
+      SMTP_SECURE: true
+      SMTP_USER: support@codeharmony.com
+      SMTP_PASS: ${BLINDTEST_SMTP_PASSWORD}
+      EMAIL_FROM: support@codeharmony.com
+      EMAIL_FROM_NAME: Blind Test Musical
+
+      # Redis (optionnel)
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      REDIS_PASSWORD: ${REDIS_PASSWORD}
+
+    depends_on:
+      - mariadb
+      - redis
+
+    volumes:
+      - blindtest_api_logs:/app/logs
+
+    labels:
+      - "traefik.enable=true"
+      # API accessible sur blindtest.codeharmony.fr/api
+      - "traefik.http.routers.blindtest-api.rule=Host(`blindtest.codeharmony.fr`) && PathPrefix(`/api`)"
+      - "traefik.http.routers.blindtest-api.entrypoints=https"
+      - "traefik.http.routers.blindtest-api.tls=true"
+      - "traefik.http.routers.blindtest-api.tls.certresolver=letsencrypt"
+      - "traefik.http.services.blindtest-api.loadbalancer.server.port=3000"
+      - "traefik.docker.network=proxy"
+
+      # Priority plus élevée pour que /api soit capturé avant le frontend
+      - "traefik.http.routers.blindtest-api.priority=100"
+
+      # CORS middleware si nécessaire
+      - "traefik.http.middlewares.blindtest-cors.headers.accesscontrolallowmethods=GET,OPTIONS,PUT,POST,DELETE,PATCH"
+      - "traefik.http.middlewares.blindtest-cors.headers.accesscontrolalloworiginlist=https://blindtest.codeharmony.fr"
+      - "traefik.http.middlewares.blindtest-cors.headers.accesscontrolallowcredentials=true"
+      - "traefik.http.middlewares.blindtest-cors.headers.accesscontrolallowheaders=*"
+      - "traefik.http.routers.blindtest-api.middlewares=blindtest-cors"
+
+    networks:
+      - proxy
+      - backend
+
+    healthcheck:
+      test: ["CMD", "node", "-e", "require('http').get('http://localhost:3000/api/health', (r) => {process.exit(r.statusCode === 200 ? 0 : 1)})"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  # ============================================
+  # BLIND TEST MUSICAL - WEB (Angular)
+  # ============================================
+  blindtest-web:
+    build:
+      context: ./apps/web
+      dockerfile: Dockerfile
+      args:
+        - API_URL=https://api.blindtest.codeharmony.fr
+    image: blindtest-web:latest
+    container_name: blindtest-web
+    restart: always
+
+    environment:
+      - NODE_ENV=production
+
+    depends_on:
+      - blindtest-api
+
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.blindtest-web.rule=Host(`blindtest.codeharmony.fr`) || Host(`www.blindtest.codeharmony.fr`)"
+      - "traefik.http.routers.blindtest-web.entrypoints=https"
+      - "traefik.http.routers.blindtest-web.tls=true"
+      - "traefik.http.routers.blindtest-web.tls.certresolver=letsencrypt"
+      - "traefik.http.services.blindtest-web.loadbalancer.server.port=80"
+      - "traefik.docker.network=proxy"
+
+      # Priority normale (l'API a 100, donc elle sera capturée avant)
+      - "traefik.http.routers.blindtest-web.priority=10"
+
+      # Redirect www to non-www (optionnel)
+      - "traefik.http.middlewares.blindtest-redirect-www.redirectregex.regex=^https://www\\.blindtest\\.codeharmony\\.fr/(.*)"
+      - "traefik.http.middlewares.blindtest-redirect-www.redirectregex.replacement=https://blindtest.codeharmony.fr/$${1}"
+      - "traefik.http.routers.blindtest-web.middlewares=blindtest-redirect-www"
+
+    networks:
+      - proxy
+
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:80/health"]
+      interval: 30s
+      timeout: 3s
+      retries: 3
+      start_period: 5s
+
+  # ============================================
+  # REDIS (Cache & Sessions)
+  # ============================================
+  redis:
+    image: redis:7-alpine
+    container_name: blindtest-redis
+    restart: always
+    command: redis-server --requirepass ${REDIS_PASSWORD} --maxmemory 256mb --maxmemory-policy allkeys-lru
+
+    volumes:
+      - redis_data:/data
+
+    networks:
+      - backend
+
+    healthcheck:
+      test: ["CMD", "redis-cli", "--raw", "incr", "ping"]
+      interval: 30s
+      timeout: 3s
+      retries: 3
+
+# ============================================
+# VOLUMES
+# ============================================
+volumes:
+  blindtest_api_logs:
+    driver: local
+  redis_data:
+    driver: local
+
+# ============================================
+# NETWORKS
+# À adapter selon votre configuration existante
+# ============================================
+networks:
+  proxy:
+    external: true  # Réseau Traefik existant
+  backend:
+    external: true  # Réseau backend existant (ou créer si inexistant)
